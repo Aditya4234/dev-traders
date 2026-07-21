@@ -20,7 +20,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createOrder } from "@/lib/api";
 
 type Step = "cart" | "order-form" | "success";
@@ -57,6 +57,17 @@ export default function CartDrawer() {
     pincode: "",
     note: "",
   });
+
+  useEffect(() => {
+    if (cartOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [cartOpen]);
 
   const subtotal = cart.reduce(
     (sum, item) => sum + item.product.discountPrice * item.quantity,

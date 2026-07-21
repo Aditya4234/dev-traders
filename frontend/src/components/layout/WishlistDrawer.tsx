@@ -6,6 +6,7 @@ import { X, Heart, ShoppingBag, Trash2, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
 
 export default function WishlistDrawer() {
   const {
@@ -15,6 +16,17 @@ export default function WishlistDrawer() {
     toggleWishlist,
     addToCart,
   } = useShop();
+
+  useEffect(() => {
+    if (wishlistOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [wishlistOpen]);
 
   const handleAddToCart = (product: any) => {
     addToCart(product);

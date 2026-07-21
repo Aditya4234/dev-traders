@@ -68,6 +68,17 @@ export default function LoginModal() {
     }
   }, [loginOpen]);
 
+  useEffect(() => {
+    if (loginOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [loginOpen]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");

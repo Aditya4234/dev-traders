@@ -27,6 +27,17 @@ export default function LingerieCatalog({ categoryFilter, initialBadge, initialS
   const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false);
 
   useEffect(() => {
+    if (showMobileFilters) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showMobileFilters]);
+
+  useEffect(() => {
     getProducts({ limit: 100 })
       .then((data) => {
         if (data.success && data.products.length > 0) {
