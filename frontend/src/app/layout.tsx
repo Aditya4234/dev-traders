@@ -54,13 +54,11 @@ export default function RootLayout({
       lang="en"
       className={`${playfair.variable} ${inter.variable} ${poppins.variable} h-full antialiased`}
     >
-      <head>
+      <body className="min-h-full flex flex-col font-sans">
         <Script
           src="https://accounts.google.com/gsi/client"
           strategy="afterInteractive"
         />
-      </head>
-      <body className="min-h-full flex flex-col font-sans">
         <ShopProvider>
           <Header />
           <main className="flex-1">{children}</main>
