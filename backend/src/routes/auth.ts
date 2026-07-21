@@ -18,7 +18,7 @@ router.post("/google", async (req: Request, res: Response) => {
     const response = await fetch(
       `https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`
     );
-    const tokenData = await response.json();
+    const tokenData: any = await response.json();
 
     if (tokenData.error_description || tokenData.error) {
       res.status(401).json({ success: false, message: "Invalid Google token" });
