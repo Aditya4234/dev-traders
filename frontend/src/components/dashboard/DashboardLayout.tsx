@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -18,6 +19,7 @@ import {
   Ticket,
   Settings,
   LogOut,
+  ShoppingBag,
 } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
 
@@ -38,9 +40,12 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { user, logout } = useShop();
+  const { user, logout, cart, wishlist, setCartOpen, setWishlistOpen } = useShop();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const userName = user?.name || "User";
+  const cartCount = cart?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -54,10 +59,15 @@ export default function DashboardLayout({
             >
               <Menu size={20} className="text-dark-text" />
             </button>
-            <Link href="/" className="flex items-center gap-2">
-              <span className="font-[family-name:var(--font-playfair)] text-xl font-semibold tracking-[0.04em] text-dark-text">
-                RIYA <span className="text-primary">TOUCH</span>
-              </span>
+            <Link href="/" className="group flex items-center gap-2">
+              <Image
+                src="/products/logo.png"
+                alt="Riya Touch"
+                width={120}
+                height={40}
+                className="h-8 w-auto object-contain sm:h-9 md:h-10"
+                priority
+              />
             </Link>
           </div>
           <div className="hidden md:flex flex-1 max-w-lg mx-8">
