@@ -92,7 +92,7 @@ router.delete("/:itemId", optionalAuth, async (req: AuthRequest, res: Response) 
     }
 
     cart.items = cart.items.filter(
-      (item) => item._id.toString() !== req.params.itemId
+      (item) => item._id?.toString() !== req.params.itemId
     );
     await cart.save();
 
