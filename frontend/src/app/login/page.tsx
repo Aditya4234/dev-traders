@@ -45,31 +45,49 @@ export default function LoginPage() {
 
   useEffect(() => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!clientId || !window.google || !googleBtnRef.current || googleInitRef.current) return;
+    if (!clientId || !googleBtnRef.current || googleInitRef.current) return;
 
-    googleInitRef.current = true;
-    window.google.accounts.id.initialize({
-      client_id: clientId,
-      callback: async (response: { credential: string }) => {
-        setError("");
-        setLoading(true);
-        try {
-          await googleLoginWithApi(response.credential);
-          router.push("/dashboard");
-        } catch (err: any) {
-          setError(err.message || "Google login failed. Please try again.");
-        } finally {
-          setLoading(false);
-        }
-      },
-    });
-    window.google.accounts.id.renderButton(googleBtnRef.current, {
-      theme: "outline",
-      size: "large",
-      width: "100%",
-      text: "continue_with",
-      shape: "pill",
-    });
+    const initGoogle = () => {
+      if (!window.google || !googleBtnRef.current || googleInitRef.current) return;
+
+      googleInitRef.current = true;
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: async (response: { credential: string }) => {
+          setError("");
+          setLoading(true);
+          try {
+            await googleLoginWithApi(response.credential);
+            router.push("/dashboard");
+          } catch (err: any) {
+            setError(err.message || "Google login failed. Please try again.");
+          } finally {
+            setLoading(false);
+          }
+        },
+      });
+      window.google.accounts.id.renderButton(googleBtnRef.current, {
+        theme: "outline",
+        size: "large",
+        width: "100%",
+        text: "continue_with",
+        shape: "pill",
+      });
+    };
+
+    if (window.google) {
+      initGoogle();
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (window.google) {
+        clearInterval(interval);
+        initGoogle();
+      }
+    }, 200);
+
+    return () => clearInterval(interval);
   }, [googleLoginWithApi, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {

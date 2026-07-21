@@ -62,10 +62,23 @@ export default function LoginModal() {
   };
 
   useEffect(() => {
-    if (loginOpen) {
-      googleInitRef.current = false;
+    if (!loginOpen) return;
+
+    googleInitRef.current = false;
+
+    if (window.google) {
       setTimeout(initGoogle, 100);
+      return;
     }
+
+    const interval = setInterval(() => {
+      if (window.google) {
+        clearInterval(interval);
+        initGoogle();
+      }
+    }, 200);
+
+    return () => clearInterval(interval);
   }, [loginOpen]);
 
   useEffect(() => {
