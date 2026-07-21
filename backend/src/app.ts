@@ -24,7 +24,11 @@ const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/riya_t
 
 // Middleware
 app.use(cors({
-  origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
+  origin: [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://dev-traders.vercel.app",
+  ],
   credentials: true,
 }));
 app.use(express.json());
