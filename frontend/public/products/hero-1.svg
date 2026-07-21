@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 900" fill="none">
+  <rect width="1920" height="900" fill="#2D2D2D"/>
+  <rect x="0" y="0" width="1920" height="900" fill="url(#grad)"/>
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="1920" y2="900">
+      <stop offset="0%" stop-color="#2D2D2D"/>
+      <stop offset="100%" stop-color="#9A5A64"/>
+    </linearGradient>
+  </defs>
+  <text x="960" y="400" text-anchor="middle" font-family="Georgia, serif" font-size="72" fill="#FFFFFF" font-weight="300">Riya Touch</text>
+  <text x="960" y="480" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#D4A5A5" letter-spacing="8">WOMEN&apos;S INNERWEAR ONLY</text>
+  <text x="960" y="540" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#FFFFFF" opacity="0.7">Bras · Panties · Lingerie Sets</text>
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 900" fill="none">
+  <rect width="1920" height="900" fill="#B76E79"/>
+  <rect x="0" y="0" width="1920" height="900" fill="url(#grad2)"/>
+  <defs>
+    <linearGradient id="grad2" x1="0" y1="900" x2="1920" y2="0">
+      <stop offset="0%" stop-color="#9A5A64"/>
+      <stop offset="100%" stop-color="#FDF2F4"/>
+    </linearGradient>
+  </defs>
+  <text x="960" y="380" text-anchor="middle" font-family="Georgia, serif" font-size="80" fill="#FFFFFF" font-weight="300">Flat 50% OFF</text>
+  <text x="960" y="470" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" fill="#2D2D2D" letter-spacing="4">RIYA TOUCH BRAS &amp; PANTIES</text>
+  <text x="960" y="530" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#2D2D2D" opacity="0.8">No outerwear · Innerwear exclusive</text>
+</svg>
