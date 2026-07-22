@@ -14,6 +14,8 @@ interface ShopContextType {
   wishlist: Product[];
   user: User | null;
   authLoading: boolean;
+  justLoggedIn: boolean;
+  setJustLoggedIn: (v: boolean) => void;
   cartOpen: boolean;
   wishlistOpen: boolean;
   loginOpen: boolean;
@@ -44,6 +46,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -184,6 +187,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem("riya_touch_saved_credentials");
       }
       setLoginOpen(false);
+      setJustLoggedIn(true);
     }
   }, [setSessionCookie]);
 
@@ -195,6 +199,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       setUser(data.user);
       localStorage.setItem("riya_touch_user", JSON.stringify(data.user));
       setLoginOpen(false);
+      setJustLoggedIn(true);
     }
   }, [setSessionCookie]);
 
@@ -206,6 +211,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       setUser(data.user);
       localStorage.setItem("riya_touch_user", JSON.stringify(data.user));
       setLoginOpen(false);
+      setJustLoggedIn(true);
     }
   }, [setSessionCookie]);
 
@@ -241,6 +247,8 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         wishlist,
         user,
         authLoading,
+        justLoggedIn,
+        setJustLoggedIn,
         cartOpen,
         wishlistOpen,
         loginOpen,

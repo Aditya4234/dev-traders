@@ -29,6 +29,8 @@ import {
   ExternalLink,
   Zap,
   Store,
+  Star,
+  Send,
 } from 'lucide-react'
 import { useShop } from '@/context/ShopContext'
 
@@ -92,10 +94,15 @@ const navSections: NavSection[] = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { user, authLoading, logout, setWishlistOpen } = useShop()
+  const { user, authLoading, logout, setWishlistOpen, justLoggedIn, setJustLoggedIn } = useShop()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [userDropdownOpen, setUserDropdownOpen] = useState(false)
+  const [ratingOpen, setRatingOpen] = useState(false)
+  const [ratingStars, setRatingStars] = useState(0)
+  const [ratingHover, setRatingHover] = useState(0)
+  const [ratingText, setRatingText] = useState('')
+  const [ratingSubmitted, setRatingSubmitted] = useState(false)
 
   const userName = user?.name || 'Partner'
   const companyName = user?.companyName || 'Riya Touch'
@@ -166,6 +173,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       document.body.style.overflow = ''
     }
   }, [mobileOpen])
+
+  useEffect(() => {
+    if (justLoggedIn) {
+      setRatingOpen(true)
+      setJustLoggedIn(false)
+    }
+  }, [justLoggedIn, setJustLoggedIn])
+
+  const handleRatingSubmit = () => {
+    setRatingSubmitted(true)
+    setTimeout(() => {
+      setRatingOpen(false)
+      setRatingSubmitted(false)
+      setRatingStars(0)
+      setRatingText('')
+    }, 1500)
+  }
 
   const isActive = (href: string) => {
     if (href === '#') return false
@@ -347,7 +371,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           >
             <Menu size={20} />
           </button>
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <div className="relative h-7 w-7 overflow-hidden rounded-lg bg-white shadow-sm">
               <Image src="/products/logo.png" alt="Riya Touch" fill className="object-contain p-0.5" />
             </div>
@@ -357,10 +381,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
               Riya Touch
             </span>
-          </div>
+          </Link>
         </div>
 
-        <div className="hidden md:flex items-center gap-3 md:ml-0">
+        <Link href="/" className="hidden md:flex items-center gap-3 md:ml-0">
           <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-white shadow-sm">
             <Image src="/products/logo.png" alt="Riya Touch" fill className="object-contain p-0.5" />
           </div>
@@ -370,7 +394,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           >
             Riya Touch
           </span>
-        </div>
+        </Link>
 
         <div className="hidden flex-1 md:block md:ml-4">
           <div className="relative mx-auto max-w-xl">
@@ -557,6 +581,118 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {children}
         </main>
       </div>
+
+      <AnimatePresence>
+        {ratingOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            onClick={() => {
+              setRatingOpen(false)
+              setRatingStars(0)
+              setRatingText('')
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="w-full max-w-sm rounded-3xl bg-white p-8 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {ratingSubmitted ? (
+                <div className="flex flex-col items-center gap-3 py-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                    <Star size={32} className="text-green-500 fill-green-500" />
+                  </div>
+                  <h3 className="text-lg font-bold text-[var(--dark-text)]" style={{ fontFamily: 'var(--font-poppins)' }}>
+                    Thank You!
+                  </h3>
+                  <p className="text-sm text-[var(--muted)] text-center" style={{ fontFamily: 'var(--font-poppins)' }}>
+                    Your feedback helps us improve.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-6 text-center">
+                    <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 shadow-lg">
+                      <Star size={28} className="text-white fill-white" />
+                    </div>
+                    <h3 className="text-lg font-bold text-[var(--dark-text)]" style={{ fontFamily: 'var(--font-poppins)' }}>
+                      Rate Your Experience
+                    </h3>
+                    <p className="mt-1 text-sm text-[var(--muted)]" style={{ fontFamily: 'var(--font-poppins)' }}>
+                      How was your experience with Riya Touch?
+                    </p>
+                  </div>
+
+                  <div className="mb-6 flex justify-center gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onMouseEnter={() => setRatingHover(star)}
+                        onMouseLeave={() => setRatingHover(0)}
+                        onClick={() => setRatingStars(star)}
+                        className="transition-transform hover:scale-110"
+                      >
+                        <Star
+                          size={36}
+                          className={`transition-colors ${
+                            star <= (ratingHover || ratingStars)
+                              ? 'text-amber-400 fill-amber-400'
+                              : 'text-gray-200 fill-gray-200'
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+
+                  <textarea
+                    value={ratingText}
+                    onChange={(e) => setRatingText(e.target.value)}
+                    placeholder="Tell us more (optional)..."
+                    rows={3}
+                    className="mb-5 w-full rounded-xl border bg-gray-50 px-4 py-3 text-sm text-[var(--dark-text)] placeholder:text-[var(--muted)]/50 focus:border-[var(--primary)] focus:bg-white focus:outline-none resize-none"
+                    style={{
+                      fontFamily: 'var(--font-poppins)',
+                      borderColor: 'var(--border)',
+                    }}
+                  />
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        setRatingOpen(false)
+                        setRatingStars(0)
+                        setRatingText('')
+                      }}
+                      className="flex-1 rounded-xl border px-4 py-2.5 text-sm font-medium text-[var(--muted)] transition-colors hover:bg-gray-50"
+                      style={{
+                        fontFamily: 'var(--font-poppins)',
+                        borderColor: 'var(--border)',
+                      }}
+                    >
+                      Skip
+                    </button>
+                    <button
+                      onClick={handleRatingSubmit}
+                      disabled={ratingStars === 0}
+                      className="btn-primary flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ fontFamily: 'var(--font-poppins)' }}
+                    >
+                      <Send size={14} />
+                      Submit
+                    </button>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
