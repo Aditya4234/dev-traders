@@ -667,12 +667,12 @@ export default function DashboardPage() {
             <p className="mt-1 text-sm text-[var(--muted)]" style={{ fontFamily: "var(--font-poppins)" }}>Our dedicated wholesale support team is available Mon-Sat, 9AM-7PM</p>
           </div>
           <div className="flex items-center gap-3">
-            <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full bg-green-500 px-5 py-2.5 text-xs font-semibold text-white transition-all hover:bg-green-600 hover:shadow-lg" style={{ fontFamily: "var(--font-poppins)" }}>
+            <a href="https://wa.me/919205778531" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full bg-green-500 px-5 py-2.5 text-xs font-semibold text-white transition-all hover:bg-green-600 hover:shadow-lg" style={{ fontFamily: "var(--font-poppins)" }}>
               <MessageSquare size={14} />
               WhatsApp
               <ExternalLink size={10} />
             </a>
-            <a href="tel:+919876543210" className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-white px-5 py-2.5 text-xs font-semibold text-[var(--dark-text)] transition-all hover:bg-[var(--accent)]" style={{ fontFamily: "var(--font-poppins)" }}>
+            <a href="tel:+919205778531" className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-white px-5 py-2.5 text-xs font-semibold text-[var(--dark-text)] transition-all hover:bg-[var(--accent)]" style={{ fontFamily: "var(--font-poppins)" }}>
               <Users size={14} />
               Call Us
             </a>

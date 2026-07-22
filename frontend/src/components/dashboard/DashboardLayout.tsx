@@ -305,7 +305,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </p>
           <div className="space-y-2">
             <a
-              href="https://wa.me/919876543210"
+              href="https://wa.me/919205778531"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[var(--dark-text)]/70 transition-colors hover:bg-green-50 hover:text-green-600"
@@ -318,7 +318,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <ExternalLink size={10} className="opacity-40" />
             </a>
             <a
-              href="tel:+919876543210"
+              href="tel:+919205778531"
               className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[var(--dark-text)]/70 transition-colors hover:bg-blue-50 hover:text-blue-600"
               style={{ fontFamily: 'var(--font-poppins)' }}
             >
