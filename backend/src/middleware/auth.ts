@@ -8,6 +8,11 @@ export interface AuthRequest extends Request {
     name: string;
     email: string;
     role: string;
+    phone?: string;
+    profileImage?: string;
+    companyName?: string;
+    dealerId?: string;
+    permissions?: string[];
   };
 }
 
@@ -47,6 +52,11 @@ export const protect = async (
       name: user.name,
       email: user.email,
       role: user.role,
+      phone: user.phone,
+      profileImage: user.profileImage,
+      companyName: user.companyName,
+      dealerId: user.dealerId,
+      permissions: user.permissions,
     };
 
     next();
@@ -82,6 +92,11 @@ export const optionalAuth = async (
           name: user.name,
           email: user.email,
           role: user.role,
+          phone: user.phone,
+          profileImage: user.profileImage,
+          companyName: user.companyName,
+          dealerId: user.dealerId,
+          permissions: user.permissions,
         };
       }
     } catch {

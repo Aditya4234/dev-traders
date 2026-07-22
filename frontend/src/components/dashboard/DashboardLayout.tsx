@@ -14,8 +14,6 @@ import {
   AlertCircle,
   Wallet,
   Receipt,
-  Truck,
-  RotateCcw,
   HeadphonesIcon,
   Bell,
   User,
@@ -23,9 +21,6 @@ import {
   LogOut,
   Search,
   Heart,
-  MessageSquare,
-  Sun,
-  Moon,
   Menu,
   X,
   ChevronRight,
@@ -66,26 +61,24 @@ const navSections: NavSection[] = [
   {
     title: 'Finance',
     items: [
-      { label: 'Invoices', href: '#', icon: <FileText size={18} /> },
-      { label: 'Payments', href: '#', icon: <CreditCard size={18} /> },
-      { label: 'Outstanding', href: '#', icon: <AlertCircle size={18} /> },
-      { label: 'Credit Ledger', href: '#', icon: <Receipt size={18} /> },
-      { label: 'Wallet', href: '#', icon: <Wallet size={18} /> },
+      { label: 'Invoices', href: '/dashboard/invoices', icon: <FileText size={18} /> },
+      { label: 'Payments', href: '/dashboard/payments', icon: <CreditCard size={18} /> },
+      { label: 'Outstanding', href: '/dashboard/outstanding', icon: <AlertCircle size={18} /> },
+      { label: 'Credit Ledger', href: '/dashboard/credit-ledger', icon: <Receipt size={18} /> },
+      { label: 'Wallet', href: '/dashboard/wallet', icon: <Wallet size={18} /> },
     ],
   },
   {
     title: 'Products',
     items: [
-      { label: 'Price List', href: '#', icon: <FileText size={18} /> },
-      { label: 'Shipment Tracking', href: '#', icon: <Truck size={18} /> },
-      { label: 'Returns', href: '#', icon: <RotateCcw size={18} /> },
+      { label: 'Price List', href: '/dashboard/price-list', icon: <FileText size={18} /> },
     ],
   },
   {
     title: 'Support',
     items: [
-      { label: 'Support', href: '#', icon: <HeadphonesIcon size={18} /> },
-      { label: 'Notifications', href: '#', icon: <Bell size={18} /> },
+      { label: 'Support', href: '/dashboard/support', icon: <HeadphonesIcon size={18} /> },
+      { label: 'Notifications', href: '/dashboard/notifications', icon: <Bell size={18} /> },
     ],
   },
   {
@@ -99,14 +92,16 @@ const navSections: NavSection[] = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { user, logout, setWishlistOpen } = useShop()
+  const { user, authLoading, logout, setWishlistOpen } = useShop()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [darkMode, setDarkMode] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [userDropdownOpen, setUserDropdownOpen] = useState(false)
 
-  const dealerName = 'Mahendra Garments'
-  const dealerId = 'RT-1025'
+  const userName = user?.name || 'Partner'
+  const companyName = user?.companyName || 'Riya Touch'
+  const userDealerId = user?.dealerId || ''
+  const userEmail = user?.email || ''
+  const userRole = user?.role || 'customer'
 
   const initials = user?.name
     ? user.name
@@ -115,7 +110,45 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         .join('')
         .slice(0, 2)
         .toUpperCase()
-    : 'MG'
+    : 'RT'
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-[var(--primary)] border-t-transparent" />
+          <p className="text-sm text-[var(--muted)]" style={{ fontFamily: 'var(--font-poppins)' }}>
+            Loading dashboard...
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
+        <div className="flex flex-col items-center gap-4 text-center px-4">
+          <div className="h-16 w-16 rounded-full bg-red-50 flex items-center justify-center">
+            <User size={28} className="text-red-400" />
+          </div>
+          <h2 className="text-lg font-semibold text-[var(--dark-text)]" style={{ fontFamily: 'var(--font-poppins)' }}>
+            Authentication Required
+          </h2>
+          <p className="text-sm text-[var(--muted)]" style={{ fontFamily: 'var(--font-poppins)' }}>
+            Please log in to access the dashboard.
+          </p>
+          <a
+            href="/login"
+            className="inline-flex items-center gap-2 rounded-xl bg-[var(--primary)] px-6 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90"
+            style={{ fontFamily: 'var(--font-poppins)' }}
+          >
+            Go to Login
+          </a>
+        </div>
+      </div>
+    )
+  }
 
   const closeMobile = useCallback(() => setMobileOpen(false), [])
 
@@ -143,19 +176,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const sidebarContent = (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 px-6 py-6">
-        <div className="relative h-10 w-10 overflow-hidden rounded-xl bg-white shadow-sm">
-          <Image src="/products/logo.png" alt="Riya Touch" fill className="object-contain p-1" />
-        </div>
         <div>
           <h1
             className="text-lg font-bold tracking-tight"
             style={{ fontFamily: 'var(--font-playfair)' }}
           >
-            Riya Touch
+            Menu
           </h1>
-          <p className="text-[11px] font-medium tracking-wide text-[var(--muted)]">
-            Wholesale ERP
-          </p>
         </div>
       </div>
 
@@ -175,13 +202,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className="truncate text-sm font-semibold text-[var(--dark-text)]"
                 style={{ fontFamily: 'var(--font-poppins)' }}
               >
-                {dealerName}
+                {userName}
               </p>
               <p
                 className="text-[11px] text-[var(--muted)]"
                 style={{ fontFamily: 'var(--font-poppins)' }}
               >
-                Dealer ID: {dealerId}
+                {userDealerId ? `Dealer ID: ${userDealerId}` : companyName}
               </p>
             </div>
           </div>
@@ -190,7 +217,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm"
             >
               <Zap size={10} />
-              Gold Partner
+              {userRole === 'dealer' ? 'Wholesale Dealer' : userRole === 'admin' ? 'Admin' : 'Partner'}
             </span>
           </div>
         </div>
@@ -333,7 +360,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
 
-        <div className="hidden flex-1 md:block md:ml-72">
+        <div className="hidden md:flex items-center gap-3 md:ml-0">
+          <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-white shadow-sm">
+            <Image src="/products/logo.png" alt="Riya Touch" fill className="object-contain p-0.5" />
+          </div>
+          <span
+            className="text-sm font-bold text-[var(--dark-text)]"
+            style={{ fontFamily: 'var(--font-playfair)' }}
+          >
+            Riya Touch
+          </span>
+        </div>
+
+        <div className="hidden flex-1 md:block md:ml-4">
           <div className="relative mx-auto max-w-xl">
             <Search
               size={16}
@@ -354,20 +393,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-          <button className="relative flex h-9 w-9 items-center justify-center rounded-xl text-[var(--dark-text)]/70 transition-colors hover:bg-[var(--accent)] hover:text-[var(--dark-text)]">
+          <Link href="/dashboard/notifications" className="relative flex h-9 w-9 items-center justify-center rounded-xl text-[var(--dark-text)]/70 transition-colors hover:bg-[var(--accent)] hover:text-[var(--dark-text)]">
             <Bell size={18} />
             <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[var(--primary)] shadow-sm ring-2 ring-white" />
-          </button>
+          </Link>
 
           <button
             onClick={() => setWishlistOpen(true)}
             className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--dark-text)]/70 transition-colors hover:bg-[var(--accent)] hover:text-[var(--dark-text)]"
           >
             <Heart size={18} />
-          </button>
-
-          <button className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--dark-text)]/70 transition-colors hover:bg-[var(--accent)] hover:text-[var(--dark-text)]">
-            <MessageSquare size={18} />
           </button>
 
           <Link
@@ -397,10 +432,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   className="text-xs font-semibold text-[var(--dark-text)] leading-tight"
                   style={{ fontFamily: 'var(--font-poppins)' }}
                 >
-                  {user?.name || dealerName}
+                  {userName}
                 </p>
                 <span className="inline-flex items-center gap-0.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 px-1.5 py-0 text-[8px] font-bold uppercase tracking-wider text-white">
-                  Gold Partner
+                  {userRole === 'dealer' ? 'Dealer' : userRole === 'admin' ? 'Admin' : 'Partner'}
                 </span>
               </div>
             </button>
@@ -425,13 +460,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         className="text-sm font-semibold text-[var(--dark-text)]"
                         style={{ fontFamily: 'var(--font-poppins)' }}
                       >
-                        {user?.name || dealerName}
+                        {userName}
                       </p>
                       <p
                         className="text-xs text-[var(--muted)]"
                         style={{ fontFamily: 'var(--font-poppins)' }}
                       >
-                        {user?.email || 'mahendra@garments.com'}
+                        {userEmail}
                       </p>
                     </div>
                     <Link
@@ -469,13 +504,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               )}
             </AnimatePresence>
           </div>
-
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--dark-text)]/70 transition-colors hover:bg-[var(--accent)] hover:text-[var(--dark-text)]"
-          >
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
         </div>
       </header>
 
@@ -506,22 +534,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 style={{ borderColor: 'var(--border)' }}
               >
                 <div className="flex items-center justify-between px-6 py-5">
-                  <div className="flex items-center gap-2">
-                    <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-white shadow-sm">
-                      <Image
-                        src="/products/logo.png"
-                        alt="Riya Touch"
-                        fill
-                        className="object-contain p-0.5"
-                      />
-                    </div>
-                    <span
-                      className="text-sm font-bold text-[var(--dark-text)]"
-                      style={{ fontFamily: 'var(--font-playfair)' }}
-                    >
-                      Riya Touch
-                    </span>
-                  </div>
+                  <span
+                    className="text-sm font-bold text-[var(--dark-text)]"
+                    style={{ fontFamily: 'var(--font-playfair)' }}
+                  >
+                    Riya Touch
+                  </span>
                   <button
                     onClick={closeMobile}
                     className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--accent)]"

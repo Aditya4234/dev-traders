@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { Product } from "@/types";
+import { Product, User } from "@/types";
 import * as api from "@/lib/api";
 
 export interface CartItem {
@@ -12,7 +12,8 @@ export interface CartItem {
 interface ShopContextType {
   cart: CartItem[];
   wishlist: Product[];
-  user: { name: string; email: string; id?: string } | null;
+  user: User | null;
+  authLoading: boolean;
   cartOpen: boolean;
   wishlistOpen: boolean;
   loginOpen: boolean;
@@ -25,11 +26,14 @@ interface ShopContextType {
   toggleWishlist: (product: Product) => void;
   isInWishlist: (productId: string) => boolean;
   login: (name: string, email: string) => void;
-  loginWithApi: (email: string, password: string) => Promise<void>;
+  loginWithApi: (email: string, password: string, remember?: boolean) => Promise<void>;
+  getSavedCredentials: () => { email: string; password: string } | null;
+  clearSavedCredentials: () => void;
   registerWithApi: (name: string, email: string, password: string) => Promise<void>;
   googleLoginWithApi: (credential: string) => Promise<void>;
   logout: () => void;
   clearCart: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
@@ -37,18 +41,55 @@ const ShopContext = createContext<ShopContextType | undefined>(undefined);
 export function ShopProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<Product[]>([]);
-  const [user, setUser] = useState<{ name: string; email: string; id?: string } | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const [cartOpen, setCartOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
 
-  // Load from local storage
+  const setSessionCookie = useCallback((token: string) => {
+    document.cookie = `riya_session=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+  }, []);
+
+  const clearSessionCookie = useCallback(() => {
+    document.cookie = "riya_session=; path=/; max-age=0";
+  }, []);
+
+  const refreshUser = useCallback(async () => {
+    const savedToken = localStorage.getItem("riya_touch_token");
+    if (!savedToken) {
+      setUser(null);
+      setAuthLoading(false);
+      return;
+    }
+
+    setSessionCookie(savedToken);
+
+    try {
+      const data = await api.getMe();
+      if (data.success && data.user) {
+        setUser(data.user);
+        localStorage.setItem("riya_touch_user", JSON.stringify(data.user));
+      } else {
+        localStorage.removeItem("riya_touch_token");
+        localStorage.removeItem("riya_touch_user");
+        clearSessionCookie();
+        setUser(null);
+      }
+    } catch {
+      localStorage.removeItem("riya_touch_token");
+      localStorage.removeItem("riya_touch_user");
+      clearSessionCookie();
+      setUser(null);
+    } finally {
+      setAuthLoading(false);
+    }
+  }, [setSessionCookie, clearSessionCookie]);
+
   useEffect(() => {
     const savedCart = localStorage.getItem("riya_touch_cart");
     const savedWishlist = localStorage.getItem("riya_touch_wishlist");
-    const savedUser = localStorage.getItem("riya_touch_user");
-    const savedToken = localStorage.getItem("riya_touch_token");
 
     if (savedCart) {
       try { setCart(JSON.parse(savedCart)); } catch (e) { console.error("Error parsing cart", e); }
@@ -56,25 +97,9 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     if (savedWishlist) {
       try { setWishlist(JSON.parse(savedWishlist)); } catch (e) { console.error("Error parsing wishlist", e); }
     }
-    if (savedUser) {
-      try { setUser(JSON.parse(savedUser)); } catch (e) { console.error("Error parsing user", e); }
-    }
 
-    // Verify token with backend if exists
-    if (savedToken) {
-      api.getMe().then((data) => {
-        if (data.success) {
-          setUser(data.user);
-          localStorage.setItem("riya_touch_user", JSON.stringify(data.user));
-        }
-      }).catch(() => {
-        // Token expired or invalid, clear
-        localStorage.removeItem("riya_touch_token");
-        localStorage.removeItem("riya_touch_user");
-        setUser(null);
-      });
-    }
-  }, []);
+    refreshUser();
+  }, [refreshUser]);
 
   useEffect(() => {
     localStorage.setItem("riya_touch_cart", JSON.stringify(cart));
@@ -130,46 +155,79 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   }, [wishlist]);
 
   const login = useCallback((name: string, email: string) => {
-    const userData = { name, email };
+    const userData: User = {
+      id: "",
+      name,
+      email,
+      role: "customer",
+      phone: null,
+      profileImage: null,
+      companyName: null,
+      dealerId: null,
+      permissions: [],
+    };
     setUser(userData);
     localStorage.setItem("riya_touch_user", JSON.stringify(userData));
     setLoginOpen(false);
   }, []);
 
-  const loginWithApi = useCallback(async (email: string, password: string) => {
+  const loginWithApi = useCallback(async (email: string, password: string, remember = false) => {
     const data = await api.login({ email, password });
     if (data.success) {
       localStorage.setItem("riya_touch_token", data.token);
+      setSessionCookie(data.token);
       setUser(data.user);
       localStorage.setItem("riya_touch_user", JSON.stringify(data.user));
+      if (remember) {
+        localStorage.setItem("riya_touch_saved_credentials", JSON.stringify({ email, password }));
+      } else {
+        localStorage.removeItem("riya_touch_saved_credentials");
+      }
       setLoginOpen(false);
     }
-  }, []);
+  }, [setSessionCookie]);
 
   const registerWithApi = useCallback(async (name: string, email: string, password: string) => {
     const data = await api.register({ name, email, password });
     if (data.success) {
       localStorage.setItem("riya_touch_token", data.token);
+      setSessionCookie(data.token);
       setUser(data.user);
       localStorage.setItem("riya_touch_user", JSON.stringify(data.user));
       setLoginOpen(false);
     }
-  }, []);
+  }, [setSessionCookie]);
 
   const googleLoginWithApi = useCallback(async (credential: string) => {
     const data = await api.googleLogin(credential);
     if (data.success) {
       localStorage.setItem("riya_touch_token", data.token);
+      setSessionCookie(data.token);
       setUser(data.user);
       localStorage.setItem("riya_touch_user", JSON.stringify(data.user));
       setLoginOpen(false);
     }
-  }, []);
+  }, [setSessionCookie]);
 
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem("riya_touch_user");
     localStorage.removeItem("riya_touch_token");
+    clearSessionCookie();
+  }, [clearSessionCookie]);
+
+  const getSavedCredentials = useCallback(() => {
+    const saved = localStorage.getItem("riya_touch_saved_credentials");
+    if (!saved) return null;
+    try {
+      return JSON.parse(saved);
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const clearSavedCredentials = useCallback(() => {
+    localStorage.removeItem("riya_touch_saved_credentials");
   }, []);
 
   const clearCart = useCallback(() => {
@@ -182,6 +240,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         cart,
         wishlist,
         user,
+        authLoading,
         cartOpen,
         wishlistOpen,
         loginOpen,
@@ -199,6 +258,9 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         googleLoginWithApi,
         logout,
         clearCart,
+        refreshUser,
+        getSavedCredentials,
+        clearSavedCredentials,
       }}
     >
       {children}

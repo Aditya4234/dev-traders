@@ -6,7 +6,11 @@ export interface IUser extends Document {
   email: string;
   password: string;
   phone?: string;
-  role: "customer" | "admin";
+  role: "customer" | "admin" | "dealer";
+  profileImage?: string;
+  companyName?: string;
+  dealerId?: string;
+  permissions: string[];
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -22,7 +26,11 @@ const userSchema = new Schema<IUser>(
     },
     password: { type: String, required: true, minlength: 6, select: false },
     phone: { type: String },
-    role: { type: String, enum: ["customer", "admin"], default: "customer" },
+    role: { type: String, enum: ["customer", "admin", "dealer"], default: "customer" },
+    profileImage: { type: String },
+    companyName: { type: String },
+    dealerId: { type: String, unique: true, sparse: true },
+    permissions: { type: [String], default: [] },
   },
   { timestamps: true }
 );

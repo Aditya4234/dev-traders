@@ -4,6 +4,20 @@ import { generateToken, protect, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
+function sanitizeUser(user: any) {
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    phone: user.phone || null,
+    profileImage: user.profileImage || null,
+    companyName: user.companyName || null,
+    dealerId: user.dealerId || null,
+    permissions: user.permissions || [],
+  };
+}
+
 // POST /api/auth/google
 router.post("/google", async (req: Request, res: Response) => {
   try {
@@ -14,7 +28,6 @@ router.post("/google", async (req: Request, res: Response) => {
       return;
     }
 
-    // Verify Google token
     const response = await fetch(
       `https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`
     );
@@ -25,21 +38,24 @@ router.post("/google", async (req: Request, res: Response) => {
       return;
     }
 
-    const { email, name } = tokenData;
+    const { email, name, picture } = tokenData;
 
     if (!email) {
       res.status(401).json({ success: false, message: "Could not extract email from Google token" });
       return;
     }
 
-    // Find or create user
     let user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
       user = await User.create({
         name: name || email.split("@")[0],
         email: email.toLowerCase(),
         password: Math.random().toString(36).slice(-16) + "A1!",
+        profileImage: picture || undefined,
       });
+    } else if (picture && !user.profileImage) {
+      user.profileImage = picture;
+      await user.save();
     }
 
     const token = generateToken(user._id.toString());
@@ -47,12 +63,7 @@ router.post("/google", async (req: Request, res: Response) => {
     res.json({
       success: true,
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user: sanitizeUser(user),
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
@@ -81,12 +92,7 @@ router.post("/register", async (req: Request, res: Response) => {
     res.status(201).json({
       success: true,
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user: sanitizeUser(user),
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
@@ -120,12 +126,7 @@ router.post("/login", async (req: Request, res: Response) => {
     res.json({
       success: true,
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user: sanitizeUser(user),
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
@@ -143,12 +144,7 @@ router.get("/me", protect, async (req: AuthRequest, res: Response) => {
 
     res.json({
       success: true,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user: sanitizeUser(user),
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
@@ -158,7 +154,7 @@ router.get("/me", protect, async (req: AuthRequest, res: Response) => {
 // PUT /api/auth/profile
 router.put("/profile", protect, async (req: AuthRequest, res: Response) => {
   try {
-    const { name, phone } = req.body;
+    const { name, phone, companyName, dealerId } = req.body;
     const user = await User.findById(req.user?.id);
     if (!user) {
       res.status(404).json({ success: false, message: "User not found" });
@@ -167,16 +163,13 @@ router.put("/profile", protect, async (req: AuthRequest, res: Response) => {
 
     if (name) user.name = name;
     if (phone) user.phone = phone;
+    if (companyName) user.companyName = companyName;
+    if (dealerId) user.dealerId = dealerId;
     await user.save();
 
     res.json({
       success: true,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user: sanitizeUser(user),
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });

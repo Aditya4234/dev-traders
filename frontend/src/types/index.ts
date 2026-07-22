@@ -1,3 +1,15 @@
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: "customer" | "admin" | "dealer";
+  phone: string | null;
+  profileImage: string | null;
+  companyName: string | null;
+  dealerId: string | null;
+  permissions: string[];
+}
+
 export interface Product {
   id: string;
   name: string;

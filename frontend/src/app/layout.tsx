@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Inter, Poppins } from "next/font/google";
 import Script from "next/script";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import { ShopProvider } from "@/context/ShopContext";
 import CartDrawer from "@/components/layout/CartDrawer";
 import WishlistDrawer from "@/components/layout/WishlistDrawer";
@@ -60,9 +58,7 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
         <ShopProvider>
-          <Header />
           <main className="flex-1">{children}</main>
-          <Footer />
           <CartDrawer />
           <WishlistDrawer />
           <LoginModal />

@@ -26,11 +26,12 @@ declare global {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { loginWithApi, registerWithApi, googleLoginWithApi, user } = useShop();
+  const { loginWithApi, registerWithApi, googleLoginWithApi, user, getSavedCredentials } = useShop();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -42,6 +43,15 @@ export default function LoginPage() {
       router.push("/dashboard");
     }
   }, [user, router]);
+
+  useEffect(() => {
+    const saved = getSavedCredentials();
+    if (saved) {
+      setEmail(saved.email);
+      setPassword(saved.password);
+      setRememberMe(true);
+    }
+  }, [getSavedCredentials]);
 
   useEffect(() => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -104,7 +114,7 @@ export default function LoginPage() {
       if (isSignUp) {
         await registerWithApi(name, email, password);
       } else {
-        await loginWithApi(email, password);
+        await loginWithApi(email, password, rememberMe);
       }
       setEmail("");
       setPassword("");
@@ -300,6 +310,8 @@ export default function LoginPage() {
                   <input
                     type="checkbox"
                     id="remember"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
                     className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
                   />
                   <label htmlFor="remember" className="text-xs text-muted cursor-pointer">
