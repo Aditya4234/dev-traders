@@ -248,19 +248,17 @@ export default function HeroBanner() {
 
                 {/* Image frame */}
                 <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-white/80 to-soft-pink/60 p-2 shadow-2xl backdrop-blur-sm sm:p-3">
-                  <div className="relative overflow-hidden rounded-[1.5rem]">
-                    <div className="relative aspect-[3/4]">
-                      <Image
-                        src="/products/home page banner.png"
-                        alt="Riya Touch Premium Innerwear Collection"
-                        fill
-                        priority
-                        sizes="(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 35vw"
-                        className="object-cover object-top"
-                      />
-                      {/* Subtle gradient overlay at bottom */}
-                      <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-rose-gold/10 to-transparent" />
-                    </div>
+                  <div className="relative overflow-hidden rounded-[1.5rem] bg-[#FDF2F5]">
+                    <Image
+                      src="/products/home-page.png"
+                      alt="Riya Touch Premium Innerwear Collection"
+                      width={1341}
+                      height={1173}
+                      priority
+                      className="h-auto w-full object-contain"
+                    />
+                    {/* Subtle gradient overlay at bottom */}
+                    <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-rose-gold/10 to-transparent" />
                   </div>
                 </div>
 

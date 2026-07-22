@@ -20,9 +20,51 @@ import {
   RefreshCw,
   Gem,
   Headphones,
+  Check,
+  Package,
+  Store,
+  BadgeCheck,
+  TrendingUp,
 } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
 import { products } from "@/data/mock-data";
+
+const heroStats = [
+  { value: "500+", label: "Dealers", icon: Store },
+  { value: "50,000+", label: "Orders Delivered", icon: Package },
+  { value: "Since 2019", label: "Trusted Brand", icon: BadgeCheck },
+];
+
+const floatingBadges = [
+  {
+    icon: TrendingUp,
+    label: "Wholesale Price",
+    color: "from-emerald-500 to-emerald-600",
+    position: "top-[12%] -right-2 md:-right-4 md:top-[15%]",
+    delay: 1.0,
+  },
+  {
+    icon: Sparkles,
+    label: "New Collection",
+    color: "from-[#E8A0B0] to-[#D4858F]",
+    position: "top-[42%] -right-3 md:-right-6 md:top-[45%]",
+    delay: 1.2,
+  },
+  {
+    icon: Truck,
+    label: "Fast Delivery",
+    color: "from-violet-500 to-violet-600",
+    position: "bottom-[28%] -right-2 md:-right-4 md:bottom-[30%]",
+    delay: 1.4,
+  },
+  {
+    icon: Shield,
+    label: "Trusted Brand",
+    color: "from-amber-500 to-amber-600",
+    position: "bottom-[8%] right-2 md:right-0 md:bottom-[10%]",
+    delay: 1.6,
+  },
+];
 
 const trustBadges = [
   { icon: Gem, label: "Premium Fabric", desc: "Finest materials" },
@@ -63,29 +105,38 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* ═══════════════════════════════════════════════ HERO SECTION ═══════════════════════════════════════════════ */}
-      <section className="relative min-h-screen overflow-hidden gradient-hero">
-        {/* Floating decorative circles */}
+      <section className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#FDF2F5] via-[#FAE8EE] to-[#F7DCE3]">
+        {/* Background Decorative Elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div
             animate={{ y: [0, -30, 0], scale: [1, 1.05, 1] }}
             transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className="floating-circle absolute -left-32 -top-32 h-[500px] w-[500px]"
+            className="absolute -left-32 -top-32 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-[#E8A0B0]/15 to-[#D4858F]/5 blur-3xl"
           />
           <motion.div
             animate={{ y: [0, 20, 0], scale: [1, 1.08, 1] }}
             transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-            className="floating-circle absolute -bottom-48 -right-48 h-[600px] w-[600px]"
+            className="absolute -bottom-48 -right-48 h-[600px] w-[600px] rounded-full bg-gradient-to-tl from-[#E8A0B0]/10 to-[#D4858F]/8 blur-3xl"
           />
           <motion.div
             animate={{ y: [0, -15, 0], x: [0, 10, 0] }}
             transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className="floating-circle absolute left-1/3 top-1/4 h-[300px] w-[300px]"
+            className="absolute left-1/3 top-1/4 h-[300px] w-[300px] rounded-full bg-gradient-to-r from-[#E8A0B0]/8 to-transparent blur-2xl"
           />
-          {/* Subtle dot pattern */}
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+            className="absolute right-[15%] top-[10%] h-24 w-24 rounded-3xl border border-[#E8A0B0]/10 md:h-32 md:w-32"
+          />
+          <motion.div
+            animate={{ rotate: -360 }}
+            transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
+            className="absolute bottom-[15%] left-[10%] h-16 w-16 rounded-full border border-[#E8A0B0]/10 md:h-20 md:w-20"
+          />
           <div
-            className="absolute inset-0 opacity-[0.03]"
+            className="absolute inset-0 opacity-[0.025]"
             style={{
-              backgroundImage: "radial-gradient(circle, #E91E63 1px, transparent 1px)",
+              backgroundImage: "radial-gradient(circle, #b76e79 1px, transparent 1px)",
               backgroundSize: "32px 32px",
             }}
           />
@@ -93,182 +144,216 @@ export default function LandingPage() {
 
         <div className="relative z-10 mx-auto flex min-h-screen max-w-[1400px] items-center px-4 sm:px-6 md:px-8 lg:px-12">
           <div className="grid w-full items-center gap-12 lg:grid-cols-2 lg:gap-20">
-            {/* Left: Text Content */}
+            {/* ─── Left: Content ─── */}
             <div className="text-center lg:text-left">
+              {/* Top Badge */}
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
               >
-                <div className="mb-6 inline-flex items-center gap-2 rounded-full glass px-5 py-2.5 shadow-sm">
+                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#E8A0B0]/30 bg-white/60 px-5 py-2.5 shadow-sm backdrop-blur-sm">
                   <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#E8A0B0] opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-[#E8A0B0]" />
                   </span>
-                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary font-[family-name:var(--font-poppins)]">
-                    Premium Innerwear Brand
+                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#C48A96] font-[family-name:var(--font-poppins)]">
+                    India&apos;s Trusted Wholesale Brand
                   </span>
                 </div>
               </motion.div>
 
+              {/* Headline */}
               <motion.h1
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
-                className="mb-6 font-[family-name:var(--font-playfair)] text-5xl font-light leading-[1.1] tracking-tight text-dark-text sm:text-6xl md:text-7xl lg:text-[82px]"
+                className="mb-6 font-[family-name:var(--font-playfair)] text-5xl font-light leading-[1.1] tracking-tight text-[#2D2D2D] sm:text-6xl md:text-7xl lg:text-[72px]"
               >
-                Feel{" "}
+                India&apos;s Trusted{" "}
                 <span className="relative inline-block">
-                  <span className="relative z-10 bg-gradient-to-r from-primary-dark via-primary to-primary-light bg-clip-text text-transparent">
-                    Beautiful.
+                  <span className="relative z-10 bg-gradient-to-r from-[#C48A96] via-[#E8A0B0] to-[#D4858F] bg-clip-text text-transparent">
+                    Wholesale
                   </span>
                   <motion.span
                     initial={{ scaleX: 0 }}
                     animate={{ scaleX: 1 }}
                     transition={{ duration: 0.8, delay: 1.2 }}
-                    className="absolute bottom-1 left-0 z-0 h-3 w-full origin-left bg-primary/10 sm:bottom-2 sm:h-4 md:bottom-3 md:h-5"
+                    className="absolute bottom-1 left-0 z-0 h-3 w-full origin-left bg-[#E8A0B0]/10 sm:bottom-2 sm:h-4 md:bottom-3 md:h-5"
                   />
                 </span>
                 <br />
-                <span className="text-dark-text">Feel </span>
-                <span className="text-primary">Comfortable.</span>
+                <span className="text-[#2D2D2D]">Women&apos;s Innerwear</span>
                 <br />
-                <span className="text-dark-text">Feel </span>
-                <span className="text-primary">Confident.</span>
+                <span className="text-[#2D2D2D]">Brand</span>
               </motion.h1>
 
+              {/* Sub Heading */}
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
-                className="mx-auto mb-10 max-w-md text-base leading-relaxed text-muted sm:text-lg md:mx-0 md:max-w-lg md:text-xl"
+                className="mx-auto mb-8 max-w-md text-base leading-relaxed text-[#8B7B82] sm:text-lg md:mx-0 md:max-w-lg md:text-xl"
               >
-                Premium bras and lingerie designed for modern women.
-                Discover comfort, style, and confidence with every piece.
+                Premium bras, panties and lingerie for retailers, distributors and
+                wholesale partners. Competitive pricing, premium quality and fast
+                nationwide delivery.
               </motion.p>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                className="mb-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-center lg:justify-start"
-              >
-                <Link
-                  href="/shop"
-                  className="btn-primary group inline-flex w-full items-center justify-center gap-3 sm:w-auto"
-                >
-                  Shop Now
-                  <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
-                </Link>
-                <Link
-                  href="/shop"
-                  className="btn-outline group inline-flex w-full items-center justify-center gap-2 sm:w-auto"
-                >
-                  Explore Collection
-                  <ChevronRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
-                </Link>
-              </motion.div>
-
+              {/* Feature Pills */}
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
+                transition={{ duration: 0.5, delay: 0.55 }}
+                className="mb-8 flex flex-wrap items-center justify-center gap-2.5 lg:justify-start"
+              >
+                {["Wholesale Pricing", "Bulk Orders", "Fast Dispatch", "Premium Quality"].map(
+                  (pill, i) => (
+                    <motion.span
+                      key={pill}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3, delay: 0.6 + i * 0.1 }}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-[#E8A0B0]/25 bg-white/50 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-[#C48A96] shadow-sm backdrop-blur-sm font-[family-name:var(--font-poppins)]"
+                    >
+                      <Check size={12} className="text-[#E8A0B0]" />
+                      {pill}
+                    </motion.span>
+                  )
+                )}
+              </motion.div>
+
+              {/* Buttons */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.7 }}
+                className="mb-12 flex flex-col items-center gap-4 sm:flex-row sm:justify-center lg:justify-start"
+              >
+                <Link
+                  href="/l/lingerie"
+                  className="group relative inline-flex w-full items-center justify-center gap-3 overflow-hidden rounded-full bg-[#2D2D2D] px-8 py-4 text-sm font-semibold uppercase tracking-wider text-white shadow-xl transition-all duration-300 hover:bg-[#E8A0B0] hover:shadow-[#E8A0B0]/30 sm:w-auto sm:px-10 sm:py-4.5 font-[family-name:var(--font-poppins)]"
+                >
+                  <ShoppingBag size={18} className="transition-transform duration-300 group-hover:scale-110" />
+                  Browse Wholesale Collection
+                  <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                </Link>
+                <button
+                  onClick={() => setLoginOpen(true)}
+                  className="group inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[#2D2D2D]/15 px-8 py-4 text-sm font-semibold uppercase tracking-wider text-[#2D2D2D] transition-all duration-300 hover:border-[#E8A0B0] hover:bg-[#E8A0B0]/5 hover:text-[#C48A96] sm:w-auto sm:px-10 sm:py-4.5 font-[family-name:var(--font-poppins)]"
+                >
+                  Become a Dealer
+                  <span className="transition-transform duration-300 group-hover:translate-x-1">
+                    →
+                  </span>
+                </button>
+              </motion.div>
+
+              {/* Hero Statistics */}
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.9 }}
                 className="flex flex-wrap items-center justify-center gap-6 lg:justify-start"
               >
-                <div className="flex items-center gap-1.5">
-                  <div className="flex -space-x-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={13} className="fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  <span className="text-xs font-medium text-muted">4.9/5 Rating</span>
-                </div>
-                <div className="h-4 w-px bg-border" />
-                <span className="text-xs font-medium text-muted">500+ Wholesale Partners</span>
-                <div className="h-4 w-px bg-border" />
-                <span className="text-xs font-medium text-muted">Since 2019</span>
+                {heroStats.map((stat, i) => (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 1.0 + i * 0.1 }}
+                    className="flex items-center gap-2.5"
+                  >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E8A0B0]/10">
+                      <stat.icon size={16} className="text-[#C48A96]" />
+                    </div>
+                    <div className="text-left">
+                      <span className="block text-sm font-bold text-[#2D2D2D] font-[family-name:var(--font-poppins)]">
+                        {stat.value}
+                      </span>
+                      <span className="block text-[10px] font-medium uppercase tracking-wider text-[#8B7B82] font-[family-name:var(--font-poppins)]">
+                        {stat.label}
+                      </span>
+                    </div>
+                    {i < heroStats.length - 1 && (
+                      <div className="ml-4 h-8 w-px bg-[#2D2D2D]/10" />
+                    )}
+                  </motion.div>
+                ))}
               </motion.div>
             </div>
 
-            {/* Right: Hero Banner Image */}
+            {/* ─── Right: Premium Image Card ─── */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95, x: 40 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
               transition={{ duration: 0.9, delay: 0.3, ease: "easeOut" }}
               className="relative mx-auto w-full max-w-[500px] lg:max-w-none"
             >
-              <div className="relative overflow-hidden rounded-[2rem] glass-strong p-3 shadow-2xl sm:p-4">
-                <div className="relative aspect-[3/4] overflow-hidden rounded-[1.5rem]">
+              {/* Main Image Container */}
+              <div className="relative overflow-hidden rounded-[2rem] border border-white/40 bg-white/30 p-3 shadow-2xl backdrop-blur-xl sm:p-4">
+                <div className="relative overflow-hidden rounded-[1.5rem] bg-[#FDF2F5]">
                   <Image
-                    src="/products/home page banner.png"
-                    alt="Riya Touch Premium Innerwear Collection"
-                    fill
+                    src="/products/home-page.png"
+                    alt="Riya Touch Premium Wholesale Innerwear Collection"
+                    width={1341}
+                    height={1173}
                     priority
-                    className="object-cover object-top"
+                    className="h-auto w-full object-contain"
                   />
+                  {/* Bottom gradient overlay */}
+                  <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-[#E8A0B0]/15 to-transparent" />
                 </div>
               </div>
 
-              {/* Floating Discount Badge */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 1.0, type: "spring", stiffness: 200 }}
-                className="absolute -left-4 top-8 sm:-left-6 md:-left-8 md:top-12"
-              >
-                <div className="glass-badge relative flex h-20 w-20 flex-col items-center justify-center rounded-2xl shadow-xl glass sm:h-24 sm:w-24 md:h-28 md:w-28">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary-dark sm:text-xs font-[family-name:var(--font-poppins)]">
-                    UP TO
-                  </span>
-                  <span className="font-[family-name:var(--font-playfair)] text-2xl font-bold leading-none text-primary sm:text-3xl md:text-4xl">
-                    30%
-                  </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary-dark sm:text-xs font-[family-name:var(--font-poppins)]">
-                    OFF
-                  </span>
-                  <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-white sm:h-6 sm:w-6 sm:text-[9px]">
-                    HOT
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Floating Free Shipping Badge */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: 1.2, type: "spring", stiffness: 180 }}
-                className="absolute -right-2 top-1/3 hidden md:block"
-              >
-                <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}>
-                  <div className="glass-badge flex items-center gap-2 rounded-full glass px-4 py-2.5 shadow-lg">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600">
-                      <Truck size={13} className="text-white" />
+              {/* ─── Floating Badges ─── */}
+              {floatingBadges.map((badge, i) => (
+                <motion.div
+                  key={badge.label}
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{
+                    duration: 0.4,
+                    delay: badge.delay,
+                    type: "spring",
+                    stiffness: 180,
+                  }}
+                  className={`absolute ${badge.position} hidden md:block`}
+                >
+                  <motion.div
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{
+                      duration: 3 + i * 0.5,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                  >
+                    <div className="flex items-center gap-2 rounded-full border border-white/40 bg-white/60 px-4 py-2.5 shadow-lg backdrop-blur-xl">
+                      <div
+                        className={`flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br ${badge.color}`}
+                      >
+                        <badge.icon size={13} className="text-white" />
+                      </div>
+                      <span className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-wide text-[#2D2D2D] font-[family-name:var(--font-poppins)]">
+                        {badge.label}
+                      </span>
                     </div>
-                    <span className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-wide text-dark-text font-[family-name:var(--font-poppins)]">
-                      Free Shipping
-                    </span>
-                  </div>
+                  </motion.div>
                 </motion.div>
-              </motion.div>
+              ))}
 
-              {/* Floating Premium Quality Badge */}
+              {/* Decorative floating shapes */}
               <motion.div
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: 1.4, type: "spring", stiffness: 180 }}
-                className="absolute -right-4 bottom-1/4 hidden md:block"
-              >
-                <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}>
-                  <div className="glass-badge flex items-center gap-2 rounded-full glass px-4 py-2.5 shadow-lg">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-amber-600">
-                      <Heart size={13} className="text-white" />
-                    </div>
-                    <span className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-wide text-dark-text font-[family-name:var(--font-poppins)]">
-                      Premium Quality
-                    </span>
-                  </div>
-                </motion.div>
-              </motion.div>
+                animate={{ rotate: 360 }}
+                transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+                className="absolute -right-4 bottom-1/4 h-12 w-12 rounded-full border border-[#E8A0B0]/10 md:-right-8 md:h-16 md:w-16"
+              />
+              <motion.div
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -bottom-6 -left-6 h-20 w-20 rounded-full border-2 border-dashed border-[#E8A0B0]/10 md:-bottom-8 md:-left-8 md:h-28 md:w-28"
+              />
             </motion.div>
           </div>
         </div>
