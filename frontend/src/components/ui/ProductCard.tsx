@@ -75,7 +75,10 @@ export default function ProductCard({ product, className }: ProductCardProps) {
         {/* Card Container */}
         <div className="relative overflow-hidden rounded-3xl bg-white shadow-[0_2px_16px_-4px_rgba(183,110,121,0.06)] transition-all duration-500 hover:shadow-[0_12px_48px_-12px_rgba(183,110,121,0.16)]">
           {/* Image Section */}
-          <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-br from-soft-pink/50 via-soft-pink to-soft-pink-dark/30">
+          <div
+            onClick={() => setShowQuickView(true)}
+            className="relative aspect-[4/5] cursor-pointer overflow-hidden bg-gradient-to-br from-soft-pink/50 via-soft-pink to-soft-pink-dark/30"
+          >
             {/* Product Image */}
             <Image
               src={product.image}
