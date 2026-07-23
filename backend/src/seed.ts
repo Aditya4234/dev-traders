@@ -24,21 +24,21 @@ const categoriesData = [
 ];
 
 const productsData = [
-  { name: "Silk Lace Push-Up Bra", brand: BRAND_NAME, price: 2499, discountPrice: 1499, rating: 4.8, reviewCount: 124, image: "/products/bra.svg", category: "Push-Up Bras", badge: "bestseller" },
-  { name: "Seamless T-Shirt Bra", brand: BRAND_NAME, price: 1899, discountPrice: 1299, rating: 4.6, reviewCount: 89, image: "/products/bra.svg", category: "T-Shirt Bras", badge: "new" },
-  { name: "Cotton Comfort Hipster Panty", brand: BRAND_NAME, price: 799, discountPrice: 499, rating: 4.9, reviewCount: 256, image: "/products/panty.svg", category: "Hipsters", badge: "bestseller" },
-  { name: "Wireless Everyday Bra", brand: BRAND_NAME, price: 1699, discountPrice: 999, rating: 4.7, reviewCount: 167, image: "/products/bra.svg", category: "Wireless Bras", badge: "trending" },
-  { name: "Lace Bra & Panty Set", brand: BRAND_NAME, price: 3299, discountPrice: 1999, rating: 4.8, reviewCount: 93, image: "/products/set.svg", category: "Bra & Panty Sets", badge: "sale" },
-  { name: "High-Impact Sports Bra", brand: BRAND_NAME, price: 2199, discountPrice: 1599, rating: 4.5, reviewCount: 78, image: "/products/sports-bra.svg", category: "Sports Bras", badge: "new" },
-  { name: "Non-Padded Cotton Bra", brand: BRAND_NAME, price: 1299, discountPrice: 899, rating: 4.6, reviewCount: 142, image: "/products/bra.svg", category: "Non-Padded Bras" },
-  { name: "Seamless Bikini Panty", brand: BRAND_NAME, price: 699, discountPrice: 449, rating: 4.8, reviewCount: 201, image: "/products/panty.svg", category: "Bikini Panties", badge: "trending" },
-  { name: "Padded Full Coverage Bra", brand: BRAND_NAME, price: 1999, discountPrice: 1199, rating: 4.7, reviewCount: 115, image: "/products/bra.svg", category: "Padded Bras", badge: "bestseller" },
-  { name: "Boyshort Cotton Panty", brand: BRAND_NAME, price: 649, discountPrice: 399, rating: 4.5, reviewCount: 88, image: "/products/panty.svg", category: "Boyshorts" },
-  { name: "Bridal Lace Lingerie Set", brand: BRAND_NAME, price: 4999, discountPrice: 3499, rating: 4.9, reviewCount: 56, image: "/products/bridal.svg", category: "Bridal Lingerie", badge: "new" },
-  { name: "Maternity Nursing Bra", brand: BRAND_NAME, price: 1799, discountPrice: 1299, rating: 4.8, reviewCount: 134, image: "/products/maternity.svg", category: "Maternity Bras", badge: "trending" },
-  { name: "Damini", brand: BRAND_NAME, price: 1999, discountPrice: 1499, rating: 4.7, reviewCount: 0, image: "/products/damini.png", category: "Bra & Panty Sets", badge: "new" },
-  { name: "Monika", brand: BRAND_NAME, price: 1499, discountPrice: 999, rating: 4.7, reviewCount: 0, image: "/products/monika.png", category: "Bra & Panty Sets", badge: "new" },
-  { name: "Payal", brand: BRAND_NAME, price: 999, discountPrice: 699, rating: 4.7, reviewCount: 0, image: "/products/payal.png", category: "Bra & Panty Sets", badge: "new" },
+  { name: "Silk Lace Push-Up Bra", brand: "Riya Touch", price: 2499, discountPrice: 1499, rating: 4.8, reviewCount: 124, image: "/products/bra.svg", category: "Push-Up Bras", badge: "bestseller", sizes: ["32A", "32B", "32C", "34A", "34B", "34C", "36B", "36C"] },
+  { name: "Seamless T-Shirt Bra", brand: "Lace & Love", price: 1899, discountPrice: 1299, rating: 4.6, reviewCount: 89, image: "/products/bra.svg", category: "T-Shirt Bras", badge: "new", sizes: ["32B", "32C", "34A", "34B", "34C", "36B", "36C", "38B"] },
+  { name: "Cotton Comfort Hipster Panty", brand: "Bloom Intimates", price: 799, discountPrice: 499, rating: 4.9, reviewCount: 256, image: "/products/panty.svg", category: "Hipsters", badge: "bestseller", sizes: ["XS", "S", "M", "L", "XL", "XXL"] },
+  { name: "Wireless Everyday Bra", brand: "Riya Touch", price: 1699, discountPrice: 999, rating: 4.7, reviewCount: 167, image: "/products/bra.svg", category: "Wireless Bras", badge: "trending", sizes: ["32A", "32B", "34A", "34B", "34C", "36B", "36C", "38B", "38C"] },
+  { name: "Lace Bra & Panty Set", brand: "Lace & Love", price: 3299, discountPrice: 1999, rating: 4.8, reviewCount: 93, image: "/products/set.svg", category: "Bra & Panty Sets", badge: "sale", sizes: ["S", "M", "L", "XL"] },
+  { name: "High-Impact Sports Bra", brand: "Riya Touch", price: 2199, discountPrice: 1599, rating: 4.5, reviewCount: 78, image: "/products/sports-bra.svg", category: "Sports Bras", badge: "new", sizes: ["32B", "32C", "34B", "34C", "36B", "36C", "38B"] },
+  { name: "Non-Padded Cotton Bra", brand: "Bloom Intimates", price: 1299, discountPrice: 899, rating: 4.6, reviewCount: 142, image: "/products/bra.svg", category: "Non-Padded Bras", sizes: ["32A", "34A", "34B", "36A", "36B", "38B", "40B"] },
+  { name: "Seamless Bikini Panty", brand: "Velvet Dreams", price: 699, discountPrice: 449, rating: 4.8, reviewCount: 201, image: "/products/panty.svg", category: "Bikini Panties", badge: "trending", sizes: ["XS", "S", "M", "L", "XL"] },
+  { name: "Padded Full Coverage Bra", brand: "Riya Touch", price: 1999, discountPrice: 1199, rating: 4.7, reviewCount: 115, image: "/products/bra.svg", category: "Padded Bras", badge: "bestseller", sizes: ["32B", "32C", "34A", "34B", "34C", "36B", "36C", "38B", "38C", "40B"] },
+  { name: "Boyshort Cotton Panty", brand: "Bloom Intimates", price: 649, discountPrice: 399, rating: 4.5, reviewCount: 88, image: "/products/panty.svg", category: "Boyshorts", sizes: ["S", "M", "L", "XL", "XXL"] },
+  { name: "Bridal Lace Lingerie Set", brand: "Lace & Love", price: 4999, discountPrice: 3499, rating: 4.9, reviewCount: 56, image: "/products/bridal.svg", category: "Bridal Lingerie", badge: "new", sizes: ["S", "M", "L", "XL"] },
+  { name: "Maternity Nursing Bra", brand: "Riya Touch", price: 1799, discountPrice: 1299, rating: 4.8, reviewCount: 134, image: "/products/maternity.svg", category: "Maternity Bras", badge: "trending", sizes: ["34B", "34C", "36B", "36C", "38B", "38C", "40B", "40C"] },
+  { name: "Damini", brand: "Velvet Dreams", price: 1999, discountPrice: 1499, rating: 4.7, reviewCount: 0, image: "/products/damini.png", category: "Bra & Panty Sets", badge: "new", sizes: ["S", "M", "L", "XL"] },
+  { name: "Monika", brand: "Lace & Love", price: 1499, discountPrice: 999, rating: 4.7, reviewCount: 0, image: "/products/monika.png", category: "Bra & Panty Sets", badge: "new", sizes: ["XS", "S", "M", "L", "XL"] },
+  { name: "Payal", brand: "Bloom Intimates", price: 999, discountPrice: 699, rating: 4.7, reviewCount: 0, image: "/products/payal.png", category: "Bra & Panty Sets", badge: "new", sizes: ["S", "M", "L", "XL"] },
 ];
 
 const heroSlidesData = [

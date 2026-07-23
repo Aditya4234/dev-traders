@@ -53,6 +53,7 @@ export default function LingerieCatalog({ categoryFilter, initialBadge, initialS
               image: p.image,
               category: p.category,
               badge: p.badge,
+              sizes: p.sizes,
             }))
           );
         }

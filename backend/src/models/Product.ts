@@ -10,6 +10,7 @@ export interface IProduct extends Document {
   image: string;
   category: string;
   badge?: "new" | "sale" | "bestseller" | "trending";
+  sizes?: string[];
   isActive: boolean;
 }
 
@@ -27,6 +28,7 @@ const productSchema = new Schema<IProduct>(
       type: String,
       enum: ["new", "sale", "bestseller", "trending"],
     },
+    sizes: [{ type: String }],
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

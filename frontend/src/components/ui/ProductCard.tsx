@@ -52,6 +52,7 @@ export default function ProductCard({ product, className }: ProductCardProps) {
   const [showQuickView, setShowQuickView] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
   const [quickViewQty, setQuickViewQty] = useState(1);
+  const [selectedSize, setSelectedSize] = useState<string>(product.sizes?.[0] || "");
   const discount = getDiscountPercent(product.price, product.discountPrice);
   const badge = product.badge ? badgeConfig[product.badge] : null;
 
@@ -380,7 +381,7 @@ export default function ProductCard({ product, className }: ProductCardProps) {
                 </div>
 
                 {/* Price */}
-                <div className="mb-6 flex items-baseline gap-3">
+                <div className="mb-4 flex items-baseline gap-3">
                   <span className="font-serif text-3xl font-semibold text-charcoal">
                     {formatPrice(product.discountPrice)}
                   </span>
@@ -390,6 +391,31 @@ export default function ProductCard({ product, className }: ProductCardProps) {
                     </span>
                   )}
                 </div>
+
+                {/* Size Selector */}
+                {product.sizes && product.sizes.length > 0 && (
+                  <div className="mb-6">
+                    <p className="mb-2 text-xs font-bold uppercase tracking-widest text-charcoal">
+                      Select Size
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {product.sizes.map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => setSelectedSize(size)}
+                          className={cn(
+                            "min-w-[44px] rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-200",
+                            selectedSize === size
+                              ? "border-rose-gold bg-rose-gold text-white shadow-md shadow-rose-gold/25"
+                              : "border-soft-pink-dark bg-white text-charcoal hover:border-rose-gold hover:text-rose-gold"
+                          )}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Quantity & Add to Cart */}
                 <div className="mt-auto flex flex-col gap-3 sm:flex-row">

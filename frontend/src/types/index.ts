@@ -21,6 +21,7 @@ export interface Product {
   image: string;
   category: string;
   badge?: "new" | "sale" | "bestseller" | "trending";
+  sizes?: string[];
 }
 
 export interface Category {
