@@ -119,6 +119,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         .toUpperCase()
     : 'RT'
 
+  const closeMobile = useCallback(() => setMobileOpen(false), [])
+
+  useEffect(() => {
+    closeMobile()
+  }, [pathname, closeMobile])
+
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [mobileOpen])
+
+  useEffect(() => {
+    if (justLoggedIn) {
+      setRatingOpen(true)
+      setJustLoggedIn(false)
+    }
+  }, [justLoggedIn, setJustLoggedIn])
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
@@ -156,30 +180,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
     )
   }
-
-  const closeMobile = useCallback(() => setMobileOpen(false), [])
-
-  useEffect(() => {
-    closeMobile()
-  }, [pathname, closeMobile])
-
-  useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [mobileOpen])
-
-  useEffect(() => {
-    if (justLoggedIn) {
-      setRatingOpen(true)
-      setJustLoggedIn(false)
-    }
-  }, [justLoggedIn, setJustLoggedIn])
 
   const handleRatingSubmit = () => {
     setRatingSubmitted(true)

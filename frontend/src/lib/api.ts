@@ -19,12 +19,21 @@ async function fetchAPI<T>(
   }
 
   const res = await fetch(url, { ...options, headers });
-  const data = await res.json();
 
   if (!res.ok) {
-    throw new Error(data.message || "Something went wrong");
+    const text = await res.text();
+    try {
+      const data = JSON.parse(text);
+      throw new Error(data.message || `Request failed (${res.status})`);
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        throw new Error(`Server error (${res.status}): please try again later`);
+      }
+      throw e;
+    }
   }
 
+  const data = await res.json();
   return data;
 }
 
@@ -141,4 +150,49 @@ export async function subscribeNewsletter(email: string) {
     method: "POST",
     body: JSON.stringify({ email }),
   });
+}
+
+// ─── Invoices ───
+export async function getInvoices(params?: { status?: string; page?: number; limit?: number }) {
+  const query = new URLSearchParams();
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== "") query.set(key, String(value));
+    });
+  }
+  const qs = query.toString();
+  return fetchAPI<{ success: boolean; invoices: any[]; pagination: any }>(
+    `/billing/invoices${qs ? `?${qs}` : ""}`
+  );
+}
+
+export async function getInvoice(id: string) {
+  return fetchAPI<{ success: boolean; invoice: any }>(`/billing/invoices/${id}`);
+}
+
+// ─── Dashboard Stats ───
+export async function getDashboardStats() {
+  return fetchAPI<{
+    success: boolean;
+    stats: {
+      totalRevenue: number;
+      totalOrders: number;
+      avgOrderValue: number;
+      totalProducts: number;
+      totalCustomers: number;
+      repeatRate: number;
+      thisMonthRevenue: number;
+      thisMonthOrders: number;
+      thisMonthAvg: number;
+      revenueChange: number;
+      orderChange: number;
+      pendingOrders: number;
+      deliveredOrders: number;
+      cancelledOrders: number;
+      recentOrders: any[];
+      topProducts: any[];
+      monthlyChart: { month: string; sales: number; orders: number }[];
+      categorySales: { _id: string; total: number }[];
+    };
+  }>("/admin/stats");
 }

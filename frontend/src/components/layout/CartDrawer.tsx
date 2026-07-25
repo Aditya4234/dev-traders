@@ -44,6 +44,7 @@ export default function CartDrawer() {
     updateQuantity,
     removeFromCart,
     clearCart,
+    markOrderPlaced,
   } = useShop();
 
   const [step, setStep] = useState<Step>("cart");
@@ -176,6 +177,7 @@ Riya Touch se order karne ke liye shukriya! 💕
     window.open(waUrl, "_blank");
 
     setStep("success");
+    markOrderPlaced();
     setTimeout(() => {
       clearCart();
     }, 1000);

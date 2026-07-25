@@ -19,6 +19,8 @@ interface ShopContextType {
   cartOpen: boolean;
   wishlistOpen: boolean;
   loginOpen: boolean;
+  orderPlacedAt: number;
+  markOrderPlaced: () => void;
   setCartOpen: (open: boolean) => void;
   setWishlistOpen: (open: boolean) => void;
   setLoginOpen: (open: boolean) => void;
@@ -50,6 +52,11 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   const [cartOpen, setCartOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [orderPlacedAt, setOrderPlacedAt] = useState(0);
+
+  const markOrderPlaced = useCallback(() => {
+    setOrderPlacedAt(Date.now());
+  }, []);
 
   const setSessionCookie = useCallback((token: string) => {
     document.cookie = `riya_session=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
@@ -252,6 +259,8 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         cartOpen,
         wishlistOpen,
         loginOpen,
+        orderPlacedAt,
+        markOrderPlaced,
         setCartOpen,
         setWishlistOpen,
         setLoginOpen,
