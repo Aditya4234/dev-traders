@@ -17,9 +17,9 @@ interface DispatchOrder {
   total: number;
   createdAt: string;
   items: DispatchItem[];
-  customer: {
+  customer?: {
     name: string;
-    email: string;
+    email?: string;
   };
 }
 

@@ -563,3 +563,11 @@ export async function getDeliverySlots() {
 export async function getCustomerDetails(id: string) {
   return fetchAPI<{ success: boolean; user: User; orders: OrderData[]; totalSpent: number }>(`/admin/users/${id}`);
 }
+
+// ─── Dispatch / Order Status ───
+export async function updateOrderStatus(orderId: string, status: string) {
+  return fetchAPI<{ success: boolean; order: OrderData }>(`/orders/${orderId}/status`, {
+    method: "PUT",
+    body: JSON.stringify({ status }),
+  });
+}
