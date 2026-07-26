@@ -206,6 +206,44 @@ export async function getInvoice(id: string) {
   return fetchAPI<{ success: boolean; invoice: any }>(`/billing/invoices/${id}`);
 }
 
+// ─── Payments ───
+export async function createPaymentOrder(data: {
+  amount: number;
+  orderId?: string;
+  description?: string;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+}) {
+  return fetchAPI<{
+    success: boolean;
+    razorpayOrderId: string;
+    amount: number;
+    currency: string;
+    paymentId: string;
+    keyId: string;
+  }>("/payments/create-order", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function verifyPayment(data: {
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
+  paymentId: string;
+}) {
+  return fetchAPI<{
+    success: boolean;
+    status: string;
+    payment: any;
+  }>("/payments/verify", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
 // ─── Dashboard Stats ───
 export async function getDashboardStats() {
   return fetchAPI<{

@@ -16,14 +16,16 @@ import {
   MessageCircle,
   CheckCircle2,
   Package,
+  CreditCard,
+  Shield,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { createOrder } from "@/lib/api";
+import { createOrder, createPaymentOrder, verifyPayment } from "@/lib/api";
 
-type Step = "cart" | "order-form" | "success";
+type Step = "cart" | "order-form" | "payment" | "success";
 
 interface OrderForm {
   name: string;
@@ -36,6 +38,26 @@ interface OrderForm {
 
 const WHATSAPP_NUMBER = "919205778531";
 
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+function loadRazorpayScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window !== "undefined" && window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
 export default function CartDrawer() {
   const {
     cart,
@@ -45,14 +67,15 @@ export default function CartDrawer() {
     removeFromCart,
     clearCart,
     markOrderPlaced,
+    user,
   } = useShop();
 
   const [step, setStep] = useState<Step>("cart");
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [orderForm, setOrderForm] = useState<OrderForm>({
-    name: "",
-    phone: "",
+    name: user?.name || "",
+    phone: user?.phone || "",
     address: "",
     city: "",
     pincode: "",
@@ -69,6 +92,16 @@ export default function CartDrawer() {
       document.body.style.overflow = "";
     };
   }, [cartOpen]);
+
+  useEffect(() => {
+    if (user) {
+      setOrderForm((prev) => ({
+        ...prev,
+        name: prev.name || user.name || "",
+        phone: prev.phone || user.phone || "",
+      }));
+    }
+  }, [user]);
 
   const subtotal = cart.reduce(
     (sum, item) => sum + item.product.discountPrice * item.quantity,
@@ -93,6 +126,26 @@ export default function CartDrawer() {
   ) => {
     setOrderForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setFormError("");
+  };
+
+  const validateForm = (): boolean => {
+    if (!orderForm.name.trim()) {
+      setFormError("Apna naam enter karein.");
+      return false;
+    }
+    if (!/^[6-9]\d{9}$/.test(orderForm.phone.trim())) {
+      setFormError("Valid 10-digit Indian phone number enter karein.");
+      return false;
+    }
+    if (!orderForm.address.trim() || !orderForm.city.trim() || !orderForm.pincode.trim()) {
+      setFormError("Complete delivery address fill karein.");
+      return false;
+    }
+    if (!/^\d{6}$/.test(orderForm.pincode.trim())) {
+      setFormError("Valid 6-digit pincode enter karein.");
+      return false;
+    }
+    return true;
   };
 
   const buildWhatsAppMessage = () => {
@@ -126,29 +179,11 @@ Riya Touch se order karne ke liye shukriya! 💕
     return encodeURIComponent(message);
   };
 
-  const handlePlaceOrder = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!orderForm.name.trim()) {
-      setFormError("Apna naam enter karein.");
-      return;
-    }
-    if (!/^[6-9]\d{9}$/.test(orderForm.phone.trim())) {
-      setFormError("Valid 10-digit Indian phone number enter karein.");
-      return;
-    }
-    if (!orderForm.address.trim() || !orderForm.city.trim() || !orderForm.pincode.trim()) {
-      setFormError("Complete delivery address fill karein.");
-      return;
-    }
-    if (!/^\d{6}$/.test(orderForm.pincode.trim())) {
-      setFormError("Valid 6-digit pincode enter karein.");
-      return;
-    }
-
+  const handlePlaceWhatsAppOrder = async () => {
+    if (!validateForm()) return;
     setSubmitting(true);
 
     try {
-      // Save order to backend
       await createOrder({
         items: cart.map((item) => ({
           product: item.product.id,
@@ -169,19 +204,112 @@ Riya Touch se order karne ke liye shukriya! 💕
         whatsappSent: true,
       });
     } catch {
-      // Continue even if backend save fails - WhatsApp order still goes through
+      // Continue even if backend fails
     }
 
-    // Open WhatsApp with pre-filled message
     const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${buildWhatsAppMessage()}`;
     window.open(waUrl, "_blank");
 
     setStep("success");
     markOrderPlaced();
-    setTimeout(() => {
-      clearCart();
-    }, 1000);
+    setTimeout(() => clearCart(), 1000);
     setSubmitting(false);
+  };
+
+  const handlePayOnline = async () => {
+    if (!validateForm()) return;
+    setSubmitting(true);
+
+    try {
+      const loaded = await loadRazorpayScript();
+      if (!loaded) {
+        setFormError("Payment gateway load nahi ho paya. Please try again.");
+        setSubmitting(false);
+        return;
+      }
+
+      const orderData = await createPaymentOrder({
+        amount: subtotal,
+        description: `Order - ${cart.length} item(s)`,
+        customerName: orderForm.name,
+        customerPhone: orderForm.phone,
+      });
+
+      if (!orderData?.success || !orderData.razorpayOrderId) {
+        setFormError("Payment order create nahi ho paya. Please try again.");
+        setSubmitting(false);
+        return;
+      }
+
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency || "INR",
+        name: "Riya Touch",
+        description: "Wholesale Order Payment",
+        order_id: orderData.razorpayOrderId,
+        prefill: {
+          name: orderForm.name,
+          contact: orderForm.phone,
+        },
+        theme: {
+          color: "#E91E63",
+        },
+        handler: async (response: any) => {
+          try {
+            await verifyPayment({
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+              paymentId: orderData.paymentId,
+            });
+          } catch {
+            // verification failed but payment was made
+          }
+
+          try {
+            await createOrder({
+              items: cart.map((item) => ({
+                product: item.product.id,
+                name: item.product.name,
+                price: item.product.discountPrice,
+                quantity: item.quantity,
+                image: item.product.image,
+              })),
+              customer: {
+                name: orderForm.name,
+                phone: orderForm.phone,
+                address: orderForm.address,
+                city: orderForm.city,
+                pincode: orderForm.pincode,
+                note: orderForm.note || undefined,
+              },
+              paymentMethod: "online",
+              whatsappSent: false,
+            });
+          } catch {
+            // order save failed but payment done
+          }
+
+          setStep("success");
+          markOrderPlaced();
+          setTimeout(() => clearCart(), 1000);
+          setSubmitting(false);
+        },
+        modal: {
+          ondismiss: () => {
+            setFormError("Payment cancel ho gaya. Phir se try karein.");
+            setSubmitting(false);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err: any) {
+      setFormError(err.message || "Payment failed. Please try again.");
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -208,11 +336,11 @@ Riya Touch se order karne ke liye shukriya! 💕
             {/* Header */}
             <div className="flex items-center justify-between border-b border-soft-pink-dark px-6 py-4 shrink-0">
               <div className="flex items-center gap-2">
-                {step === "order-form" && (
+                {(step === "order-form" || step === "payment") && (
                   <button
-                    onClick={() => setStep("cart")}
+                    onClick={() => setStep(step === "payment" ? "order-form" : "cart")}
                     className="mr-1 rounded-full p-1 text-muted hover:bg-soft-pink hover:text-charcoal transition-colors"
-                    aria-label="Back to cart"
+                    aria-label="Back"
                   >
                     <ArrowLeft size={18} />
                   </button>
@@ -223,6 +351,8 @@ Riya Touch se order karne ke liye shukriya! 💕
                     ? "Your Cart"
                     : step === "order-form"
                     ? "Delivery Details"
+                    : step === "payment"
+                    ? "Choose Payment"
                     : "Order Placed!"}
                 </h2>
                 {step === "cart" && cart.length > 0 && (
@@ -241,15 +371,16 @@ Riya Touch se order karne ke liye shukriya! 💕
             </div>
 
             {/* Progress Steps */}
-            {(step === "cart" || step === "order-form") && cart.length > 0 && (
+            {(step === "cart" || step === "order-form" || step === "payment") && cart.length > 0 && (
               <div className="flex items-center gap-0 border-b border-soft-pink-dark bg-soft-pink/20 px-6 py-3 shrink-0">
-                {["Cart", "Details", "Confirm"].map((label, i) => {
+                {["Cart", "Details", "Pay"].map((label, i) => {
                   const isActive =
                     (label === "Cart" && step === "cart") ||
-                    (label === "Details" && step === "order-form");
+                    (label === "Details" && step === "order-form") ||
+                    (label === "Pay" && step === "payment");
                   const isDone =
-                    (label === "Cart" && (step as Step) !== "cart") ||
-                    (label === "Details" && (step as Step) === "success");
+                    (label === "Cart" && step !== "cart") ||
+                    (label === "Details" && step === "payment");
                   return (
                     <div key={label} className="flex items-center">
                       <div className="flex flex-col items-center">
@@ -302,9 +433,8 @@ Riya Touch se order karne ke liye shukriya! 💕
                     Order Placed Successfully!
                   </h3>
                   <p className="text-sm text-muted max-w-xs leading-relaxed mb-2">
-                    Aapka order successfully place ho gaya hai! Humare team ko
-                    WhatsApp notification mil gaya hai. Hum jald hi aapse
-                    contact karenge delivery details ke liye.
+                    Aapka order successfully place ho gaya hai! Hum jald hi
+                    aapse contact karenge delivery details ke liye.
                   </p>
                   <div className="mt-4 rounded-2xl bg-emerald-50 border border-emerald-200 px-6 py-4 text-left w-full max-w-xs">
                     <p className="text-xs font-semibold text-emerald-800 mb-1 flex items-center gap-1.5">
@@ -338,6 +468,96 @@ Riya Touch se order karne ke liye shukriya! 💕
                 </motion.div>
               )}
 
+              {/* STEP: PAYMENT METHOD SELECTION */}
+              {step === "payment" && (
+                <motion.div
+                  key="payment"
+                  initial={{ opacity: 0, x: 30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -30 }}
+                  className="flex flex-1 flex-col overflow-hidden"
+                >
+                  <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+                    <p className="text-xs text-muted leading-relaxed">
+                      Payment method choose karein:
+                    </p>
+
+                    {formError && (
+                      <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-xs text-red-600">
+                        {formError}
+                      </div>
+                    )}
+
+                    {/* Order Summary */}
+                    <div className="rounded-xl bg-soft-pink/30 border border-soft-pink-dark p-4 space-y-2">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-charcoal/70 mb-2">
+                        Order Summary
+                      </p>
+                      {cart.map((item) => (
+                        <div
+                          key={item.product.id}
+                          className="flex justify-between text-xs text-charcoal"
+                        >
+                          <span className="truncate max-w-[200px]">
+                            {item.product.name}{" "}
+                            <span className="text-muted">×{item.quantity}</span>
+                          </span>
+                          <span className="font-semibold ml-2">
+                            {formatPrice(item.product.discountPrice * item.quantity)}
+                          </span>
+                        </div>
+                      ))}
+                      <div className="border-t border-soft-pink-dark pt-2 flex justify-between text-sm font-semibold">
+                        <span>Total</span>
+                        <span className="text-rose-gold">{formatPrice(subtotal)}</span>
+                      </div>
+                    </div>
+
+                    {/* Pay Online */}
+                    <button
+                      onClick={handlePayOnline}
+                      disabled={submitting}
+                      className="w-full flex items-center gap-3 rounded-xl border-2 border-[var(--primary)] bg-[var(--primary)]/5 p-4 text-left transition-all hover:bg-[var(--primary)]/10 hover:shadow-md disabled:opacity-50"
+                    >
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--primary)]/10 text-[var(--primary)]">
+                        <CreditCard size={22} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-[var(--dark-text)]">
+                          Pay Online
+                        </p>
+                        <p className="text-[11px] text-[var(--muted)]">
+                          UPI, Cards, NetBanking via Razorpay
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] text-[var(--muted)]">
+                        <Shield size={12} />
+                        <span>Secure</span>
+                      </div>
+                    </button>
+
+                    {/* Pay via WhatsApp */}
+                    <button
+                      onClick={handlePlaceWhatsAppOrder}
+                      disabled={submitting}
+                      className="w-full flex items-center gap-3 rounded-xl border-2 border-[#25D366]/30 bg-[#25D366]/5 p-4 text-left transition-all hover:bg-[#25D366]/10 hover:shadow-md disabled:opacity-50"
+                    >
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#25D366]/10 text-[#25D366]">
+                        <MessageCircle size={22} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-[var(--dark-text)]">
+                          Order via WhatsApp
+                        </p>
+                        <p className="text-[11px] text-[var(--muted)]">
+                          Cash on Delivery / Bank Transfer
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
               {/* STEP: ORDER FORM */}
               {step === "order-form" && (
                 <motion.form
@@ -345,18 +565,20 @@ Riya Touch se order karne ke liye shukriya! 💕
                   initial={{ opacity: 0, x: 30 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -30 }}
-                  onSubmit={handlePlaceOrder}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (validateForm()) setStep("payment");
+                  }}
                   className="flex flex-1 flex-col overflow-hidden"
                 >
                   <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
                     <p className="text-xs text-muted leading-relaxed">
-                      Order WhatsApp par send hoga. Apni delivery details fill
-                      karein:
+                      Apni delivery details fill karein:
                     </p>
 
                     {formError && (
                       <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-xs text-red-600">
-                        ⚠️ {formError}
+                        {formError}
                       </div>
                     )}
 
@@ -507,15 +729,11 @@ Riya Touch se order karne ke liye shukriya! 💕
                   <div className="border-t border-soft-pink-dark px-6 py-4 shrink-0 bg-white">
                     <button
                       type="submit"
-                      disabled={submitting}
-                      className="w-full flex items-center justify-center gap-2.5 rounded-full bg-[#25D366] py-4 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#1ebe5c] transition-colors shadow-lg hover:shadow-green-500/25 disabled:opacity-50"
+                      className="w-full flex items-center justify-center gap-2 rounded-full bg-charcoal py-4 text-xs font-bold uppercase tracking-wider text-white hover:bg-rose-gold transition-colors shadow-lg"
                     >
-                      <MessageCircle size={16} />
-                      {submitting ? "Placing Order..." : "Place Order via WhatsApp"}
+                      Continue to Payment
+                      <ArrowRight size={14} />
                     </button>
-                    <p className="mt-2 text-center text-[10px] text-muted">
-                      Order WhatsApp par send hoga — koi payment abhi nahi
-                    </p>
                   </div>
                 </motion.form>
               )}
