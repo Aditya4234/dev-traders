@@ -77,6 +77,7 @@ export interface InvoiceItemInput {
 export interface CreateInvoiceInput {
   orderId?: string;
   dealerId?: string;
+  userId?: string;
   customer: {
     name: string;
     phone: string;
@@ -138,6 +139,7 @@ export async function createInvoice(input: CreateInvoiceInput) {
     invoiceNumber,
     orderId: input.orderId,
     dealer: input.dealerId,
+    user: input.userId,
     customer: input.customer,
     items,
     subtotal: totalTaxableAmount + totalDiscount,

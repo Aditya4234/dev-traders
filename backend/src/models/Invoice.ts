@@ -19,6 +19,7 @@ export interface IInvoice extends Document {
   invoiceNumber: string;
   orderId?: mongoose.Types.ObjectId;
   dealer?: mongoose.Types.ObjectId;
+  user?: mongoose.Types.ObjectId;
   customer: {
     name: string;
     phone: string;
@@ -69,6 +70,7 @@ const invoiceSchema = new Schema<IInvoice>(
     invoiceNumber: { type: String, required: true, unique: true },
     orderId: { type: Schema.Types.ObjectId, ref: "Order" },
     dealer: { type: Schema.Types.ObjectId, ref: "Dealer" },
+    user: { type: Schema.Types.ObjectId, ref: "User" },
     customer: {
       name: { type: String, required: true },
       phone: { type: String, required: true },
@@ -112,6 +114,7 @@ const invoiceSchema = new Schema<IInvoice>(
 invoiceSchema.index({ invoiceNumber: 1 });
 invoiceSchema.index({ orderId: 1 });
 invoiceSchema.index({ dealer: 1 });
+invoiceSchema.index({ user: 1 });
 invoiceSchema.index({ status: 1 });
 invoiceSchema.index({ createdAt: -1 });
 

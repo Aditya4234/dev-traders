@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import Product from "../models/Product";
 import Order from "../models/Order";
 import Invoice from "../models/Invoice";
+import User from "../models/User";
 import { protect, adminOnly, AuthRequest } from "../middleware/auth";
 
 const router = Router();
@@ -202,6 +203,38 @@ router.get("/stats", protect, adminOnly, async (req: AuthRequest, res: Response)
         categorySales,
       },
     });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// GET /api/admin/users/search - Search users for invoicing
+router.get("/users/search", protect, async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user || (req.user.role !== "admin" && req.user.role !== "dealer")) {
+      res.status(403).json({ success: false, message: "Wholeseller access only" });
+      return;
+    }
+
+    const { q } = req.query as { q?: string };
+    if (!q || q.trim().length < 2) {
+      res.json({ success: true, users: [] });
+      return;
+    }
+
+    const regex = new RegExp(q.trim(), "i");
+    const users = await User.find({
+      $or: [
+        { name: regex },
+        { email: regex },
+        { phone: regex },
+      ],
+    })
+      .select("name email phone role companyName dealerId")
+      .limit(20)
+      .lean();
+
+    res.json({ success: true, users });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

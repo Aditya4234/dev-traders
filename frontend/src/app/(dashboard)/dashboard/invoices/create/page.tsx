@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Plus, Trash2, ArrowLeft, Loader2, FileText, CheckCircle2 } from 'lucide-react'
+import { Plus, Trash2, ArrowLeft, Loader2, FileText, CheckCircle2, Search, UserCircle, X, ShieldAlert } from 'lucide-react'
 import * as api from '@/lib/api'
 import Link from 'next/link'
+import { useShop } from '@/context/ShopContext'
 
 const INDIAN_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -30,6 +31,16 @@ interface LineItem {
   gstRate: number
 }
 
+interface UserResult {
+  _id: string
+  name: string
+  email: string
+  phone?: string
+  role: string
+  companyName?: string
+  dealerId?: string
+}
+
 const emptyItem = (): LineItem => ({
   name: '',
   hsnCode: '',
@@ -41,8 +52,19 @@ const emptyItem = (): LineItem => ({
 
 export default function CreateInvoicePage() {
   const router = useRouter()
+  const { user } = useShop()
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
+
+  const isWholeseller = user?.role === 'admin' || user?.role === 'dealer'
+
+  const [selectedUser, setSelectedUser] = useState<UserResult | null>(null)
+  const [userSearchQuery, setUserSearchQuery] = useState('')
+  const [userSearchResults, setUserSearchResults] = useState<UserResult[]>([])
+  const [userSearching, setUserSearching] = useState(false)
+  const [showUserDropdown, setShowUserDropdown] = useState(false)
+  const userSearchRef = useRef<HTMLDivElement>(null)
+  const userSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [customer, setCustomer] = useState({
     name: '',
@@ -59,6 +81,65 @@ export default function CreateInvoicePage() {
   const [discount, setDiscount] = useState(0)
   const [notes, setNotes] = useState('')
   const [placeOfSupply, setPlaceOfSupply] = useState('')
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userSearchRef.current && !userSearchRef.current.contains(e.target as Node)) {
+        setShowUserDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const searchUsers = useCallback(async (q: string) => {
+    if (!isWholeseller) return
+    if (q.trim().length < 2) {
+      setUserSearchResults([])
+      return
+    }
+    setUserSearching(true)
+    try {
+      const data = await api.searchUsers(q)
+      if (data?.success) {
+        setUserSearchResults(data.users)
+      }
+    } catch {
+      // ignore
+    } finally {
+      setUserSearching(false)
+    }
+  }, [isWholeseller])
+
+  const handleUserSearchChange = (value: string) => {
+    setUserSearchQuery(value)
+    setShowUserDropdown(true)
+    if (userSearchTimer.current) clearTimeout(userSearchTimer.current)
+    userSearchTimer.current = setTimeout(() => searchUsers(value), 300)
+  }
+
+  const selectUser = (u: UserResult) => {
+    setSelectedUser(u)
+    setCustomer(prev => ({
+      ...prev,
+      name: u.name,
+      phone: u.phone || '',
+      city: prev.city,
+      state: prev.state,
+      pincode: prev.pincode,
+      address: prev.address,
+      gstNumber: prev.gstNumber,
+    }))
+    setUserSearchQuery(u.name)
+    setShowUserDropdown(false)
+    setUserSearchResults([])
+  }
+
+  const clearSelectedUser = () => {
+    setSelectedUser(null)
+    setUserSearchQuery('')
+    setCustomer({ name: '', phone: '', address: '', city: '', state: '', pincode: '', gstNumber: '' })
+  }
 
   const updateCustomer = (field: string, value: string) => {
     setCustomer(prev => ({ ...prev, [field]: value }))
@@ -116,6 +197,7 @@ export default function CreateInvoicePage() {
         discount: discount || undefined,
         notes: notes || undefined,
         placeOfSupply,
+        userId: selectedUser?._id || undefined,
       })
       setSuccess(true)
       setTimeout(() => router.push('/dashboard/invoices'), 1500)
@@ -124,6 +206,21 @@ export default function CreateInvoicePage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (!isWholeseller) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
+          <ShieldAlert size={28} className="text-red-400" />
+        </div>
+        <p className="mt-4 text-lg font-semibold text-[var(--dark-text)]" style={{ fontFamily: 'var(--font-playfair)' }}>Access Restricted</p>
+        <p className="mt-1 text-sm text-[var(--muted)]">Only wholesalers can create invoices.</p>
+        <Link href="/dashboard/invoices" className="mt-6 rounded-xl bg-[var(--primary)] px-6 py-2.5 text-sm font-semibold text-white hover:opacity-90" style={{ fontFamily: 'var(--font-poppins)' }}>
+          Back to Invoices
+        </Link>
+      </div>
+    )
   }
 
   if (success) {
@@ -146,8 +243,67 @@ export default function CreateInvoicePage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-[var(--dark-text)]" style={{ fontFamily: 'var(--font-playfair)' }}>Create Invoice</h1>
-          <p className="text-sm text-[var(--muted)]">Fill in the details to generate a new tax invoice</p>
+          <p className="text-sm text-[var(--muted)]">Wholeseller - fill details to generate a new tax invoice</p>
         </div>
+      </div>
+
+      {/* Send To (User Search) */}
+      <div className="rounded-2xl border bg-white/80 backdrop-blur-sm p-6" style={{ borderColor: 'var(--border)' }}>
+        <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-[var(--primary)]" style={{ fontFamily: 'var(--font-poppins)' }}>Send Invoice To</h2>
+        {selectedUser ? (
+          <div className="flex items-center gap-3 rounded-xl border border-[var(--primary)]/20 bg-[var(--primary)]/5 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary)]/10 text-[var(--primary)]">
+              <UserCircle size={20} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-[var(--dark-text)] truncate">{selectedUser.name}</p>
+              <p className="text-xs text-[var(--muted)] truncate">{selectedUser.email}{selectedUser.phone ? ` · ${selectedUser.phone}` : ''}</p>
+              <span className="inline-block mt-1 rounded-full bg-[var(--accent)] px-2 py-0.5 text-[10px] font-semibold text-[var(--muted)] capitalize">{selectedUser.role}</span>
+            </div>
+            <button onClick={clearSelectedUser} className="rounded-lg p-1.5 text-[var(--muted)] hover:bg-red-50 hover:text-red-500 transition-colors" title="Remove">
+              <X size={16} />
+            </button>
+          </div>
+        ) : (
+          <div className="relative" ref={userSearchRef}>
+            <div className="relative">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+              <input
+                type="text"
+                value={userSearchQuery}
+                onChange={e => handleUserSearchChange(e.target.value)}
+                onFocus={() => userSearchQuery.length >= 2 && setShowUserDropdown(true)}
+                className="input-luxury text-sm pl-10"
+                placeholder="Search by name, email, or phone..."
+              />
+              {userSearching && (
+                <Loader2 size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 animate-spin text-[var(--primary)]" />
+              )}
+            </div>
+            {showUserDropdown && userSearchResults.length > 0 && (
+              <div className="absolute z-20 mt-2 w-full max-h-60 overflow-y-auto rounded-xl border border-[var(--border)] bg-white shadow-xl">
+                {userSearchResults.map(u => (
+                  <button key={u._id} onClick={() => selectUser(u)} className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--accent)] border-b border-[var(--border)]/50 last:border-0">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--primary)]/10 text-[var(--primary)] text-xs font-bold">
+                      {u.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-[var(--dark-text)] truncate">{u.name}</p>
+                      <p className="text-[11px] text-[var(--muted)] truncate">{u.email}{u.phone ? ` · ${u.phone}` : ''}</p>
+                    </div>
+                    <span className="text-[10px] font-semibold text-[var(--muted)] capitalize bg-[var(--accent)] rounded-full px-2 py-0.5">{u.role}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {showUserDropdown && userSearchQuery.length >= 2 && userSearchResults.length === 0 && !userSearching && (
+              <div className="absolute z-20 mt-2 w-full rounded-xl border border-[var(--border)] bg-white p-4 text-center shadow-xl">
+                <p className="text-xs text-[var(--muted)]">No users found</p>
+              </div>
+            )}
+            <p className="mt-2 text-[11px] text-[var(--muted)]">Search and select the user to send this invoice to. You can also fill customer details manually below.</p>
+          </div>
+        )}
       </div>
 
       {/* Customer Details */}
@@ -196,7 +352,6 @@ export default function CreateInvoicePage() {
             <Plus size={14} /> Add Item
           </button>
         </div>
-
         <div className="space-y-4">
           {items.map((item, idx) => (
             <div key={idx} className="rounded-xl border border-[var(--border)]/60 bg-[var(--accent)]/30 p-4">

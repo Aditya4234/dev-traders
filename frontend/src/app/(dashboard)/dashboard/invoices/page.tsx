@@ -61,6 +61,7 @@ const statusColors: Record<string, string> = {
 
 export default function InvoicesPage() {
   const { user } = useShop()
+  const isWholeseller = user?.role === 'admin' || user?.role === 'dealer'
   const [filter, setFilter] = useState('all')
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
@@ -106,8 +107,8 @@ export default function InvoicesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--dark-text)]" style={{ fontFamily: 'var(--font-playfair)' }}>Invoices</h1>
-          <p className="text-sm text-[var(--muted)]">Manage and view all your invoices</p>
+          <h1 className="text-2xl font-bold text-[var(--dark-text)]" style={{ fontFamily: 'var(--font-playfair)' }}>{isWholeseller ? 'Invoices' : 'My Invoices'}</h1>
+          <p className="text-sm text-[var(--muted)]">{isWholeseller ? 'Manage and send invoices to customers' : 'Invoices sent to you by your wholeseller'}</p>
         </div>
         <div className="flex items-center gap-2">
           {user && (
@@ -116,14 +117,16 @@ export default function InvoicesPage() {
               <p className="text-[10px] text-[var(--muted)]">{user.email}</p>
             </div>
           )}
-          <Link
-            href="/dashboard/invoices/create"
-            className="flex items-center gap-1.5 rounded-xl bg-[var(--primary)] px-4 py-2 text-xs font-semibold text-white shadow-md transition-all hover:shadow-lg"
-            style={{ fontFamily: 'var(--font-poppins)' }}
-          >
-            <Plus size={14} />
-            Create Invoice
-          </Link>
+          {isWholeseller && (
+            <Link
+              href="/dashboard/invoices/create"
+              className="flex items-center gap-1.5 rounded-xl bg-[var(--primary)] px-4 py-2 text-xs font-semibold text-white shadow-md transition-all hover:shadow-lg"
+              style={{ fontFamily: 'var(--font-poppins)' }}
+            >
+              <Plus size={14} />
+              Create Invoice
+            </Link>
+          )}
         </div>
       </div>
 

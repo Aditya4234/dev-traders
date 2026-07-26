@@ -16,7 +16,7 @@ router.post("/invoice", protect, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// GET /api/billing/invoices - List all invoices
+// GET /api/billing/invoices - List invoices (customers see only their own)
 router.get("/invoices", protect, async (req: AuthRequest, res: Response) => {
   try {
     const { status, dealerId, page = "1", limit = "20" } = req.query as Record<string, string>;
@@ -24,6 +24,11 @@ router.get("/invoices", protect, async (req: AuthRequest, res: Response) => {
     const filter: any = {};
     if (status) filter.status = status;
     if (dealerId) filter.dealer = dealerId;
+
+    // Customers can only see invoices sent to them
+    if (req.user?.role === "customer") {
+      filter.user = req.user.id;
+    }
 
     const pageNum = parseInt(page as string, 10);
     const limitNum = parseInt(limit as string, 10);

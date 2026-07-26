@@ -152,6 +152,11 @@ export async function subscribeNewsletter(email: string) {
   });
 }
 
+// ─── Admin Users Search ───
+export async function searchUsers(query: string) {
+  return fetchAPI<{ success: boolean; users: any[] }>(`/admin/users/search?q=${encodeURIComponent(query)}`);
+}
+
 // ─── Invoices ───
 export async function createInvoice(data: {
   customer: {
@@ -176,6 +181,7 @@ export async function createInvoice(data: {
   discount?: number;
   notes?: string;
   placeOfSupply: string;
+  userId?: string;
 }) {
   return fetchAPI<{ success: boolean; invoice: any }>("/billing/invoice", {
     method: "POST",

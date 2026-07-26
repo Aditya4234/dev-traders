@@ -45,52 +45,56 @@ interface NavSection {
   items: NavItem[]
 }
 
-const navSections: NavSection[] = [
-  {
-    title: 'Overview',
-    items: [
-      { label: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={18} /> },
-    ],
-  },
-  {
-    title: 'Commerce',
-    items: [
-      { label: 'Wholesale Catalog', href: '/shop', icon: <Store size={18} /> },
-      { label: 'Bulk Orders', href: '/dashboard/orders', icon: <Package size={18} /> },
-      { label: 'My Orders', href: '/dashboard/orders', icon: <ShoppingBag size={18} /> },
-    ],
-  },
-  {
-    title: 'Finance',
-    items: [
-      { label: 'Invoices', href: '/dashboard/invoices', icon: <FileText size={18} /> },
-      { label: 'Payments', href: '/dashboard/payments', icon: <CreditCard size={18} /> },
-      { label: 'Outstanding', href: '/dashboard/outstanding', icon: <AlertCircle size={18} /> },
-      { label: 'Credit Ledger', href: '/dashboard/credit-ledger', icon: <Receipt size={18} /> },
-      { label: 'Wallet', href: '/dashboard/wallet', icon: <Wallet size={18} /> },
-    ],
-  },
-  {
-    title: 'Products',
-    items: [
-      { label: 'Price List', href: '/dashboard/price-list', icon: <FileText size={18} /> },
-    ],
-  },
-  {
-    title: 'Support',
-    items: [
-      { label: 'Support', href: '/dashboard/support', icon: <HeadphonesIcon size={18} /> },
-      { label: 'Notifications', href: '/dashboard/notifications', icon: <Bell size={18} /> },
-    ],
-  },
-  {
-    title: 'Account',
-    items: [
-      { label: 'Profile', href: '/dashboard/profile', icon: <User size={18} /> },
-      { label: 'Settings', href: '/dashboard/settings', icon: <Settings size={18} /> },
-    ],
-  },
-]
+function getNavSections(role: string): NavSection[] {
+  const isWholeseller = role === 'admin' || role === 'dealer'
+  return [
+    {
+      title: 'Overview',
+      items: [
+        { label: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={18} /> },
+      ],
+    },
+    {
+      title: 'Commerce',
+      items: [
+        { label: 'Wholesale Catalog', href: '/shop', icon: <Store size={18} /> },
+        { label: 'My Orders', href: '/dashboard/orders', icon: <ShoppingBag size={18} /> },
+      ],
+    },
+    {
+      title: 'Finance',
+      items: [
+        { label: isWholeseller ? 'Invoices' : 'My Invoices', href: '/dashboard/invoices', icon: <FileText size={18} /> },
+        ...(isWholeseller ? [
+          { label: 'Payments', href: '/dashboard/payments', icon: <CreditCard size={18} /> },
+          { label: 'Outstanding', href: '/dashboard/outstanding', icon: <AlertCircle size={18} /> },
+          { label: 'Credit Ledger', href: '/dashboard/credit-ledger', icon: <Receipt size={18} /> },
+        ] : []),
+        { label: 'Wallet', href: '/dashboard/wallet', icon: <Wallet size={18} /> },
+      ],
+    },
+    {
+      title: 'Products',
+      items: [
+        { label: 'Price List', href: '/dashboard/price-list', icon: <FileText size={18} /> },
+      ],
+    },
+    {
+      title: 'Support',
+      items: [
+        { label: 'Support', href: '/dashboard/support', icon: <HeadphonesIcon size={18} /> },
+        { label: 'Notifications', href: '/dashboard/notifications', icon: <Bell size={18} /> },
+      ],
+    },
+    {
+      title: 'Account',
+      items: [
+        { label: 'Profile', href: '/dashboard/profile', icon: <User size={18} /> },
+        { label: 'Settings', href: '/dashboard/settings', icon: <Settings size={18} /> },
+      ],
+    },
+  ]
+}
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -248,7 +252,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
 
       <nav className="flex-1 overflow-y-auto px-4 pb-4" style={{ scrollbarWidth: 'thin' }}>
-        {navSections.map((section) => (
+        {getNavSections(userRole).map((section) => (
           <div key={section.title} className="mb-5">
             <p
               className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--muted)]"
