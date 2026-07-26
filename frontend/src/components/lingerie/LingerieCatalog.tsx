@@ -12,9 +12,10 @@ interface LingerieCatalogProps {
   categoryFilter: string;
   initialBadge?: string | null;
   initialSort?: string | null;
+  initialSearch?: string;
 }
 
-export default function LingerieCatalog({ categoryFilter, initialBadge, initialSort }: LingerieCatalogProps) {
+export default function LingerieCatalog({ categoryFilter, initialBadge, initialSort, initialSearch }: LingerieCatalogProps) {
   const [allProducts, setAllProducts] = useState<Product[]>(fallbackProducts);
   const [selectedGroup, setSelectedGroup] = useState<string>("All");
   const [maxPrice, setMaxPrice] = useState<number>(5000);
@@ -23,7 +24,7 @@ export default function LingerieCatalog({ categoryFilter, initialBadge, initialS
     initialSort === "new" ? "newest" : "popularity"
   );
   const [badgeFilter] = useState<string | null>(initialBadge || null);
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>(initialSearch || "");
   const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false);
 
   useEffect(() => {
@@ -60,6 +61,12 @@ export default function LingerieCatalog({ categoryFilter, initialBadge, initialS
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (initialSearch) {
+      setSearchQuery(initialSearch);
+    }
+  }, [initialSearch]);
 
   useEffect(() => {
     if (categoryFilter) {

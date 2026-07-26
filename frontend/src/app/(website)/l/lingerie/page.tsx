@@ -11,8 +11,22 @@ import LingerieHighlights from "@/components/lingerie/LingerieHighlights";
 function LingeriePageContent() {
   const searchParams = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [initialSearch, setInitialSearch] = useState<string>("");
 
   useEffect(() => {
+    const searchParam = searchParams.get("search");
+    if (searchParam) {
+      setInitialSearch(searchParam);
+      // Scroll to catalog after search param is set
+      const timer = setTimeout(() => {
+        const catalogElement = document.getElementById("catalog");
+        if (catalogElement) {
+          catalogElement.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+
     const catParam = searchParams.get("category");
     if (!catParam) return;
 
@@ -68,7 +82,7 @@ function LingeriePageContent() {
       <BraFitCalculator />
 
       {/* 5. Filterable Catalog grid */}
-      <LingerieCatalog categoryFilter={selectedCategory} />
+      <LingerieCatalog categoryFilter={selectedCategory} initialSearch={initialSearch} />
     </div>
   );
 }
