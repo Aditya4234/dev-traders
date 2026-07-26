@@ -1,12 +1,13 @@
 'use client'
 
-import { FileText, Download, Eye, Calendar, Loader2, Plus } from 'lucide-react'
+import { FileText, Download, Eye, Loader2, Plus } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import * as api from '@/lib/api'
 import { generateInvoicePDF } from '@/lib/invoice-pdf'
 import { useShop } from '@/context/ShopContext'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface InvoiceItem {
   name: string
@@ -61,7 +62,6 @@ const statusColors: Record<string, string> = {
 
 export default function InvoicesPage() {
   const { user } = useShop()
-  const isWholeseller = user?.role === 'admin' || user?.role === 'dealer'
   const [filter, setFilter] = useState('all')
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
@@ -73,7 +73,7 @@ export default function InvoicesPage() {
       setLoading(true)
       const params: Record<string, string> = {}
       if (filter !== 'all') params.status = filter
-      const data = await api.getInvoices(params as any)
+      const data = await api.getInvoices(params as Record<string, string>)
       if (data?.success) {
         setInvoices(data.invoices)
       }
@@ -85,7 +85,7 @@ export default function InvoicesPage() {
   }, [filter])
 
   useEffect(() => {
-    fetchInvoices()
+    void (async () => { await fetchInvoices(); })();
   }, [fetchInvoices])
 
   const handleDownload = async (invoice: Invoice) => {
@@ -107,8 +107,8 @@ export default function InvoicesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--dark-text)]" style={{ fontFamily: 'var(--font-playfair)' }}>{isWholeseller ? 'Invoices' : 'My Invoices'}</h1>
-          <p className="text-sm text-[var(--muted)]">{isWholeseller ? 'Manage and send invoices to customers' : 'Invoices sent to you by your wholeseller'}</p>
+          <h1 className="text-2xl font-bold text-[var(--dark-text)]" style={{ fontFamily: 'var(--font-playfair)' }}>Invoices</h1>
+          <p className="text-sm text-[var(--muted)]">View and manage your invoices</p>
         </div>
         <div className="flex items-center gap-2">
           {user && (
@@ -117,7 +117,7 @@ export default function InvoicesPage() {
               <p className="text-[10px] text-[var(--muted)]">{user.email}</p>
             </div>
           )}
-          {isWholeseller && (
+          {user?.role === 'admin' || user?.role === 'dealer' ? (
             <Link
               href="/dashboard/invoices/create"
               className="flex items-center gap-1.5 rounded-xl bg-[var(--primary)] px-4 py-2 text-xs font-semibold text-white shadow-md transition-all hover:shadow-lg"
@@ -126,7 +126,7 @@ export default function InvoicesPage() {
               <Plus size={14} />
               Create Invoice
             </Link>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -234,7 +234,7 @@ export default function InvoicesPage() {
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <img src="/products/logo.png" alt="DevTraders" className="h-10 w-10 object-contain" />
+                  <Image src="/products/logo.png" alt="DevTraders" width={40} height={40} className="h-10 w-10 object-contain" />
                   <div>
                     <h2 className="text-lg font-bold text-[#E91E63]" style={{ fontFamily: 'var(--font-playfair)' }}>DevTraders</h2>
                     <p className="text-[10px] text-[var(--muted)]">Riya Touch Wholesale</p>

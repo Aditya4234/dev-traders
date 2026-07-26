@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { Star, Quote } from "lucide-react";
 import SectionHeader from "@/components/ui/SectionHeader";
 import { getReviews } from "@/lib/api";
+import type { Review } from "@/types";
 import { reviews as fallbackReviews } from "@/data/mock-data";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +20,7 @@ export default function CustomerReviews() {
       .then((data) => {
         if (data.success && data.reviews.length > 0) {
           setReviews(
-            data.reviews.map((r: any) => ({
+            data.reviews.map((r: Review) => ({
               id: r._id || r.id,
               name: r.name,
               rating: r.rating,

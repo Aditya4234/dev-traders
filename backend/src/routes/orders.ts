@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import Order from "../models/Order";
+import Product from "../models/Product";
 import { protect, optionalAuth, adminOnly, AuthRequest } from "../middleware/auth";
 import { sendOrderNotification } from "../services/notification";
 
@@ -20,7 +21,25 @@ router.post("/", optionalAuth, async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const subtotal = items.reduce(
+    const validatedItems = await Promise.all(
+      items.map(async (item: any) => {
+        const product = await Product.findById(item.product);
+        if (!product || !product.isActive) {
+          throw new Error(`Product ${item.product} not found or unavailable`);
+        }
+        const price = product.discountPrice || product.price;
+        const quantity = Math.max(1, parseInt(item.quantity, 10) || 1);
+        return {
+          product: product._id,
+          name: product.name,
+          price,
+          quantity,
+          image: product.image,
+        };
+      })
+    );
+
+    const subtotal = validatedItems.reduce(
       (sum: number, item: any) => sum + item.price * item.quantity,
       0
     );
@@ -29,7 +48,7 @@ router.post("/", optionalAuth, async (req: AuthRequest, res: Response) => {
     const total = subtotal + shipping;
 
     const orderData: any = {
-      items,
+      items: validatedItems,
       customer,
       subtotal,
       shipping,
@@ -44,8 +63,7 @@ router.post("/", optionalAuth, async (req: AuthRequest, res: Response) => {
 
     const order = await Order.create(orderData);
 
-    // Send WhatsApp/SMS notification to admin
-    sendOrderNotification(order).catch((err) =>
+    sendOrderNotification(order).catch((err: any) =>
       console.error("[Order] Notification failed:", err)
     );
 
@@ -75,12 +93,67 @@ router.get("/my", protect, async (req: AuthRequest, res: Response) => {
   }
 });
 
+// GET /api/orders/stats - Get order stats for logged-in user
+router.get("/stats", protect, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const isWholeseller = req.user?.role === "admin" || req.user?.role === "dealer";
+
+    const matchStage: any = isWholeseller ? {} : { user: userId };
+
+    const [stats] = await Order.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: null,
+          totalOrders: { $sum: 1 },
+          totalSpent: { $sum: "$total" },
+          pendingOrders: {
+            $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] },
+          },
+          processingOrders: {
+            $sum: { $cond: [{ $eq: ["$status", "confirmed"] }, 1, 0] },
+          },
+          deliveredOrders: {
+            $sum: { $cond: [{ $eq: ["$status", "delivered"] }, 1, 0] },
+          },
+          cancelledOrders: {
+            $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] },
+          },
+          shippedOrders: {
+            $sum: { $cond: [{ $eq: ["$status", "shipped"] }, 1, 0] },
+          },
+        },
+      },
+    ]);
+
+    res.json({
+      success: true,
+      stats: stats || {
+        totalOrders: 0,
+        totalSpent: 0,
+        pendingOrders: 0,
+        processingOrders: 0,
+        deliveredOrders: 0,
+        cancelledOrders: 0,
+        shippedOrders: 0,
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // GET /api/orders/:id
-router.get("/:id", async (req: Request, res: Response) => {
+router.get("/:id", protect, async (req: AuthRequest, res: Response) => {
   try {
     const order = await Order.findById(req.params.id);
     if (!order) {
       res.status(404).json({ success: false, message: "Order not found" });
+      return;
+    }
+    if (req.user?.role !== "admin" && req.user?.role !== "dealer" && order.user?.toString() !== req.user?.id) {
+      res.status(403).json({ success: false, message: "Access denied" });
       return;
     }
     res.json({ success: true, order });
@@ -93,6 +166,11 @@ router.get("/:id", async (req: Request, res: Response) => {
 router.put("/:id/status", protect, adminOnly, async (req: Request, res: Response) => {
   try {
     const { status } = req.body;
+    const validStatuses = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
+    if (!validStatuses.includes(status)) {
+      res.status(400).json({ success: false, message: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
+      return;
+    }
     const order = await Order.findByIdAndUpdate(
       req.params.id,
       { status },

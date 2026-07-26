@@ -10,6 +10,16 @@ interface RateLimitOptions {
 
 const requestCounts = new Map<string, { count: number; resetTime: number }>();
 
+// Cleanup expired entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of requestCounts) {
+    if (now > entry.resetTime) {
+      requestCounts.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
+
 export function rateLimiter(options: RateLimitOptions) {
   const { windowMs, maxRequests, keyGenerator, message } = options;
 

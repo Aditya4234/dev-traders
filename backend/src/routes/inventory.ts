@@ -1,12 +1,12 @@
 import { Router, Request, Response } from "express";
 import Inventory from "../models/Inventory";
-import { protect, AuthRequest } from "../middleware/auth";
+import { protect, adminOnly, AuthRequest } from "../middleware/auth";
 import { cacheDelPattern } from "../services/redis";
 
 const router = Router();
 
 // GET /api/inventory - List all inventory items (admin)
-router.get("/", protect, async (req: AuthRequest, res: Response) => {
+router.get("/", protect, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
     const { search, lowStock, warehouse, page = "1", limit = "50" } = req.query;
 
@@ -51,7 +51,7 @@ router.get("/", protect, async (req: AuthRequest, res: Response) => {
 });
 
 // GET /api/inventory/stats
-router.get("/stats", protect, async (_req: AuthRequest, res: Response) => {
+router.get("/stats", protect, adminOnly, async (_req: AuthRequest, res: Response) => {
   try {
     const [totalProducts, lowStockItems, outOfStockItems, totalValue, warehouseStats] =
       await Promise.all([
@@ -82,7 +82,7 @@ router.get("/stats", protect, async (_req: AuthRequest, res: Response) => {
 });
 
 // GET /api/inventory/:productId
-router.get("/:productId", protect, async (req: AuthRequest, res: Response) => {
+router.get("/:productId", protect, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
     const item = await Inventory.findOne({ product: req.params.productId })
       .populate("product", "name brand image category price");
@@ -97,7 +97,7 @@ router.get("/:productId", protect, async (req: AuthRequest, res: Response) => {
 });
 
 // POST /api/inventory - Create inventory record
-router.post("/", protect, async (req: AuthRequest, res: Response) => {
+router.post("/", protect, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
     const item = await Inventory.create(req.body);
     await cacheDelPattern("cache:/api/products*");
@@ -108,7 +108,7 @@ router.post("/", protect, async (req: AuthRequest, res: Response) => {
 });
 
 // PUT /api/inventory/:id - Update inventory
-router.put("/:id", protect, async (req: AuthRequest, res: Response) => {
+router.put("/:id", protect, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
     const item = await Inventory.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -126,7 +126,7 @@ router.put("/:id", protect, async (req: AuthRequest, res: Response) => {
 });
 
 // POST /api/inventory/:id/restock - Restock inventory
-router.post("/:id/restock", protect, async (req: AuthRequest, res: Response) => {
+router.post("/:id/restock", protect, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
     const { quantity, costPrice } = req.body;
     if (!quantity || quantity <= 0) {
@@ -152,7 +152,7 @@ router.post("/:id/restock", protect, async (req: AuthRequest, res: Response) => 
 });
 
 // POST /api/inventory/bulk-update - Bulk inventory update
-router.post("/bulk-update", protect, async (req: AuthRequest, res: Response) => {
+router.post("/bulk-update", protect, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
     const { updates } = req.body;
     if (!updates || !Array.isArray(updates)) {

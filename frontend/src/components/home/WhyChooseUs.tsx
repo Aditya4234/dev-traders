@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Truck,
@@ -63,12 +62,6 @@ const features = [
 ];
 
 export default function WhyChooseUs() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   return (
     <section className="relative overflow-hidden bg-white py-16 sm:py-20 md:py-28">
       {/* Subtle background decoration */}

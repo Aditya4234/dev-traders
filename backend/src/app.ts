@@ -21,8 +21,10 @@ import inventoryRoutes from "./routes/inventory";
 import billingRoutes from "./routes/billing";
 import paymentRoutes from "./routes/payment";
 import recommendationRoutes from "./routes/recommendations";
+import notificationRoutes from "./routes/notifications";
+import wholesellerRoutes from "./routes/wholeseller";
 import { initRedis } from "./services/redis";
-import { apiLimiter, authLimiter, searchLimiter } from "./middleware/rateLimiter";
+import { apiLimiter, authLimiter, searchLimiter, paymentLimiter } from "./middleware/rateLimiter";
 
 dotenv.config();
 
@@ -87,6 +89,7 @@ app.use((req, res, next) => {
 
 // Rate limiting
 app.use("/api/auth", authLimiter);
+app.use("/api/payments", paymentLimiter);
 app.use("/api/recommendations/search", searchLimiter);
 app.use("/api", apiLimiter);
 
@@ -108,13 +111,18 @@ app.use("/api/inventory", inventoryRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/recommendations", recommendationRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/wholeseller", wholesellerRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {
-  res.json({
-    status: "ok",
+  const dbState = mongoose.connection.readyState;
+  const dbOk = dbState === 1;
+  res.status(dbOk ? 200 : 503).json({
+    status: dbOk ? "ok" : "degraded",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+    mongodb: dbOk ? "connected" : "disconnected",
     memory: process.memoryUsage(),
   });
 });
@@ -150,5 +158,22 @@ mongoose
 
 mongoose.connection.on("disconnected", () => mongodbConnections.set(0));
 mongoose.connection.on("connected", () => mongodbConnections.set(1));
+
+// Global error handler (must be last middleware)
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error("[Error]", err.message);
+  res.status(err.status || 500).json({
+    success: false,
+    message: process.env.NODE_ENV === "production" ? "Internal server error" : err.message,
+  });
+});
+
+process.on("unhandledRejection", (reason: any) => {
+  console.error("[Unhandled Rejection]", reason?.message || reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("[Uncaught Exception]", err.message);
+});
 
 export default app;

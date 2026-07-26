@@ -1,52 +1,10 @@
-import { Router, Request, Response } from "express";
+import { Router, Response } from "express";
 import Product from "../models/Product";
 import Order from "../models/Order";
-import Invoice from "../models/Invoice";
 import User from "../models/User";
 import { protect, adminOnly, AuthRequest } from "../middleware/auth";
 
 const router = Router();
-
-// POST /api/admin/product
-router.post("/product", protect, adminOnly, async (req: Request, res: Response) => {
-  try {
-    const product = await Product.create(req.body);
-    res.status(201).json({ success: true, product });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// PUT /api/admin/product/:id
-router.put("/product/:id", protect, adminOnly, async (req: Request, res: Response) => {
-  try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-    if (!product) {
-      res.status(404).json({ success: false, message: "Product not found" });
-      return;
-    }
-    res.json({ success: true, product });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// DELETE /api/admin/product/:id
-router.delete("/product/:id", protect, adminOnly, async (req: Request, res: Response) => {
-  try {
-    const product = await Product.findByIdAndDelete(req.params.id);
-    if (!product) {
-      res.status(404).json({ success: false, message: "Product not found" });
-      return;
-    }
-    res.json({ success: true, message: "Product deleted" });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
 
 // GET /api/admin/stats - Dashboard statistics
 router.get("/stats", protect, adminOnly, async (req: AuthRequest, res: Response) => {
@@ -61,7 +19,7 @@ router.get("/stats", protect, adminOnly, async (req: AuthRequest, res: Response)
     const [
       totalOrders,
       ordersThisMonth,
-      ordersLastMonth,
+      _ordersLastMonth,
       totalRevenueAgg,
       revenueThisMonthAgg,
       revenueLastMonthAgg,
@@ -70,7 +28,7 @@ router.get("/stats", protect, adminOnly, async (req: AuthRequest, res: Response)
       cancelledOrders,
       recentOrders,
       topProducts,
-      monthlySales,
+      _monthlySales,
       totalProducts,
     ] = await Promise.all([
       Order.countDocuments(),
@@ -235,6 +193,217 @@ router.get("/users/search", protect, async (req: AuthRequest, res: Response) => 
       .lean();
 
     res.json({ success: true, users });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// GET /api/admin/users - List all users with login/activity data (admin only)
+router.get("/users", protect, adminOnly, async (req: AuthRequest, res: Response) => {
+  try {
+    const { page = "1", limit = "50", role, search } = req.query as Record<string, string>;
+
+    const filter: any = {};
+    if (role && role !== "all") filter.role = role;
+    if (search && search.trim().length >= 2) {
+      const regex = new RegExp(search.trim(), "i");
+      filter.$or = [{ name: regex }, { email: regex }, { phone: regex }];
+    }
+
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const skip = (pageNum - 1) * limitNum;
+
+    const [users, total] = await Promise.all([
+      User.find(filter)
+        .select("name email phone role companyName dealerId lastLoginAt loginCount createdAt profileImage")
+        .sort("-createdAt")
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      User.countDocuments(filter),
+    ]);
+
+    res.json({
+      success: true,
+      users,
+      pagination: { page: pageNum, limit: limitNum, total, pages: Math.ceil(total / limitNum) },
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// GET /api/admin/overview - Comprehensive admin overview
+router.get("/overview", protect, adminOnly, async (req: AuthRequest, res: Response) => {
+  try {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const [
+      // User stats
+      totalUsers,
+      totalCustomers,
+      totalDealers,
+      totalAdmins,
+      newUsersThisMonth,
+      newUsersThisWeek,
+      activeUsers,
+      usersLoggedInToday,
+      // Order stats
+      totalOrders,
+      ordersToday,
+      ordersThisWeek,
+      ordersThisMonth,
+      pendingOrders,
+      deliveredOrders,
+      cancelledOrders,
+      confirmedOrders,
+      shippedOrders,
+      // Revenue stats
+      totalRevenueAgg,
+      revenueThisMonthAgg,
+      revenueTodayAgg,
+      revenueThisWeekAgg,
+      // Payment stats
+      codOrders,
+      onlineOrders,
+      whatsappOrders,
+      // Product stats
+      totalProducts,
+      activeProducts,
+      lowStockProducts,
+      // Recent orders
+      recentOrders,
+    ] = await Promise.all([
+      // User stats
+      User.countDocuments(),
+      User.countDocuments({ role: "customer" }),
+      User.countDocuments({ role: "dealer" }),
+      User.countDocuments({ role: "admin" }),
+      User.countDocuments({ createdAt: { $gte: startOfMonth } }),
+      User.countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
+      User.countDocuments({ lastLoginAt: { $gte: thirtyDaysAgo } }),
+      User.countDocuments({ lastLoginAt: { $gte: startOfDay } }),
+      // Order stats
+      Order.countDocuments(),
+      Order.countDocuments({ createdAt: { $gte: startOfDay } }),
+      Order.countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
+      Order.countDocuments({ createdAt: { $gte: startOfMonth } }),
+      Order.countDocuments({ status: "pending" }),
+      Order.countDocuments({ status: "delivered" }),
+      Order.countDocuments({ status: "cancelled" }),
+      Order.countDocuments({ status: "confirmed" }),
+      Order.countDocuments({ status: "shipped" }),
+      // Revenue stats
+      Order.aggregate([{ $group: { _id: null, total: { $sum: "$total" } } }]),
+      Order.aggregate([
+        { $match: { createdAt: { $gte: startOfMonth } } },
+        { $group: { _id: null, total: { $sum: "$total" } } },
+      ]),
+      Order.aggregate([
+        { $match: { createdAt: { $gte: startOfDay } } },
+        { $group: { _id: null, total: { $sum: "$total" } } },
+      ]),
+      Order.aggregate([
+        { $match: { createdAt: { $gte: sevenDaysAgo } } },
+        { $group: { _id: null, total: { $sum: "$total" } } },
+      ]),
+      // Payment stats
+      Order.countDocuments({ paymentMethod: "cod" }),
+      Order.countDocuments({ paymentMethod: "online" }),
+      Order.countDocuments({ whatsappSent: true }),
+      // Product stats
+      Product.countDocuments(),
+      Product.countDocuments({ isActive: true }),
+      0,
+      // Recent orders
+      Order.find().sort("-createdAt").limit(10).lean(),
+    ]);
+
+    // Low stock products
+    const lowStockData = await import("../models/Inventory").then(async (mod) => {
+      const Inventory = mod.default;
+      const lowStock = await Inventory.find({ $and: [{ quantity: { $lte: 10 } }, { quantity: { $gt: 0 } }] })
+        .populate("product", "name image")
+        .select("product quantity sku")
+        .limit(10)
+        .lean();
+      return lowStock;
+    }).catch(() => []);
+
+    const totalRevenue = totalRevenueAgg[0]?.total || 0;
+    const revenueThisMonth = revenueThisMonthAgg[0]?.total || 0;
+    const revenueToday = revenueTodayAgg[0]?.total || 0;
+    const revenueThisWeek = revenueThisWeekAgg[0]?.total || 0;
+    const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+
+    // Daily sales for last 7 days
+    const dailySales: { date: string; sales: number; orders: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
+      const dayData = await Order.aggregate([
+        { $match: { createdAt: { $gte: dayStart, $lte: dayEnd } } },
+        { $group: { _id: null, sales: { $sum: "$total" }, orders: { $sum: 1 } } },
+      ]);
+      dailySales.push({
+        date: dayStart.toISOString().slice(0, 10),
+        sales: dayData[0]?.sales || 0,
+        orders: dayData[0]?.orders || 0,
+      });
+    }
+
+    res.json({
+      success: true,
+      overview: {
+        users: {
+          total: totalUsers,
+          customers: totalCustomers,
+          dealers: totalDealers,
+          admins: totalAdmins,
+          newThisMonth: newUsersThisMonth,
+          newThisWeek: newUsersThisWeek,
+          activeLast30Days: activeUsers,
+          loggedInToday: usersLoggedInToday,
+        },
+        orders: {
+          total: totalOrders,
+          today: ordersToday,
+          thisWeek: ordersThisWeek,
+          thisMonth: ordersThisMonth,
+          pending: pendingOrders,
+          confirmed: confirmedOrders,
+          shipped: shippedOrders,
+          delivered: deliveredOrders,
+          cancelled: cancelledOrders,
+        },
+        revenue: {
+          total: totalRevenue,
+          today: revenueToday,
+          thisWeek: revenueThisWeek,
+          thisMonth: revenueThisMonth,
+          avgOrderValue,
+        },
+        payments: {
+          cod: codOrders,
+          online: onlineOrders,
+          whatsapp: whatsappOrders,
+        },
+        products: {
+          total: totalProducts,
+          active: activeProducts,
+          lowStock: lowStockData,
+        },
+        recentOrders,
+        dailySales,
+      },
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

@@ -2,12 +2,12 @@ import { Router, Request, Response } from "express";
 import Dealer from "../models/Dealer";
 import Order from "../models/Order";
 import Invoice from "../models/Invoice";
-import { protect, AuthRequest } from "../middleware/auth";
+import { protect, adminOnly, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
 // GET /api/dealers - List all dealers (admin)
-router.get("/", protect, async (req: AuthRequest, res: Response) => {
+router.get("/", protect, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
     const { tier, active, page = "1", limit = "20" } = req.query;
 
@@ -39,7 +39,7 @@ router.get("/", protect, async (req: AuthRequest, res: Response) => {
 });
 
 // POST /api/dealers - Create dealer (admin)
-router.post("/", protect, async (req: AuthRequest, res: Response) => {
+router.post("/", protect, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
     const dealer = await Dealer.create(req.body);
     res.status(201).json({ success: true, dealer });
@@ -49,7 +49,7 @@ router.post("/", protect, async (req: AuthRequest, res: Response) => {
 });
 
 // GET /api/dealers/:id - Get dealer by ID
-router.get("/:id", protect, async (req: AuthRequest, res: Response) => {
+router.get("/:id", protect, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
     const dealer = await Dealer.findById(req.params.id).populate("user", "name email phone");
     if (!dealer) {
@@ -63,7 +63,7 @@ router.get("/:id", protect, async (req: AuthRequest, res: Response) => {
 });
 
 // PUT /api/dealers/:id - Update dealer
-router.put("/:id", protect, async (req: AuthRequest, res: Response) => {
+router.put("/:id", protect, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
     const dealer = await Dealer.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -80,7 +80,7 @@ router.put("/:id", protect, async (req: AuthRequest, res: Response) => {
 });
 
 // GET /api/dealers/:id/dashboard - Dealer dashboard data
-router.get("/:id/dashboard", protect, async (req: AuthRequest, res: Response) => {
+router.get("/:id/dashboard", protect, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
     const dealer = await Dealer.findById(req.params.id);
     if (!dealer) {
@@ -132,7 +132,7 @@ router.get("/:id/dashboard", protect, async (req: AuthRequest, res: Response) =>
 });
 
 // GET /api/dealers/:id/orders - Get dealer orders
-router.get("/:id/orders", protect, async (req: AuthRequest, res: Response) => {
+router.get("/:id/orders", protect, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
     const dealer = await Dealer.findById(req.params.id);
     if (!dealer) {

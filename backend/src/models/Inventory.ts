@@ -34,8 +34,6 @@ const inventorySchema = new Schema<IInventory>(
   { timestamps: true }
 );
 
-inventorySchema.index({ product: 1 });
-inventorySchema.index({ sku: 1 });
 inventorySchema.index({ quantity: 1 });
 
 export default mongoose.model<IInventory>("Inventory", inventorySchema);

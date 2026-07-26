@@ -53,7 +53,7 @@ export default function HeroBanner() {
   const opacity = useTransform(scrollY, [0, 300], [1, 0.3]);
 
   useEffect(() => {
-    setMounted(true);
+    requestAnimationFrame(() => { setMounted(true); });
   }, []);
 
   return (

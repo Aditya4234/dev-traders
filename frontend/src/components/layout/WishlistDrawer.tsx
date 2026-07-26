@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
+import type { Product } from "@/types";
 
 export default function WishlistDrawer() {
   const {
@@ -28,7 +29,7 @@ export default function WishlistDrawer() {
     };
   }, [wishlistOpen]);
 
-  const handleAddToCart = (product: any) => {
+  const handleAddToCart = (product: Product) => {
     addToCart(product);
     // Optionally close wishlist drawer
     setWishlistOpen(false);

@@ -11,6 +11,10 @@ export interface IUser extends Document {
   companyName?: string;
   dealerId?: string;
   permissions: string[];
+  lastLoginAt?: Date;
+  loginCount: number;
+  resetPasswordToken?: string;
+  resetPasswordExpiry?: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -31,6 +35,10 @@ const userSchema = new Schema<IUser>(
     companyName: { type: String },
     dealerId: { type: String, unique: true, sparse: true },
     permissions: { type: [String], default: [] },
+    lastLoginAt: { type: Date },
+    loginCount: { type: Number, default: 0 },
+    resetPasswordToken: { type: String, select: false },
+    resetPasswordExpiry: { type: Date, select: false },
   },
   { timestamps: true }
 );

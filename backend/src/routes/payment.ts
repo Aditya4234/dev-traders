@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import Payment from "../models/Payment";
 import Order from "../models/Order";
-import { protect, optionalAuth, AuthRequest } from "../middleware/auth";
+import { protect, optionalAuth, adminOnly, AuthRequest } from "../middleware/auth";
 import {
   createRazorpayOrder,
   verifyPaymentSignature,
@@ -107,7 +107,7 @@ router.post("/verify", async (req: Request, res: Response) => {
 });
 
 // POST /api/payments/refund - Process refund
-router.post("/refund", protect, async (req: AuthRequest, res: Response) => {
+router.post("/refund", protect, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
     const { paymentId, amount, reason } = req.body;
 
@@ -146,7 +146,7 @@ router.post("/refund", protect, async (req: AuthRequest, res: Response) => {
 });
 
 // GET /api/payments - List all payments (admin)
-router.get("/", protect, async (req: AuthRequest, res: Response) => {
+router.get("/", protect, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
     const { status, method, page = "1", limit = "20" } = req.query;
 

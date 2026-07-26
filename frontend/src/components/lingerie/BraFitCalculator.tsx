@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { HelpCircle, ChevronRight, RotateCcw, CheckCircle, Info } from "lucide-react";
-import Image from "next/image";
+import { ChevronRight, RotateCcw, CheckCircle, Info } from "lucide-react";
 import { products } from "@/data/mock-data";
 import ProductCard from "@/components/ui/ProductCard";
 

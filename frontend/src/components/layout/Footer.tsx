@@ -1,7 +1,7 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import {
   MessageCircle,
   Mail,
@@ -11,7 +11,9 @@ import {
   Shield,
   BadgeCheck,
   Send,
+  CheckCircle,
 } from "lucide-react";
+import { subscribeNewsletter } from "@/lib/api";
 
 const WHATSAPP_LINK = "https://wa.me/919205778531";
 
@@ -50,6 +52,25 @@ const socialLinks = [
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [newsletterMsg, setNewsletterMsg] = useState("");
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterEmail) return;
+    setNewsletterStatus("loading");
+    try {
+      const res = await subscribeNewsletter(newsletterEmail);
+      setNewsletterStatus("success");
+      setNewsletterMsg(res.message || "Subscribed successfully!");
+      setNewsletterEmail("");
+    } catch (err: unknown) {
+      setNewsletterStatus("error");
+      setNewsletterMsg(err instanceof Error ? err.message : "Something went wrong");
+    }
+    setTimeout(() => setNewsletterStatus("idle"), 4000);
+  };
 
   return (
     <footer className="relative overflow-hidden bg-dark-text">
@@ -123,7 +144,7 @@ export default function Footer() {
               New arrivals, exclusive offers & wholesale deals.
             </p>
             <form
-              onSubmit={(e) => e.preventDefault()}
+              onSubmit={handleNewsletterSubmit}
               className="mt-5 flex gap-2"
             >
               <div className="relative flex-1">
@@ -133,18 +154,35 @@ export default function Footer() {
                 />
                 <input
                   type="email"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
                   placeholder="Enter your email"
                   className="w-full rounded-full border border-white/10 bg-white/5 py-3 pl-11 pr-4 text-sm text-white placeholder-white/30 outline-none transition-all focus:border-primary-light/40 focus:bg-white/[0.07] focus:ring-1 focus:ring-primary-light/20"
+                  required
                 />
               </div>
               <button
                 type="submit"
-                className="flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-xs font-bold uppercase tracking-wider text-white transition-all duration-300 hover:bg-primary-dark hover:shadow-lg hover:shadow-primary/20 font-[family-name:var(--font-poppins)]"
+                disabled={newsletterStatus === "loading"}
+                className="flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-xs font-bold uppercase tracking-wider text-white transition-all duration-300 hover:bg-primary-dark hover:shadow-lg hover:shadow-primary/20 font-[family-name:var(--font-poppins)] disabled:opacity-60"
               >
-                <Send size={13} />
-                <span className="hidden sm:inline">Subscribe</span>
+                {newsletterStatus === "loading" ? (
+                  <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : newsletterStatus === "success" ? (
+                  <CheckCircle size={13} />
+                ) : (
+                  <Send size={13} />
+                )}
+                <span className="hidden sm:inline">
+                  {newsletterStatus === "success" ? "Subscribed!" : "Subscribe"}
+                </span>
               </button>
             </form>
+            {newsletterMsg && (
+              <p className={`mt-2 text-[11px] ${newsletterStatus === "success" ? "text-green-400" : "text-red-400"}`}>
+                {newsletterMsg}
+              </p>
+            )}
 
             {/* WhatsApp CTA */}
             <a

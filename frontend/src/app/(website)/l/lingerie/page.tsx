@@ -14,31 +14,31 @@ function LingeriePageContent() {
 
   useEffect(() => {
     const catParam = searchParams.get("category");
-    if (catParam) {
-      // Map URL friendly strings back to display category names
-      const mapping: Record<string, string> = {
-        "bras": "Bras",
-        "panties": "Panties",
-        "bra-panty-sets": "Lingerie Sets",
-        "sports-bras": "Bras", // fall back or map to Bras
-        "lingerie-sets": "Lingerie Sets",
-        "shapewear": "Shapewear",
-        "bridal-lingerie": "Bridal Lingerie",
-        "maternity-bras": "Maternity Bras"
-      };
-      
-      const categoryName = mapping[catParam.toLowerCase()] || catParam;
-      setSelectedCategory(categoryName);
-      
-      const timer = setTimeout(() => {
-        const catalogElement = document.getElementById("catalog");
-        if (catalogElement) {
-          catalogElement.scrollIntoView({ behavior: "smooth" });
-        }
-      }, 500);
+    if (!catParam) return;
 
-      return () => clearTimeout(timer);
-    }
+    // Map URL friendly strings back to display category names
+    const mapping: Record<string, string> = {
+      "bras": "Bras",
+      "panties": "Panties",
+      "bra-panty-sets": "Lingerie Sets",
+      "sports-bras": "Bras", // fall back or map to Bras
+      "lingerie-sets": "Lingerie Sets",
+      "shapewear": "Shapewear",
+      "bridal-lingerie": "Bridal Lingerie",
+      "maternity-bras": "Maternity Bras"
+    };
+    
+    const categoryName = mapping[catParam.toLowerCase()] || catParam;
+    requestAnimationFrame(() => { setSelectedCategory(categoryName); });
+    
+    const timer = setTimeout(() => {
+      const catalogElement = document.getElementById("catalog");
+      if (catalogElement) {
+        catalogElement.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [searchParams]);
 
   const handleSelectCategory = (category: string) => {

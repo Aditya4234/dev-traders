@@ -6,12 +6,14 @@ node_modules/
 dist/
 build/
 
-# env files
+# env files - NEVER commit these
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+backend/.env
+frontend/.env.local
 
 # debug logs
 npm-debug.log*
@@ -21,3 +23,7 @@ yarn-error.log*
 # misc
 .DS_Store
 *.tsbuildinfo
+
+# secrets
+*.pem
+*.key

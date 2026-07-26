@@ -128,3 +128,19 @@ export const adminOnly = async (
   }
   next();
 };
+
+export const wholesellerOnly = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  if (!req.user) {
+    res.status(401).json({ success: false, message: "Not authorized" });
+    return;
+  }
+  if (req.user.role !== "admin" && req.user.role !== "dealer") {
+    res.status(403).json({ success: false, message: "Wholeseller access only" });
+    return;
+  }
+  next();
+};

@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard,
   ShoppingBag,
-  Package,
   FileText,
   CreditCard,
   AlertCircle,
@@ -31,6 +30,8 @@ import {
   Store,
   Star,
   Send,
+  Shield,
+  BarChart3,
 } from 'lucide-react'
 import { useShop } from '@/context/ShopContext'
 
@@ -47,7 +48,9 @@ interface NavSection {
 
 function getNavSections(role: string): NavSection[] {
   const isWholeseller = role === 'admin' || role === 'dealer'
-  return [
+  const isCustomer = role === 'customer'
+
+  const sections: NavSection[] = [
     {
       title: 'Overview',
       items: [
@@ -57,43 +60,65 @@ function getNavSections(role: string): NavSection[] {
     {
       title: 'Commerce',
       items: [
-        { label: 'Wholesale Catalog', href: '/shop', icon: <Store size={18} /> },
         { label: 'My Orders', href: '/dashboard/orders', icon: <ShoppingBag size={18} /> },
       ],
     },
-    {
+  ]
+
+  if (isWholeseller) {
+    sections[1].items.unshift({ label: 'Wholesale Catalog', href: '/shop', icon: <Store size={18} /> })
+    sections.unshift({
+      title: 'Admin',
+      items: [
+        { label: 'Wholeseller Dashboard', href: '/dashboard/wholeseller', icon: <BarChart3 size={18} /> },
+        { label: 'Admin Panel', href: '/dashboard/admin', icon: <Shield size={18} /> },
+      ],
+    })
+    sections.push({
       title: 'Finance',
       items: [
-        { label: isWholeseller ? 'Invoices' : 'My Invoices', href: '/dashboard/invoices', icon: <FileText size={18} /> },
-        ...(isWholeseller ? [
-          { label: 'Payments', href: '/dashboard/payments', icon: <CreditCard size={18} /> },
-          { label: 'Outstanding', href: '/dashboard/outstanding', icon: <AlertCircle size={18} /> },
-          { label: 'Credit Ledger', href: '/dashboard/credit-ledger', icon: <Receipt size={18} /> },
-        ] : []),
+        { label: 'Invoices', href: '/dashboard/invoices', icon: <FileText size={18} /> },
+        { label: 'Payments', href: '/dashboard/payments', icon: <CreditCard size={18} /> },
+        { label: 'Outstanding', href: '/dashboard/outstanding', icon: <AlertCircle size={18} /> },
+        { label: 'Credit Ledger', href: '/dashboard/credit-ledger', icon: <Receipt size={18} /> },
         { label: 'Wallet', href: '/dashboard/wallet', icon: <Wallet size={18} /> },
       ],
-    },
-    {
+    })
+    sections.push({
       title: 'Products',
       items: [
         { label: 'Price List', href: '/dashboard/price-list', icon: <FileText size={18} /> },
       ],
-    },
-    {
+    })
+  }
+
+  if (!isCustomer) {
+    sections.push({
       title: 'Support',
       items: [
         { label: 'Support', href: '/dashboard/support', icon: <HeadphonesIcon size={18} /> },
         { label: 'Notifications', href: '/dashboard/notifications', icon: <Bell size={18} /> },
       ],
-    },
-    {
-      title: 'Account',
+    })
+  } else {
+    sections.push({
+      title: 'Support',
       items: [
-        { label: 'Profile', href: '/dashboard/profile', icon: <User size={18} /> },
-        { label: 'Settings', href: '/dashboard/settings', icon: <Settings size={18} /> },
+        { label: 'Support', href: '/dashboard/support', icon: <HeadphonesIcon size={18} /> },
+        { label: 'Notifications', href: '/dashboard/notifications', icon: <Bell size={18} /> },
       ],
-    },
-  ]
+    })
+  }
+
+  sections.push({
+    title: 'Account',
+    items: [
+      { label: 'Profile', href: '/dashboard/profile', icon: <User size={18} /> },
+      { label: 'Settings', href: '/dashboard/settings', icon: <Settings size={18} /> },
+    ],
+  })
+
+  return sections
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -126,7 +151,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const closeMobile = useCallback(() => setMobileOpen(false), [])
 
   useEffect(() => {
-    closeMobile()
+    requestAnimationFrame(() => { closeMobile(); });
   }, [pathname, closeMobile])
 
   useEffect(() => {
@@ -142,8 +167,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (justLoggedIn) {
-      setRatingOpen(true)
-      setJustLoggedIn(false)
+      requestAnimationFrame(() => {
+        setRatingOpen(true);
+        setJustLoggedIn(false);
+      });
     }
   }, [justLoggedIn, setJustLoggedIn])
 
@@ -185,7 +212,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     )
   }
 
-  const handleRatingSubmit = () => {
+  const handleRatingSubmit = async () => {
+    try {
+      const token = localStorage.getItem('riya_touch_token')
+      if (token && ratingStars > 0) {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/reviews`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            rating: ratingStars,
+            comment: ratingText,
+          }),
+        })
+      }
+    } catch {
+      // Rating submission failed silently
+    }
     setRatingSubmitted(true)
     setTimeout(() => {
       setRatingOpen(false)

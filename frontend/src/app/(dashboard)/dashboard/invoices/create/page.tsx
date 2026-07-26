@@ -201,8 +201,9 @@ export default function CreateInvoicePage() {
       })
       setSuccess(true)
       setTimeout(() => router.push('/dashboard/invoices'), 1500)
-    } catch (err: any) {
-      alert(err.message || 'Failed to create invoice')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create invoice';
+      alert(message)
     } finally {
       setSubmitting(false)
     }

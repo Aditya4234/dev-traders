@@ -20,9 +20,9 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 // POST /api/reviews
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", protect, async (req: AuthRequest, res: Response) => {
   try {
-    const review = await Review.create(req.body);
+    const review = await Review.create({ ...req.body, userId: req.user?.id });
     res.status(201).json({ success: true, review });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });

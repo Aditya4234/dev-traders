@@ -11,6 +11,7 @@ import CustomerReviews from "@/components/home/CustomerReviews";
 import InstagramGallery from "@/components/home/InstagramGallery";
 import Newsletter from "@/components/home/Newsletter";
 import { getProducts } from "@/lib/api";
+import type { Product } from "@/types";
 import { products as fallbackProducts } from "@/data/mock-data";
 
 export default function Home() {
@@ -21,7 +22,7 @@ export default function Home() {
       .then((data) => {
         if (data.success && data.products.length > 0) {
           setAllProducts(
-            data.products.map((p: any) => ({
+            data.products.map((p: Product) => ({
               id: p._id || p.id,
               name: p.name,
               brand: p.brand,

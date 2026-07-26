@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
+import type { Product, Offer, NotificationData } from "@/types";
 import {
   Heart,
   Package,
@@ -28,6 +29,8 @@ import {
   MessageSquare,
   HeadphonesIcon,
   ExternalLink,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import {
   AreaChart,
@@ -44,7 +47,6 @@ import {
   Cell,
 } from "recharts";
 import { useShop } from "@/context/ShopContext";
-import { products } from "@/data/mock-data";
 import * as api from "@/lib/api";
 
 interface DashboardStats {
@@ -62,8 +64,8 @@ interface DashboardStats {
   pendingOrders: number;
   deliveredOrders: number;
   cancelledOrders: number;
-  recentOrders: any[];
-  topProducts: any[];
+  recentOrders: { _id: string; status: string; total: number; createdAt: string; items: { name: string; quantity: number }[]; customer?: { name: string } }[];
+  topProducts: { _id: string; totalSold: number; revenue: number }[];
   monthlyChart: { month: string; sales: number; orders: number }[];
   categorySales: { _id: string; total: number }[];
 }
@@ -82,21 +84,27 @@ const statusConfig: Record<string, { bg: string; text: string }> = {
   cancelled: { bg: "bg-red-50", text: "text-red-600" },
 };
 
-const coupons = [
-  { code: "RIYA20", discount: "20% OFF", description: "On orders above ₹999", expires: "Dec 31, 2026" },
-  { code: "WELCOME10", discount: "10% OFF", description: "First wholesale order", expires: "Dec 31, 2026" },
-  { code: "BULK50", discount: "₹50 OFF", description: "On bulk orders above ₹5000", expires: "Nov 30, 2026" },
-];
-
 export default function DashboardPage() {
   const { user, wishlist, orderPlacedAt, addToCart } = useShop();
   const userName = user?.name?.split(" ")[0] || "Partner";
+  const isWholeseller = user?.role === "admin" || user?.role === "dealer";
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [activeChartTab, setActiveChartTab] = useState<"sales" | "orders">("sales");
   const [dateRange, setDateRange] = useState("7d");
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [notificationsRead, setNotificationsRead] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [coupons, setCoupons] = useState<{ code: string; discount: string; description: string }[]>([]);
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
+  const [customerStats, setCustomerStats] = useState<{
+    totalOrders: number;
+    totalSpent: number;
+    pendingOrders: number;
+    processingOrders: number;
+    deliveredOrders: number;
+    cancelledOrders: number;
+    shippedOrders: number;
+  } | null>(null);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -113,8 +121,31 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    fetchStats();
-  }, [fetchStats, orderPlacedAt]);
+    if (isWholeseller) {
+      void (async () => { await fetchStats(); })();
+    }
+  }, [fetchStats, orderPlacedAt, isWholeseller]);
+
+  useEffect(() => {
+    api.getNotifications({ limit: 5 }).then((res) => {
+      setNotifications(res.notifications || []);
+    }).catch(() => {});
+    api.getProducts({ sort: "-sales", limit: 5 }).then((res) => {
+      setRecommendedProducts(res.products || []);
+    }).catch(() => {});
+    api.getMyOrderStats().then((res) => {
+      if (res?.success) setCustomerStats(res.stats);
+    }).catch(() => {});
+    if (isWholeseller) {
+      api.getOffers().then((res) => {
+        setCoupons((res.offers || []).map((o: Offer) => ({
+          code: o.code || o.title?.substring(0, 8).toUpperCase().replace(/\s/g, '') || '',
+          discount: o.discountType === 'percentage' ? `${o.discountValue}% OFF` : `₹${o.discountValue} OFF`,
+          description: o.description || o.title || '',
+        })));
+      }).catch(() => {});
+    }
+  }, [isWholeseller, orderPlacedAt]);
 
   const handleCopyCoupon = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -170,7 +201,7 @@ export default function DashboardPage() {
               Welcome back, <span className="text-[var(--primary)]">{userName}</span>
             </h1>
             <p className="mt-1 text-sm text-[var(--muted)]" style={{ fontFamily: "var(--font-poppins)" }}>
-              Here&apos;s your wholesale business overview for today.
+              {isWholeseller ? "Here's your wholesale business overview for today." : "Welcome to Riya Touch — browse, order, and track your purchases."}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -269,7 +300,55 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
+      {/* 3. Customer Order Stats */}
+      {!isWholeseller && customerStats && (
+      <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
+        {[
+          {
+            icon: Package,
+            label: "Total Orders",
+            value: customerStats.totalOrders.toString(),
+            gradient: "linear-gradient(135deg, #7C3AED, #5B21B6)",
+            sub: `Total spent: ₹${customerStats.totalSpent.toLocaleString("en-IN")}`,
+          },
+          {
+            icon: Clock,
+            label: "Pending",
+            value: customerStats.pendingOrders.toString(),
+            gradient: "linear-gradient(135deg, #D97706, #B45309)",
+            sub: "Awaiting processing",
+          },
+          {
+            icon: CheckCircle2,
+            label: "Delivered",
+            value: customerStats.deliveredOrders.toString(),
+            gradient: "linear-gradient(135deg, #059669, #047857)",
+            sub: "Successfully received",
+          },
+          {
+            icon: Truck,
+            label: "Shipped",
+            value: customerStats.shippedOrders.toString(),
+            gradient: "linear-gradient(135deg, #2196F3, #1565C0)",
+            sub: "On the way",
+          },
+        ].map((stat) => (
+          <motion.div key={stat.label} variants={fadeUp} className="overflow-hidden rounded-[20px] border border-[var(--border)] bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl shadow-lg" style={{ background: stat.gradient }}>
+                <stat.icon size={20} className="text-white" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-[var(--dark-text)]" style={{ fontFamily: "var(--font-poppins)" }}>{stat.value}</p>
+            <p className="text-xs text-[var(--muted)]" style={{ fontFamily: "var(--font-poppins)" }}>{stat.label}</p>
+            <p className="mt-0.5 text-[10px] text-[var(--muted)]/60" style={{ fontFamily: "var(--font-poppins)" }}>{stat.sub}</p>
+          </motion.div>
+        ))}
+      </motion.div>
+      )}
+
       {/* 3. Key Metrics */}
+      {isWholeseller && (
       <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
         {[
           {
@@ -327,8 +406,10 @@ export default function DashboardPage() {
           </motion.div>
         ))}
       </motion.div>
+      )}
 
       {/* 4. Sales Chart + Category Breakdown */}
+      {isWholeseller && (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
         {/* Area Chart */}
         <div className="overflow-hidden rounded-[20px] border border-[var(--border)] bg-white p-6 shadow-sm xl:col-span-2">
@@ -435,6 +516,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </motion.div>
+      )}
 
       {/* 5. Quick Actions */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.25 }} className="mb-8">
@@ -442,14 +524,20 @@ export default function DashboardPage() {
           <h3 className="text-base font-semibold text-[var(--dark-text)]" style={{ fontFamily: "var(--font-poppins)" }}>Quick Actions</h3>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-          {[
+          {(isWholeseller ? [
             { icon: ShoppingBag, label: "Bulk Order", href: "/shop", color: "#E91E63" },
             { icon: Package, label: "My Orders", href: "/dashboard/orders", color: "#7C3AED" },
             { icon: Heart, label: "Wishlist", href: "/dashboard/wishlist", color: "#F44336" },
             { icon: Gift, label: "Coupons", href: "/dashboard/coupons", color: "#FF9800" },
             { icon: HeadphonesIcon, label: "Support", href: "/dashboard/support", color: "#2196F3" },
             { icon: MessageSquare, label: "Chat", href: "https://wa.me/919205778531", color: "#4CAF50" },
-          ].map((action) => (
+          ] : [
+            { icon: ShoppingBag, label: "Shop Now", href: "/shop", color: "#E91E63" },
+            { icon: Package, label: "My Orders", href: "/dashboard/orders", color: "#7C3AED" },
+            { icon: Heart, label: "Wishlist", href: "/dashboard/wishlist", color: "#F44336" },
+            { icon: HeadphonesIcon, label: "Support", href: "/dashboard/support", color: "#2196F3" },
+            { icon: MessageSquare, label: "Chat", href: "https://wa.me/919205778531", color: "#4CAF50" },
+          ]).map((action) => (
             <Link
               key={action.label}
               href={action.href}
@@ -468,6 +556,7 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* 6. Recent Orders + Top Products */}
+      {isWholeseller && (
       <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
         {/* Recent Orders */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="xl:col-span-2">
@@ -483,7 +572,7 @@ export default function DashboardPage() {
           <div className="overflow-hidden rounded-[20px] border border-[var(--border)] bg-white shadow-sm">
             {stats?.recentOrders && stats.recentOrders.length > 0 ? (
               <div className="divide-y divide-[var(--border)]/50">
-                {stats.recentOrders.slice(0, 5).map((order: any) => {
+                {stats.recentOrders.slice(0, 5).map((order) => {
                   const sc = statusConfig[order.status] || statusConfig.pending;
                   return (
                     <div key={order._id} className="flex items-center justify-between px-5 py-4 transition-colors hover:bg-[var(--accent)]/30">
@@ -543,7 +632,7 @@ export default function DashboardPage() {
           <div className="overflow-hidden rounded-[20px] border border-[var(--border)] bg-white p-5 shadow-sm">
             {stats?.topProducts && stats.topProducts.length > 0 ? (
               <div className="space-y-4">
-                {stats.topProducts.map((p: any, i: number) => (
+                {stats.topProducts.map((p, i) => (
                   <div key={p._id} className="flex items-center gap-3">
                     <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--accent)] text-[11px] font-bold text-[var(--primary)]" style={{ fontFamily: "var(--font-poppins)" }}>
                       {i + 1}
@@ -570,6 +659,7 @@ export default function DashboardPage() {
           </div>
         </motion.div>
       </div>
+      )}
 
       {/* 7. Wishlist Highlights + Coupons + Notifications */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }} className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -618,22 +708,29 @@ export default function DashboardPage() {
             </div>
             <Link href="/dashboard/coupons" className="text-[10px] font-semibold text-[var(--primary)]" style={{ fontFamily: "var(--font-poppins)" }}>View All</Link>
           </div>
-          <div className="space-y-3">
-            {coupons.map((coupon) => (
-              <div key={coupon.code} className="rounded-xl border border-dashed border-[var(--primary)]/30 bg-[var(--primary)]/5 p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-[var(--primary)]" style={{ fontFamily: "var(--font-poppins)" }}>{coupon.discount}</span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-bold tracking-wider text-[var(--dark-text)]" style={{ fontFamily: "var(--font-poppins)" }}>{coupon.code}</span>
-                    <button onClick={() => handleCopyCoupon(coupon.code)} className="flex h-5 w-5 items-center justify-center rounded-full text-[var(--primary)] transition-colors hover:bg-[var(--primary)]/10">
-                      {copiedCode === coupon.code ? <Check size={10} /> : <Copy size={10} />}
-                    </button>
+          {coupons.length === 0 ? (
+            <div className="py-6 text-center">
+              <Gift size={24} className="mx-auto text-[var(--muted)]/30" />
+              <p className="mt-2 text-xs text-[var(--muted)]" style={{ fontFamily: "var(--font-poppins)" }}>No coupons available</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {coupons.map((coupon) => (
+                <div key={coupon.code} className="rounded-xl border border-dashed border-[var(--primary)]/30 bg-[var(--primary)]/5 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-[var(--primary)]" style={{ fontFamily: "var(--font-poppins)" }}>{coupon.discount}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] font-bold tracking-wider text-[var(--dark-text)]" style={{ fontFamily: "var(--font-poppins)" }}>{coupon.code}</span>
+                      <button onClick={() => handleCopyCoupon(coupon.code)} className="flex h-5 w-5 items-center justify-center rounded-full text-[var(--primary)] transition-colors hover:bg-[var(--primary)]/10">
+                        {copiedCode === coupon.code ? <Check size={10} /> : <Copy size={10} />}
+                      </button>
+                    </div>
                   </div>
+                  <p className="mt-1 text-[10px] text-[var(--muted)]" style={{ fontFamily: "var(--font-poppins)" }}>{coupon.description}</p>
                 </div>
-                <p className="mt-1 text-[10px] text-[var(--muted)]" style={{ fontFamily: "var(--font-poppins)" }}>{coupon.description}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Notifications */}
@@ -645,20 +742,24 @@ export default function DashboardPage() {
               </div>
               <h4 className="text-sm font-semibold text-[var(--dark-text)]" style={{ fontFamily: "var(--font-poppins)" }}>Notifications</h4>
             </div>
-            <button
-              onClick={() => setNotificationsRead(true)}
-              className="text-[10px] font-semibold text-[var(--primary)]" style={{ fontFamily: "var(--font-poppins)" }}
-            >
-              {notificationsRead ? "All read ✓" : "Mark all read"}
-            </button>
+            <Link href="/dashboard/notifications" className="text-[10px] font-semibold text-[var(--primary)]" style={{ fontFamily: "var(--font-poppins)" }}>View All</Link>
           </div>
-          <div className="space-y-1">
+          {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <Bell size={24} className="text-[var(--muted)]/30" />
               <p className="mt-2 text-xs text-[var(--muted)]" style={{ fontFamily: "var(--font-poppins)" }}>No notifications yet</p>
               <p className="text-[10px] text-[var(--muted)]/60" style={{ fontFamily: "var(--font-poppins)" }}>You&apos;ll see updates here</p>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-2">
+              {notifications.slice(0, 4).map((n) => (
+                <div key={n._id} className={`rounded-xl p-3 ${n.read ? '' : 'bg-[var(--primary)]/5 border-l-2 border-l-[var(--primary)]'}`}>
+                  <p className="text-xs font-semibold text-[var(--dark-text)]" style={{ fontFamily: "var(--font-poppins)" }}>{n.title}</p>
+                  <p className="mt-0.5 text-[10px] text-[var(--muted)]" style={{ fontFamily: "var(--font-poppins)" }}>{n.message}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </motion.div>
 
@@ -673,46 +774,55 @@ export default function DashboardPage() {
             View All
           </Link>
         </div>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-5">
-          {products.slice(0, 5).map((product) => (
-            <div key={product.id} className="group overflow-hidden rounded-[20px] border border-[var(--border)] bg-white shadow-sm transition-all hover:shadow-md">
-              <div className="relative aspect-square overflow-hidden bg-[var(--accent)]">
-                <Image src={product.image} alt={product.name} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                {product.badge && (
-                  <span className="absolute left-2.5 top-2.5 rounded-full bg-[var(--primary)] px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-white" style={{ fontFamily: "var(--font-poppins)" }}>
-                    {product.badge}
-                  </span>
-                )}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white/80 to-transparent p-3 pt-10 opacity-0 transition-all duration-300 group-hover:opacity-100">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      addToCart(product);
-                    }}
-                    className="flex w-full items-center justify-center gap-2 rounded-full bg-[var(--primary)] py-2.5 text-[10px] font-bold uppercase tracking-wider text-white transition-colors hover:bg-[var(--primary)]/90" style={{ fontFamily: "var(--font-poppins)" }}
-                  >
-                    <ShoppingBag size={12} />
-                    Add to Cart
-                  </button>
+        {recommendedProducts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-[20px] border border-dashed py-12 text-center" style={{ borderColor: "var(--border)" }}>
+            <Package size={32} className="text-[var(--muted)]/30" />
+            <p className="mt-3 text-sm text-[var(--muted)]" style={{ fontFamily: "var(--font-poppins)" }}>No recommendations yet</p>
+            <p className="text-xs text-[var(--muted)]/60" style={{ fontFamily: "var(--font-poppins)" }}>Place an order to get personalized picks</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-5">
+            {recommendedProducts.map((product) => (
+              <div key={product._id} className="group overflow-hidden rounded-[20px] border border-[var(--border)] bg-white shadow-sm transition-all hover:shadow-md">
+                <div className="relative aspect-square overflow-hidden bg-[var(--accent)]">
+                  <Image src={product.image || "/products/placeholder.png"} alt={product.name} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                  {product.badge && (
+                    <span className="absolute left-2.5 top-2.5 rounded-full bg-[var(--primary)] px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-white" style={{ fontFamily: "var(--font-poppins)" }}>
+                      {product.badge}
+                    </span>
+                  )}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white/80 to-transparent p-3 pt-10 opacity-0 transition-all duration-300 group-hover:opacity-100">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        addToCart(product);
+                      }}
+                      className="flex w-full items-center justify-center gap-2 rounded-full bg-[var(--primary)] py-2.5 text-[10px] font-bold uppercase tracking-wider text-white transition-colors hover:bg-[var(--primary)]/90" style={{ fontFamily: "var(--font-poppins)" }}
+                    >
+                      <ShoppingBag size={12} />
+                      Add to Cart
+                    </button>
+                  </div>
+                </div>
+                <div className="p-3.5">
+                  <h4 className="text-xs font-semibold text-[var(--dark-text)] line-clamp-1" style={{ fontFamily: "var(--font-poppins)" }}>{product.name}</h4>
+                  <div className="mt-1 flex items-center gap-1">
+                    <Star size={10} className="fill-amber-400 text-amber-400" />
+                    <span className="text-[10px] text-[var(--muted)]" style={{ fontFamily: "var(--font-poppins)" }}>{product.rating || 4.0} ({product.reviewCount || 0})</span>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-sm font-bold text-[var(--primary)]" style={{ fontFamily: "var(--font-poppins)" }}>₹{(product.discountPrice || product.price || 0).toLocaleString('en-IN')}</span>
+                    {product.price && <span className="text-[10px] text-[var(--muted)] line-through">₹{product.price.toLocaleString('en-IN')}</span>}
+                  </div>
                 </div>
               </div>
-              <div className="p-3.5">
-                <h4 className="text-xs font-semibold text-[var(--dark-text)] line-clamp-1" style={{ fontFamily: "var(--font-poppins)" }}>{product.name}</h4>
-                <div className="mt-1 flex items-center gap-1">
-                  <Star size={10} className="fill-amber-400 text-amber-400" />
-                  <span className="text-[10px] text-[var(--muted)]" style={{ fontFamily: "var(--font-poppins)" }}>{product.rating} ({product.reviewCount})</span>
-                </div>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-sm font-bold text-[var(--primary)]" style={{ fontFamily: "var(--font-poppins)" }}>₹{product.discountPrice}</span>
-                  <span className="text-[10px] text-[var(--muted)] line-through">₹{product.price}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </motion.div>
 
       {/* 9. Business Insights */}
+      {isWholeseller && (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.5 }} className="mb-8">
         <div className="mb-4">
           <h3 className="text-base font-semibold text-[var(--dark-text)]" style={{ fontFamily: "var(--font-poppins)" }}>Business Insights</h3>
@@ -736,8 +846,10 @@ export default function DashboardPage() {
           ))}
         </div>
       </motion.div>
+      )}
 
       {/* 10. Monthly Bar Chart */}
+      {isWholeseller && (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.55 }} className="mb-8 overflow-hidden rounded-[20px] border border-[var(--border)] bg-white p-6 shadow-sm">
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -770,6 +882,7 @@ export default function DashboardPage() {
           )}
         </div>
       </motion.div>
+      )}
 
       {/* 11. Support CTA */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.6 }} className="mb-8 overflow-hidden rounded-[20px] border border-[var(--border)] bg-white shadow-sm">

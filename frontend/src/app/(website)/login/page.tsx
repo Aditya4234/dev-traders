@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Mail, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, Eye, EyeOff, ShoppingBag } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
 
 declare global {
@@ -40,16 +40,21 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user) {
-      router.push("/dashboard");
+      if (user.role === "admin" || user.role === "dealer") {
+        setError("This account is registered as a wholeseller. Please use the wholeseller login page.");
+      } else {
+        router.push("/dashboard");
+      }
     }
   }, [user, router]);
 
   useEffect(() => {
     const saved = getSavedCredentials();
     if (saved) {
-      setEmail(saved.email);
-      setPassword(saved.password);
-      setRememberMe(true);
+      requestAnimationFrame(() => {
+        setEmail(saved.email);
+        setRememberMe(true);
+      });
     }
   }, [getSavedCredentials]);
 
@@ -68,9 +73,15 @@ export default function LoginPage() {
           setLoading(true);
           try {
             await googleLoginWithApi(response.credential);
-            router.push("/dashboard");
-          } catch (err: any) {
-            setError(err.message || "Google login failed. Please try again.");
+            const userData = JSON.parse(localStorage.getItem("riya_touch_user") || "{}");
+            if (userData.role === "admin" || userData.role === "dealer") {
+              setError("This Google account is registered as a wholeseller. Please use the wholeseller login page.");
+            } else {
+              router.push("/dashboard");
+            }
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Google login failed. Please try again.";
+            setError(message);
           } finally {
             setLoading(false);
           }
@@ -115,13 +126,19 @@ export default function LoginPage() {
         await registerWithApi(name, email, password);
       } else {
         await loginWithApi(email, password, rememberMe);
+        const userData = JSON.parse(localStorage.getItem("riya_touch_user") || "{}");
+        if (userData.role === "admin" || userData.role === "dealer") {
+          setError("This account is registered as a wholeseller. Please use the wholeseller login page.");
+          return;
+        }
       }
       setEmail("");
       setPassword("");
       setName("");
       router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Authentication failed. Please try again.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Authentication failed. Please try again.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -210,7 +227,7 @@ export default function LoginPage() {
             {/* Header */}
             <div className="mb-8 text-center">
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary font-[family-name:var(--font-poppins)]">
-                Riya Touch Account
+                Customer Account
               </span>
               <h1 className="mt-2 font-[family-name:var(--font-playfair)] text-2xl font-light text-dark-text">
                 {isSignUp ? "Create Account" : "Welcome Back"}
@@ -276,12 +293,12 @@ export default function LoginPage() {
                     Password
                   </label>
                   {!isSignUp && (
-                    <a
-                      href="#"
+                    <Link
+                      href="/forgot-password"
                       className="text-[11px] text-primary hover:text-primary-dark transition-colors font-[family-name:var(--font-poppins)]"
                     >
                       Forgot Password?
-                    </a>
+                    </Link>
                   )}
                 </div>
                 <div className="relative">
@@ -382,8 +399,16 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* Wholeseller Link */}
+          <div className="mt-6 text-center text-xs text-muted">
+            <p>
+              Are you a <Link href="/wholesale-login" className="font-semibold text-primary hover:text-primary-dark transition-colors font-[family-name:var(--font-poppins)]">wholeseller</Link>?{" "}
+              Login here instead.
+            </p>
+          </div>
+
           {/* Back to Home */}
-          <p className="mt-8 text-center text-xs text-muted">
+          <p className="mt-6 text-center text-xs text-muted">
             <Link href="/" className="text-primary hover:text-primary-dark transition-colors font-[family-name:var(--font-poppins)]">
               ← Back to Home
             </Link>

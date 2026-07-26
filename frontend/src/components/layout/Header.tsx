@@ -12,7 +12,6 @@ import {
   User,
   Menu,
   X,
-  ChevronDown,
   ArrowRight,
   LogOut,
   Package,
@@ -48,24 +47,8 @@ export default function Header() {
     user,
     setCartOpen,
     setWishlistOpen,
-    setLoginOpen,
     logout,
   } = useShop();
-
-  if (pathname.startsWith("/dashboard")) {
-    return null;
-  }
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (headerSearchQuery.trim()) {
-      router.push(
-        `/l/lingerie?search=${encodeURIComponent(headerSearchQuery.trim())}`
-      );
-      setSearchOpen(false);
-      setHeaderSearchQuery("");
-    }
-  };
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -109,6 +92,21 @@ export default function Header() {
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [userMenuOpen]);
+
+  if (pathname.startsWith("/dashboard")) {
+    return null;
+  }
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (headerSearchQuery.trim()) {
+      router.push(
+        `/l/lingerie?search=${encodeURIComponent(headerSearchQuery.trim())}`
+      );
+      setSearchOpen(false);
+      setHeaderSearchQuery("");
+    }
+  };
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 

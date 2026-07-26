@@ -1,11 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Package, Search, Eye, ArrowRight } from "lucide-react";
+import { Package, ArrowRight } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
-import { useEffect } from "react";
 import * as api from "@/lib/api";
+
+interface OrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+  image: string;
+}
+
+interface Order {
+  _id: string;
+  status: string;
+  total: number;
+  createdAt: string;
+  items: OrderItem[];
+}
 
 const statusColors: Record<string, string> = {
   delivered: "badge-delivered",
@@ -16,22 +30,32 @@ const statusColors: Record<string, string> = {
 
 export default function OrdersPage() {
   const { user } = useShop();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [stats, setStats] = useState<{
+    totalOrders: number;
+    totalSpent: number;
+    pendingOrders: number;
+    deliveredOrders: number;
+  } | null>(null);
 
   useEffect(() => {
+    let cancelled = false
     if (user) {
-      api
-        .getMyOrders()
+      api.getMyOrders()
         .then((data) => {
-          setOrders(data.orders || []);
+          if (!cancelled) setOrders(data.orders || []);
         })
         .catch(() => {})
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+        .finally(() => { if (!cancelled) setLoading(false) });
+      api.getMyOrderStats()
+        .then((res) => {
+          if (!cancelled && res?.success) setStats(res.stats);
+        })
+        .catch(() => {});
     }
+    return () => { cancelled = true }
   }, [user]);
 
   const filteredOrders =
@@ -51,6 +75,27 @@ export default function OrdersPage() {
         </h1>
         <p className="mt-2 text-sm text-muted">Track and manage your orders</p>
       </div>
+
+      {/* Order Stats */}
+      {stats && stats.totalOrders > 0 && (
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            { label: "Total Orders", value: stats.totalOrders, color: "text-primary" },
+            { label: "Total Spent", value: `₹${stats.totalSpent.toLocaleString("en-IN")}`, color: "text-primary" },
+            { label: "Pending", value: stats.pendingOrders, color: "text-amber-600" },
+            { label: "Delivered", value: stats.deliveredOrders, color: "text-emerald-600" },
+          ].map((s) => (
+            <div key={s.label} className="rounded-[16px] bg-white p-4 shadow-sm border border-border/50">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted font-[family-name:var(--font-poppins)]">
+                {s.label}
+              </p>
+              <p className={`mt-1 text-xl font-bold ${s.color} font-[family-name:var(--font-poppins)]`}>
+                {s.value}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="mb-6 flex flex-wrap gap-2">
@@ -132,7 +177,7 @@ export default function OrdersPage() {
               {order.items && order.items.length > 0 && (
                 <div className="mt-4 border-t border-border/50 pt-4">
                   <div className="flex flex-wrap gap-2">
-                    {order.items.map((item: any, i: number) => (
+                    {order.items.map((item: OrderItem, i: number) => (
                       <span
                         key={i}
                         className="rounded-full bg-accent/50 px-3 py-1 text-[11px] text-dark-text/70 font-[family-name:var(--font-poppins)]"

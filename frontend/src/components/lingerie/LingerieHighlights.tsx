@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles, Wind, Heart, ShieldAlert } from "lucide-react";
+import { Sparkles, Wind, Heart } from "lucide-react";
 
 const highlights = [
   {

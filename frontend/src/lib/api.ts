@@ -1,3 +1,18 @@
+import type {
+  Product,
+  Category,
+  Collection,
+  HeroSlide,
+  Review,
+  User,
+  Pagination,
+  Offer,
+  NotificationData,
+  InvoiceData,
+  OrderData,
+  SearchResult,
+} from "@/types";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 async function fetchAPI<T>(
@@ -10,7 +25,6 @@ async function fetchAPI<T>(
     ...(options.headers as Record<string, string>),
   };
 
-  // Add auth token if exists
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("riya_touch_token");
     if (token) {
@@ -58,35 +72,35 @@ export async function getProducts(params?: {
     });
   }
   const qs = query.toString();
-  return fetchAPI<{ success: boolean; products: any[]; pagination: any }>(
+  return fetchAPI<{ success: boolean; products: Product[]; pagination: Pagination }>(
     `/products${qs ? `?${qs}` : ""}`
   );
 }
 
 export async function getProduct(id: string) {
-  return fetchAPI<{ success: boolean; product: any }>(`/products/${id}`);
+  return fetchAPI<{ success: boolean; product: Product }>(`/products/${id}`);
 }
 
 // ─── Categories ───
 export async function getCategories() {
-  return fetchAPI<{ success: boolean; categories: any[] }>("/categories");
+  return fetchAPI<{ success: boolean; categories: Category[] }>("/categories");
 }
 
 // ─── Collections ───
 export async function getCollections(type?: "featured" | "premium") {
   const qs = type ? `?type=${type}` : "";
-  return fetchAPI<{ success: boolean; collections: any[] }>(`/collections${qs}`);
+  return fetchAPI<{ success: boolean; collections: Collection[] }>(`/collections${qs}`);
 }
 
 // ─── Hero Slides ───
 export async function getHeroSlides() {
-  return fetchAPI<{ success: boolean; slides: any[] }>("/hero-slides");
+  return fetchAPI<{ success: boolean; slides: HeroSlide[] }>("/hero-slides");
 }
 
 // ─── Reviews ───
 export async function getReviews(productId?: string) {
   const qs = productId ? `?productId=${productId}` : "";
-  return fetchAPI<{ success: boolean; reviews: any[] }>(`/reviews${qs}`);
+  return fetchAPI<{ success: boolean; reviews: Review[] }>(`/reviews${qs}`);
 }
 
 // ─── Auth ───
@@ -95,29 +109,32 @@ export async function register(data: {
   email: string;
   password: string;
   phone?: string;
+  role?: "customer" | "dealer";
+  companyName?: string;
+  dealerId?: string;
 }) {
-  return fetchAPI<{ success: boolean; token: string; user: any }>("/auth/register", {
+  return fetchAPI<{ success: boolean; token: string; user: User }>("/auth/register", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export async function login(data: { email: string; password: string }) {
-  return fetchAPI<{ success: boolean; token: string; user: any }>("/auth/login", {
+  return fetchAPI<{ success: boolean; token: string; user: User }>("/auth/login", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export async function googleLogin(credential: string) {
-  return fetchAPI<{ success: boolean; token: string; user: any }>("/auth/google", {
+  return fetchAPI<{ success: boolean; token: string; user: User }>("/auth/google", {
     method: "POST",
     body: JSON.stringify({ credential }),
   });
 }
 
 export async function getMe() {
-  return fetchAPI<{ success: boolean; user: any }>("/auth/me");
+  return fetchAPI<{ success: boolean; user: User }>("/auth/me");
 }
 
 // ─── Orders ───
@@ -134,14 +151,29 @@ export async function createOrder(data: {
   paymentMethod?: string;
   whatsappSent?: boolean;
 }) {
-  return fetchAPI<{ success: boolean; order: any }>("/orders", {
+  return fetchAPI<{ success: boolean; order: OrderData }>("/orders", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export async function getMyOrders() {
-  return fetchAPI<{ success: boolean; orders: any[] }>("/orders/my");
+  return fetchAPI<{ success: boolean; orders: OrderData[] }>("/orders/my");
+}
+
+export async function getMyOrderStats() {
+  return fetchAPI<{
+    success: boolean;
+    stats: {
+      totalOrders: number;
+      totalSpent: number;
+      pendingOrders: number;
+      processingOrders: number;
+      deliveredOrders: number;
+      cancelledOrders: number;
+      shippedOrders: number;
+    };
+  }>("/orders/stats");
 }
 
 // ─── Newsletter ───
@@ -154,7 +186,7 @@ export async function subscribeNewsletter(email: string) {
 
 // ─── Admin Users Search ───
 export async function searchUsers(query: string) {
-  return fetchAPI<{ success: boolean; users: any[] }>(`/admin/users/search?q=${encodeURIComponent(query)}`);
+  return fetchAPI<{ success: boolean; users: SearchResult[] }>(`/admin/users/search?q=${encodeURIComponent(query)}`);
 }
 
 // ─── Invoices ───
@@ -183,7 +215,7 @@ export async function createInvoice(data: {
   placeOfSupply: string;
   userId?: string;
 }) {
-  return fetchAPI<{ success: boolean; invoice: any }>("/billing/invoice", {
+  return fetchAPI<{ success: boolean; invoice: InvoiceData }>("/billing/invoice", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -197,13 +229,24 @@ export async function getInvoices(params?: { status?: string; page?: number; lim
     });
   }
   const qs = query.toString();
-  return fetchAPI<{ success: boolean; invoices: any[]; pagination: any }>(
+  return fetchAPI<{ success: boolean; invoices: InvoiceData[]; pagination: Pagination }>(
     `/billing/invoices${qs ? `?${qs}` : ""}`
   );
 }
 
 export async function getInvoice(id: string) {
-  return fetchAPI<{ success: boolean; invoice: any }>(`/billing/invoices/${id}`);
+  return fetchAPI<{ success: boolean; invoice: InvoiceData }>(`/billing/invoices/${id}`);
+}
+
+export async function getBillingStats() {
+  return fetchAPI<{
+    success: boolean;
+    stats: {
+      monthly: { totalInvoiced: number; totalCollected: number; totalGST: number; count: number };
+      byStatus: { _id: string; count: number; total: number }[];
+      overdueCount: number;
+    };
+  }>("/billing/stats");
 }
 
 // ─── Payments ───
@@ -237,7 +280,7 @@ export async function verifyPayment(data: {
   return fetchAPI<{
     success: boolean;
     status: string;
-    payment: any;
+    payment: Record<string, unknown>;
   }>("/payments/verify", {
     method: "POST",
     body: JSON.stringify(data),
@@ -263,10 +306,191 @@ export async function getDashboardStats() {
       pendingOrders: number;
       deliveredOrders: number;
       cancelledOrders: number;
-      recentOrders: any[];
-      topProducts: any[];
+      recentOrders: OrderData[];
+      topProducts: { _id: string; totalSold: number; revenue: number }[];
       monthlyChart: { month: string; sales: number; orders: number }[];
       categorySales: { _id: string; total: number }[];
     };
   }>("/admin/stats");
+}
+
+// ─── Brands ───
+export async function getBrands() {
+  return fetchAPI<{ success: boolean; brands: { _id: string; name: string; count: number }[] }>("/brands");
+}
+
+// ─── Offers / Coupons ───
+export async function getOffers() {
+  return fetchAPI<{ success: boolean; offers: Offer[] }>("/offers");
+}
+
+// ─── Notifications ───
+export async function getNotifications(params?: { page?: number; limit?: number }) {
+  const query = new URLSearchParams();
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) query.set(key, String(value));
+    });
+  }
+  const qs = query.toString();
+  return fetchAPI<{
+    success: boolean;
+    notifications: NotificationData[];
+    unreadCount: number;
+    pagination: Pagination;
+  }>(`/notifications${qs ? `?${qs}` : ""}`);
+}
+
+export async function markNotificationRead(id: string) {
+  return fetchAPI<{ success: boolean; notification: NotificationData }>(`/notifications/${id}/read`, {
+    method: "PUT",
+  });
+}
+
+export async function markAllNotificationsRead() {
+  return fetchAPI<{ success: boolean; message: string }>("/notifications/read-all", {
+    method: "PUT",
+  });
+}
+
+// ─── Forgot Password ───
+export async function forgotPassword(email: string) {
+  return fetchAPI<{ success: boolean; message: string }>("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword(token: string, password: string) {
+  return fetchAPI<{ success: boolean; token: string; user: User }>("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, password }),
+  });
+}
+
+// ─── Recommendations ───
+export async function getRecommendations(limit?: number) {
+  const qs = limit ? `?limit=${limit}` : "";
+  return fetchAPI<{ success: boolean; recommendations: Product[] }>(`/recommendations${qs}`);
+}
+
+// ─── Products (top-selling for homepage) ───
+export async function getTopSellingProducts(limit = 8) {
+  return fetchAPI<{ success: boolean; products: Product[] }>(`/products?sort=-sales&limit=${limit}`);
+}
+
+// ─── Admin Overview ───
+export async function getAdminOverview() {
+  return fetchAPI<{
+    success: boolean;
+    overview: {
+      users: {
+        total: number;
+        customers: number;
+        dealers: number;
+        admins: number;
+        newThisMonth: number;
+        newThisWeek: number;
+        activeLast30Days: number;
+        loggedInToday: number;
+      };
+      orders: {
+        total: number;
+        today: number;
+        thisWeek: number;
+        thisMonth: number;
+        pending: number;
+        confirmed: number;
+        shipped: number;
+        delivered: number;
+        cancelled: number;
+      };
+      revenue: {
+        total: number;
+        today: number;
+        thisWeek: number;
+        thisMonth: number;
+        avgOrderValue: number;
+      };
+      payments: {
+        cod: number;
+        online: number;
+        whatsapp: number;
+      };
+      products: {
+        total: number;
+        active: number;
+        lowStock: { product: { name: string; image: string }; quantity: number; sku: string }[];
+      };
+      recentOrders: OrderData[];
+      dailySales: { date: string; sales: number; orders: number }[];
+    };
+  }>("/admin/overview");
+}
+
+// ─── Admin Users ───
+export async function getAdminUsers(params?: { page?: number; limit?: number; role?: string; search?: string }) {
+  const query = new URLSearchParams();
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== "") query.set(key, String(value));
+    });
+  }
+  const qs = query.toString();
+  return fetchAPI<{
+    success: boolean;
+    users: {
+      _id: string;
+      name: string;
+      email: string;
+      phone?: string;
+      role: string;
+      companyName?: string;
+      dealerId?: string;
+      lastLoginAt?: string;
+      loginCount: number;
+      createdAt: string;
+      profileImage?: string;
+    }[];
+    pagination: Pagination;
+  }>(`/admin/users${qs ? `?${qs}` : ""}`);
+}
+
+// ─── Wholeseller Dashboard ───
+export async function getWholesellerDashboard() {
+  return fetchAPI<{
+    success: boolean;
+    dashboard: {
+      revenue: {
+        total: number;
+        today: number;
+        thisWeek: number;
+        thisMonth: number;
+        avgOrderValue: number;
+        revenueChange: number;
+      };
+      orders: {
+        total: number;
+        today: number;
+        thisWeek: number;
+        thisMonth: number;
+        orderChange: number;
+        pending: number;
+        confirmed: number;
+        shipped: number;
+        delivered: number;
+        cancelled: number;
+      };
+      payments: {
+        cod: number;
+        online: number;
+        whatsapp: number;
+      };
+      recentOrders: OrderData[];
+      topProducts: { _id: string; totalSold: number; revenue: number }[];
+      dailySales: { date: string; sales: number; orders: number }[];
+      monthlyChart: { month: string; sales: number; orders: number }[];
+      categorySales: { _id: string; total: number }[];
+    };
+  }>("/wholeseller/dashboard");
 }

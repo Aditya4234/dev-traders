@@ -60,7 +60,7 @@ export default function SalePage() {
         if (data.success && data.products.length > 0) {
           setSaleProducts(
             data.products
-              .map((p: any) => ({
+              .map((p: Product) => ({
                 id: p._id || p.id,
                 name: p.name,
                 brand: p.brand,

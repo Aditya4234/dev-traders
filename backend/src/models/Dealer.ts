@@ -72,9 +72,6 @@ const dealerSchema = new Schema<IDealer>(
   { timestamps: true }
 );
 
-dealerSchema.index({ dealerCode: 1 });
-dealerSchema.index({ user: 1 });
-dealerSchema.index({ gstNumber: 1 });
 dealerSchema.index({ tier: 1 });
 
 export default mongoose.model<IDealer>("Dealer", dealerSchema);

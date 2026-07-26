@@ -1,7 +1,8 @@
 'use client'
 
-import { Tag, Search, Edit2, Eye } from 'lucide-react'
+import { Search, Edit2, Eye, ShieldAlert } from 'lucide-react'
 import { useState } from 'react'
+import { useShop } from '@/context/ShopContext'
 
 const products = [
   { id: 1, name: 'Cotton Kurti Set', sku: 'CKS-001', mrp: '₹1,200', wholesale: '₹850', margin: '29%' },
@@ -13,8 +14,20 @@ const products = [
 ]
 
 export default function PriceListPage() {
+  const { user } = useShop()
+  const isWholeseller = user?.role === 'admin' || user?.role === 'dealer'
   const [search, setSearch] = useState('')
   const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+
+  if (!isWholeseller) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 text-center">
+        <ShieldAlert size={48} className="text-[var(--muted)]/30" />
+        <h2 className="mt-4 text-lg font-semibold text-[var(--dark-text)]" style={{ fontFamily: 'var(--font-poppins)' }}>Access Restricted</h2>
+        <p className="mt-1 text-sm text-[var(--muted)]" style={{ fontFamily: 'var(--font-poppins)' }}>This section is available for wholesale partners only.</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">

@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import SectionHeader from "@/components/ui/SectionHeader";
 import { getCollections } from "@/lib/api";
+import type { Collection } from "@/types";
 import { collections as fallbackCollections } from "@/data/mock-data";
 
 export default function FeaturedCollections() {
@@ -17,7 +18,7 @@ export default function FeaturedCollections() {
       .then((data) => {
         if (data.success && data.collections.length > 0) {
           setCollections(
-            data.collections.map((c: any) => ({
+            data.collections.map((c: Collection) => ({
               id: c._id || c.id,
               title: c.title,
               subtitle: c.subtitle,

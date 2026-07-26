@@ -7,6 +7,7 @@ import * as api from "@/lib/api";
 export interface CartItem {
   product: Product;
   quantity: number;
+  size?: string;
 }
 
 interface ShopContextType {
@@ -24,7 +25,7 @@ interface ShopContextType {
   setCartOpen: (open: boolean) => void;
   setWishlistOpen: (open: boolean) => void;
   setLoginOpen: (open: boolean) => void;
-  addToCart: (product: Product, quantity?: number) => void;
+  addToCart: (product: Product, quantity?: number, size?: string) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   toggleWishlist: (product: Product) => void;
@@ -33,7 +34,7 @@ interface ShopContextType {
   loginWithApi: (email: string, password: string, remember?: boolean) => Promise<void>;
   getSavedCredentials: () => { email: string; password: string } | null;
   clearSavedCredentials: () => void;
-  registerWithApi: (name: string, email: string, password: string) => Promise<void>;
+  registerWithApi: (name: string, email: string, password: string, options?: { role?: "customer" | "dealer"; companyName?: string; dealerId?: string }) => Promise<void>;
   googleLoginWithApi: (credential: string) => Promise<void>;
   logout: () => void;
   clearCart: () => void;
@@ -42,9 +43,19 @@ interface ShopContextType {
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
 
+function loadFromStorage<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export function ShopProvider({ children }: { children: React.ReactNode }) {
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [wishlist, setWishlist] = useState<Product[]>([]);
+  const [cart, setCart] = useState<CartItem[]>(() => loadFromStorage<CartItem[]>("riya_touch_cart", []));
+  const [wishlist, setWishlist] = useState<Product[]>(() => loadFromStorage<Product[]>("riya_touch_wishlist", []));
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -98,17 +109,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   }, [setSessionCookie, clearSessionCookie]);
 
   useEffect(() => {
-    const savedCart = localStorage.getItem("riya_touch_cart");
-    const savedWishlist = localStorage.getItem("riya_touch_wishlist");
-
-    if (savedCart) {
-      try { setCart(JSON.parse(savedCart)); } catch (e) { console.error("Error parsing cart", e); }
-    }
-    if (savedWishlist) {
-      try { setWishlist(JSON.parse(savedWishlist)); } catch (e) { console.error("Error parsing wishlist", e); }
-    }
-
-    refreshUser();
+    void (async () => { await refreshUser(); })();
   }, [refreshUser]);
 
   useEffect(() => {
@@ -119,12 +120,14 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("riya_touch_wishlist", JSON.stringify(wishlist));
   }, [wishlist]);
 
-  const addToCart = useCallback((product: Product, quantity = 1) => {
+  const addToCart = useCallback((product: Product, quantity = 1, size?: string) => {
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.product.id === product.id);
+      const existingItem = prevCart.find(
+        (item) => item.product.id === product.id && item.size === (size || undefined)
+      );
       if (existingItem) {
         return prevCart.map((item) =>
-          item.product.id === product.id
+          item.product.id === product.id && item.size === (size || undefined)
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
@@ -189,17 +192,17 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       setUser(data.user);
       localStorage.setItem("riya_touch_user", JSON.stringify(data.user));
       if (remember) {
-        localStorage.setItem("riya_touch_saved_credentials", JSON.stringify({ email, password }));
+        localStorage.setItem("riya_touch_remembered_email", email);
       } else {
-        localStorage.removeItem("riya_touch_saved_credentials");
+        localStorage.removeItem("riya_touch_remembered_email");
       }
       setLoginOpen(false);
       setJustLoggedIn(true);
     }
   }, [setSessionCookie]);
 
-  const registerWithApi = useCallback(async (name: string, email: string, password: string) => {
-    const data = await api.register({ name, email, password });
+  const registerWithApi = useCallback(async (name: string, email: string, password: string, options?: { role?: "customer" | "dealer"; companyName?: string; dealerId?: string }) => {
+    const data = await api.register({ name, email, password, ...options });
     if (data.success) {
       localStorage.setItem("riya_touch_token", data.token);
       setSessionCookie(data.token);
@@ -230,17 +233,13 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   }, [clearSessionCookie]);
 
   const getSavedCredentials = useCallback(() => {
-    const saved = localStorage.getItem("riya_touch_saved_credentials");
-    if (!saved) return null;
-    try {
-      return JSON.parse(saved);
-    } catch {
-      return null;
-    }
+    const email = localStorage.getItem("riya_touch_remembered_email");
+    if (!email) return null;
+    return { email, password: "" };
   }, []);
 
   const clearSavedCredentials = useCallback(() => {
-    localStorage.removeItem("riya_touch_saved_credentials");
+    localStorage.removeItem("riya_touch_remembered_email");
   }, []);
 
   const clearCart = useCallback(() => {

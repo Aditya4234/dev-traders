@@ -40,7 +40,7 @@ const WHATSAPP_NUMBER = "919205778531";
 
 declare global {
   interface Window {
-    Razorpay: any;
+    Razorpay: new (options: Record<string, unknown>) => { open: () => void };
   }
 }
 
@@ -95,11 +95,13 @@ export default function CartDrawer() {
 
   useEffect(() => {
     if (user) {
-      setOrderForm((prev) => ({
-        ...prev,
-        name: prev.name || user.name || "",
-        phone: prev.phone || user.phone || "",
-      }));
+      requestAnimationFrame(() => {
+        setOrderForm((prev) => ({
+          ...prev,
+          name: prev.name || user.name || "",
+          phone: prev.phone || user.phone || "",
+        }));
+      });
     }
   }, [user]);
 
@@ -255,7 +257,7 @@ Riya Touch se order karne ke liye shukriya! 💕
         theme: {
           color: "#E91E63",
         },
-        handler: async (response: any) => {
+        handler: async (response: Record<string, string>) => {
           try {
             await verifyPayment({
               razorpayOrderId: response.razorpay_order_id,
@@ -306,8 +308,9 @@ Riya Touch se order karne ke liye shukriya! 💕
 
       const rzp = new window.Razorpay(options);
       rzp.open();
-    } catch (err: any) {
-      setFormError(err.message || "Payment failed. Please try again.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Payment failed. Please try again.";
+      setFormError(message);
       setSubmitting(false);
     }
   };

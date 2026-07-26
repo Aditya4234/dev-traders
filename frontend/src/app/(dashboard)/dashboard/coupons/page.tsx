@@ -1,26 +1,46 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Ticket, Copy, Check } from "lucide-react";
-import { useState } from "react";
+import { Ticket, Copy, Check, Loader2 } from "lucide-react";
+import { getOffers } from "@/lib/api";
+import type { Offer } from "@/types";
 
-const coupons = [
-  {
-    code: "RIYA20",
-    discount: "20% OFF",
-    description: "On your next order above ₹999",
-    expires: "Dec 31, 2026",
-  },
-  {
-    code: "WELCOME10",
-    discount: "10% OFF",
-    description: "First order discount",
-    expires: "Dec 31, 2026",
-  },
-];
+interface Coupon {
+  code: string;
+  discount: string;
+  description: string;
+  expires: string;
+  minOrder: number;
+}
 
 export default function CouponsPage() {
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [loading, setLoading] = useState(true);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await getOffers();
+        const offers = (res.offers || []).map((offer: Offer) => ({
+          code: offer.code || offer.title?.substring(0, 8).toUpperCase().replace(/\s/g, '') || '',
+          discount: offer.discountType === 'percentage' ? `${offer.discountValue}% OFF` : `₹${offer.discountValue} OFF`,
+          description: offer.description || offer.title || '',
+          expires: offer.validUntil
+            ? new Date(offer.validUntil).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+            : 'No expiry',
+          minOrder: offer.minOrderAmount || 0,
+        }));
+        setCoupons(offers);
+      } catch {
+        // empty state
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
 
   const handleCopy = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -41,7 +61,11 @@ export default function CouponsPage() {
         <p className="mt-2 text-sm text-muted">Available discount codes</p>
       </div>
 
-      {coupons.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : coupons.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-[24px] bg-white py-20 text-center shadow-sm border border-border/50">
           <Ticket size={48} className="text-muted/30" />
           <h3 className="mt-4 text-lg font-semibold text-dark-text">No coupons available</h3>
@@ -59,6 +83,9 @@ export default function CouponsPage() {
                 {coupon.discount}
               </span>
               <p className="mt-3 text-sm text-dark-text/70">{coupon.description}</p>
+              {coupon.minOrder > 0 && (
+                <p className="mt-1 text-[10px] text-muted">Min. order: ₹{coupon.minOrder.toLocaleString('en-IN')}</p>
+              )}
               <div className="mt-4 flex items-center justify-between">
                 <div className="flex items-center gap-2 rounded-full border border-dashed border-primary/40 bg-primary/5 px-4 py-2">
                   <span className="text-sm font-bold tracking-wider text-primary font-[family-name:var(--font-poppins)]">

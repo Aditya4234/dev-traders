@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import Cart from "../models/Cart";
+import Product from "../models/Product";
 import { optionalAuth, AuthRequest } from "../middleware/auth";
 
 const router = Router();
@@ -31,14 +32,24 @@ router.get("/", optionalAuth, async (req: AuthRequest, res: Response) => {
 // POST /api/cart - Add item to cart
 router.post("/", optionalAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const { product, name, price, quantity, image } = req.body;
+    const { product: productId, quantity, size } = req.body;
     const sessionId = req.headers["x-session-id"] as string;
     const userId = req.user?.id;
 
-    if (!product || !name || !price || !quantity || !image) {
-      res.status(400).json({ success: false, message: "All item fields required" });
+    if (!productId || !quantity) {
+      res.status(400).json({ success: false, message: "Product and quantity required" });
       return;
     }
+
+    const dbProduct = await Product.findById(productId);
+    if (!dbProduct || !dbProduct.isActive) {
+      res.status(400).json({ success: false, message: "Product not found or unavailable" });
+      return;
+    }
+
+    const price = dbProduct.discountPrice || dbProduct.price;
+    const name = dbProduct.name;
+    const image = dbProduct.image;
 
     let cart;
     if (userId) {
@@ -49,20 +60,21 @@ router.post("/", optionalAuth, async (req: AuthRequest, res: Response) => {
 
     if (!cart) {
       const cartData: any = {
-        items: [{ product, name, price, quantity, image }],
+        items: [{ product: productId, name, price, quantity, image, size }],
       };
       if (userId) cartData.user = userId;
       if (sessionId) cartData.sessionId = sessionId;
       cart = await Cart.create(cartData);
     } else {
       const existingItem = cart.items.find(
-        (item) => item.product.toString() === product
+        (item) => item.product.toString() === productId
       );
 
       if (existingItem) {
         existingItem.quantity += quantity;
+        existingItem.price = price;
       } else {
-        cart.items.push({ product, name, price, quantity, image });
+        cart.items.push({ product: productId, name, price, quantity, image, size });
       }
       await cart.save();
     }

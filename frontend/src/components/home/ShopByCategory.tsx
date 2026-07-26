@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -65,12 +64,6 @@ const categories = [
 ];
 
 export default function ShopByCategory() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-white via-soft-pink/30 to-white py-20 sm:py-28 md:py-32">
       {/* Background decoration */}

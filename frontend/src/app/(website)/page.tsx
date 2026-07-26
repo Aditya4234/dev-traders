@@ -1,9 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import {
   Sparkles,
   Shield,
@@ -15,8 +15,6 @@ import {
   ChevronRight,
   Eye,
   ShoppingBag,
-  Zap,
-  Clock,
   RefreshCw,
   Gem,
   Headphones,
@@ -27,7 +25,8 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
-import { products } from "@/data/mock-data";
+import { getProducts } from "@/lib/api";
+import type { Product } from "@/types";
 
 const heroStats = [
   { value: "500+", label: "Dealers", icon: Store },
@@ -100,7 +99,13 @@ const staggerContainer = {
 
 export default function LandingPage() {
   const { setLoginOpen } = useShop();
-  const router = useRouter();
+  const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    getProducts({ sort: "-sales", limit: 8 })
+      .then((res) => setTrendingProducts(res.products || []))
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -239,15 +244,15 @@ export default function LandingPage() {
                   <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
                 </Link>
-                <button
-                  onClick={() => setLoginOpen(true)}
+                <Link
+                  href="/wholesale-login"
                   className="group inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[#2D2D2D]/15 px-8 py-4 text-sm font-semibold uppercase tracking-wider text-[#2D2D2D] transition-all duration-300 hover:border-[#E8A0B0] hover:bg-[#E8A0B0]/5 hover:text-[#C48A96] sm:w-auto sm:px-10 sm:py-4.5 font-[family-name:var(--font-poppins)]"
                 >
                   Become a Dealer
                   <span className="transition-transform duration-300 group-hover:translate-x-1">
                     →
                   </span>
-                </button>
+                </Link>
               </motion.div>
 
               {/* Hero Statistics */}
@@ -483,16 +488,16 @@ export default function LandingPage() {
             viewport={{ once: true }}
             className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 sm:gap-6"
           >
-            {products.slice(0, 8).map((product, i) => (
+            {trendingProducts.map((product, i) => (
               <motion.div
-                key={product.id}
+                key={product._id || product.id || i}
                 variants={fadeUp}
                 transition={{ duration: 0.5, delay: i * 0.05 }}
               >
                 <div className="luxury-card group overflow-hidden">
                   <div className="relative aspect-square overflow-hidden bg-accent">
                     <Image
-                      src={product.image}
+                      src={product.image || "/products/placeholder.png"}
                       alt={product.name}
                       fill
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -518,18 +523,22 @@ export default function LandingPage() {
                     </h3>
                     <div className="mt-1 flex items-center gap-1">
                       <Star size={12} className="fill-amber-400 text-amber-400" />
-                      <span className="text-xs text-muted">{product.rating} ({product.reviewCount})</span>
+                      <span className="text-xs text-muted">{product.rating || 4.0} ({product.reviewCount || 0})</span>
                     </div>
                     <div className="mt-2 flex items-center gap-2">
                       <span className="text-base font-bold text-primary font-[family-name:var(--font-poppins)]">
-                        ₹{product.discountPrice}
+                        ₹{(product.discountPrice || product.price || 0).toLocaleString('en-IN')}
                       </span>
-                      <span className="text-xs text-muted line-through">
-                        ₹{product.price}
-                      </span>
-                      <span className="ml-auto text-[10px] font-bold text-primary bg-accent px-2 py-0.5 rounded-full font-[family-name:var(--font-poppins)]">
-                        {Math.round(((product.price - product.discountPrice) / product.price) * 100)}% OFF
-                      </span>
+                      {product.price && (
+                        <span className="text-xs text-muted line-through">
+                          ₹{product.price.toLocaleString('en-IN')}
+                        </span>
+                      )}
+                      {product.price && product.discountPrice && product.price > product.discountPrice && (
+                        <span className="ml-auto text-[10px] font-bold text-primary bg-accent px-2 py-0.5 rounded-full font-[family-name:var(--font-poppins)]">
+                          {Math.round(((product.price - product.discountPrice) / product.price) * 100)}% OFF
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -585,7 +594,7 @@ export default function LandingPage() {
               { icon: RefreshCw, title: "Easy Returns", desc: "30-day hassle-free return policy" },
               { icon: Shield, title: "Secure Payment", desc: "100% safe & encrypted checkout" },
               { icon: Headphones, title: "24/7 Support", desc: "Always here to help you" },
-            ].map((item, i) => (
+            ].map((item) => (
               <motion.div
                 key={item.title}
                 variants={fadeUp}

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Filter, ArrowUpDown, X, Search, Grid3X3 } from "lucide-react";
+import { Filter, ArrowUpDown, X, Search } from "lucide-react";
 import { getProducts } from "@/lib/api";
 import { products as fallbackProducts } from "@/data/mock-data";
 import ProductCard from "@/components/ui/ProductCard";
@@ -22,7 +22,7 @@ export default function LingerieCatalog({ categoryFilter, initialBadge, initialS
   const [sortBy, setSortBy] = useState<string>(
     initialSort === "new" ? "newest" : "popularity"
   );
-  const [badgeFilter, setBadgeFilter] = useState<string | null>(initialBadge || null);
+  const [badgeFilter] = useState<string | null>(initialBadge || null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [showMobileFilters, setShowMobileFilters] = useState<boolean>(false);
 
@@ -42,7 +42,7 @@ export default function LingerieCatalog({ categoryFilter, initialBadge, initialS
       .then((data) => {
         if (data.success && data.products.length > 0) {
           setAllProducts(
-            data.products.map((p: any) => ({
+            data.products.map((p: Product) => ({
               id: p._id || p.id,
               name: p.name,
               brand: p.brand,
@@ -63,7 +63,7 @@ export default function LingerieCatalog({ categoryFilter, initialBadge, initialS
 
   useEffect(() => {
     if (categoryFilter) {
-      setSelectedGroup(categoryFilter);
+      requestAnimationFrame(() => { setSelectedGroup(categoryFilter); });
     }
   }, [categoryFilter]);
 

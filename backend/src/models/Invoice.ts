@@ -25,6 +25,7 @@ export interface IInvoice extends Document {
     phone: string;
     address: string;
     city: string;
+    state: string;
     pincode: string;
     gstNumber?: string;
   };
@@ -76,6 +77,7 @@ const invoiceSchema = new Schema<IInvoice>(
       phone: { type: String, required: true },
       address: { type: String, required: true },
       city: { type: String, required: true },
+      state: { type: String, required: true },
       pincode: { type: String, required: true },
       gstNumber: { type: String },
     },
@@ -111,7 +113,6 @@ const invoiceSchema = new Schema<IInvoice>(
   { timestamps: true }
 );
 
-invoiceSchema.index({ invoiceNumber: 1 });
 invoiceSchema.index({ orderId: 1 });
 invoiceSchema.index({ dealer: 1 });
 invoiceSchema.index({ user: 1 });

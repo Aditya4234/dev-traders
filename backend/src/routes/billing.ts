@@ -1,12 +1,12 @@
 import { Router, Request, Response } from "express";
 import Invoice from "../models/Invoice";
-import { protect, AuthRequest } from "../middleware/auth";
+import { protect, wholesellerOnly, AuthRequest } from "../middleware/auth";
 import { createInvoice, updateInvoicePayment, CreateInvoiceInput } from "../services/billing";
 
 const router = Router();
 
 // POST /api/billing/invoice - Create invoice
-router.post("/invoice", protect, async (req: AuthRequest, res: Response) => {
+router.post("/invoice", protect, wholesellerOnly, async (req: AuthRequest, res: Response) => {
   try {
     const input: CreateInvoiceInput = req.body;
     const invoice = await createInvoice(input);
@@ -71,9 +71,14 @@ router.get("/invoices/:id", protect, async (req: AuthRequest, res: Response) => 
 });
 
 // PUT /api/billing/invoices/:id/status - Update invoice status
-router.put("/invoices/:id/status", protect, async (req: AuthRequest, res: Response) => {
+router.put("/invoices/:id/status", protect, wholesellerOnly, async (req: AuthRequest, res: Response) => {
   try {
     const { status } = req.body;
+    const validStatuses = ["draft", "issued", "paid", "cancelled", "overdue"];
+    if (!validStatuses.includes(status)) {
+      res.status(400).json({ success: false, message: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
+      return;
+    }
     const invoice = await Invoice.findByIdAndUpdate(
       req.params.id,
       { status },
@@ -90,7 +95,7 @@ router.put("/invoices/:id/status", protect, async (req: AuthRequest, res: Respon
 });
 
 // POST /api/billing/invoices/:id/pay - Record payment against invoice
-router.post("/invoices/:id/pay", protect, async (req: AuthRequest, res: Response) => {
+router.post("/invoices/:id/pay", protect, wholesellerOnly, async (req: AuthRequest, res: Response) => {
   try {
     const { amount, paymentMethod } = req.body;
     if (!amount || amount <= 0) {

@@ -4,6 +4,7 @@ import { useShop } from "@/context/ShopContext";
 import { X, Mail, Lock, User, ArrowRight } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 
 declare global {
   interface Window {
@@ -32,39 +33,49 @@ export default function LoginModal() {
   const googleBtnRef = useRef<HTMLDivElement>(null);
   const googleInitRef = useRef(false);
 
-  const initGoogle = () => {
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!clientId || !window.google || !googleBtnRef.current || googleInitRef.current) return;
-
-    googleInitRef.current = true;
-    window.google.accounts.id.initialize({
-      client_id: clientId,
-      callback: async (response: { credential: string }) => {
-        setError("");
-        setLoading(true);
-        try {
-          await googleLoginWithApi(response.credential);
-          setLoginOpen(false);
-        } catch (err: any) {
-          setError(err.message || "Google login failed. Please try again.");
-        } finally {
-          setLoading(false);
-        }
-      },
-    });
-    window.google.accounts.id.renderButton(googleBtnRef.current, {
-      theme: "outline",
-      size: "large",
-      width: "100%",
-      text: "continue_with",
-      shape: "pill",
-    });
-  };
-
   useEffect(() => {
     if (!loginOpen) return;
 
     googleInitRef.current = false;
+    const googleLoginWithApiRef = googleLoginWithApi;
+    const setLoginOpenRef = setLoginOpen;
+    const setErrorRef = setError;
+    const setLoadingRef = setLoading;
+
+    const initGoogle = () => {
+      const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+      if (!clientId || !window.google || !googleBtnRef.current || googleInitRef.current) return;
+
+      googleInitRef.current = true;
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: async (response: { credential: string }) => {
+          setErrorRef("");
+          setLoadingRef(true);
+          try {
+            await googleLoginWithApiRef(response.credential);
+            const userData = JSON.parse(localStorage.getItem("riya_touch_user") || "{}");
+            if (userData.role === "admin" || userData.role === "dealer") {
+              setErrorRef("This account is a wholeseller. Please use the wholeseller login page.");
+            } else {
+              setLoginOpenRef(false);
+            }
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Google login failed. Please try again.";
+            setErrorRef(message);
+          } finally {
+            setLoadingRef(false);
+          }
+        },
+      });
+      window.google.accounts.id.renderButton(googleBtnRef.current, {
+        theme: "outline",
+        size: "large",
+        width: "100%",
+        text: "continue_with",
+        shape: "pill",
+      });
+    };
 
     if (window.google) {
       setTimeout(initGoogle, 100);
@@ -79,7 +90,7 @@ export default function LoginModal() {
     }, 200);
 
     return () => clearInterval(interval);
-  }, [loginOpen]);
+  }, [loginOpen, googleLoginWithApi, setLoginOpen]);
 
   useEffect(() => {
     if (loginOpen) {
@@ -107,12 +118,19 @@ export default function LoginModal() {
         await registerWithApi(name, email, password);
       } else {
         await loginWithApi(email, password);
+        const userData = JSON.parse(localStorage.getItem("riya_touch_user") || "{}");
+        if (userData.role === "admin" || userData.role === "dealer") {
+          setError("This account is a wholeseller. Please use the wholeseller login page.");
+          setLoading(false);
+          return;
+        }
       }
       setEmail("");
       setPassword("");
       setName("");
-    } catch (err: any) {
-      setError(err.message || "Authentication failed. Please try again.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Authentication failed. Please try again.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -150,7 +168,7 @@ export default function LoginModal() {
             {/* Header */}
             <div className="mb-6 text-center">
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-rose-gold">
-                Riya Touch Account
+                Customer Account
               </span>
               <h2 className="mt-1 font-serif text-2xl font-light text-charcoal">
                 {isSignUp ? "Create Account" : "Welcome Back"}
@@ -286,6 +304,21 @@ export default function LoginModal() {
                   </button>
                 </p>
               )}
+            </div>
+
+            {/* Wholeseller Link */}
+            <div className="mt-4 text-center text-xs text-muted">
+              <p>
+                Are you a{" "}
+                <Link
+                  href="/wholesale-login"
+                  onClick={() => setLoginOpen(false)}
+                  className="font-semibold text-rose-gold hover:underline"
+                >
+                  wholeseller
+                </Link>
+                ? Login here instead.
+              </p>
             </div>
           </motion.div>
         </div>
