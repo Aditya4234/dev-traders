@@ -25,6 +25,7 @@ export interface IOrder extends Document {
   status: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
   paymentMethod: "cod" | "online";
   whatsappSent: boolean;
+  updatedAt: Date;
 }
 
 const orderSchema = new Schema<IOrder>(
