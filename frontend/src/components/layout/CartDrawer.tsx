@@ -698,6 +698,34 @@ Riya Touch se order karne ke liye shukriya! 💕
                       />
                     </div>
 
+                    {/* Delivery Slot */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-charcoal/70">
+                        Preferred Delivery Slot (Optional)
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { label: "Morning (9AM - 12PM)", value: "morning" },
+                          { label: "Afternoon (12PM - 4PM)", value: "afternoon" },
+                          { label: "Evening (4PM - 7PM)", value: "evening" },
+                          { label: "Any Time", value: "any" },
+                        ].map((slot) => (
+                          <button
+                            key={slot.value}
+                            type="button"
+                            onClick={() => setOrderForm({ ...orderForm, deliverySlot: slot.value } as any)}
+                            className={`rounded-xl border px-3 py-2.5 text-[11px] font-medium transition-all ${
+                              (orderForm as any).deliverySlot === slot.value
+                                ? "border-rose-gold bg-rose-gold/10 text-rose-gold-dark"
+                                : "border-soft-pink-dark bg-soft-pink/20 text-muted hover:border-rose-gold/50"
+                            }`}
+                          >
+                            {slot.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     {/* Order Summary mini */}
                     <div className="rounded-xl bg-soft-pink/30 border border-soft-pink-dark p-4 space-y-2">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-charcoal/70 mb-2">

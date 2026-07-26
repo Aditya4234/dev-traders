@@ -12,6 +12,11 @@ export interface IProduct extends Document {
   badge?: "new" | "sale" | "bestseller" | "trending";
   sizes?: string[];
   isActive: boolean;
+  stock: number;
+  sku: string;
+  dealerPrices: { minQty: number; price: number }[];
+  description: string;
+  weight: number;
 }
 
 const productSchema = new Schema<IProduct>(
@@ -30,6 +35,16 @@ const productSchema = new Schema<IProduct>(
     },
     sizes: [{ type: String }],
     isActive: { type: Boolean, default: true },
+    stock: { type: Number, default: 0, min: 0 },
+    sku: { type: String, default: "" },
+    dealerPrices: [
+      {
+        minQty: { type: Number, required: true },
+        price: { type: Number, required: true },
+      },
+    ],
+    description: { type: String, default: "" },
+    weight: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

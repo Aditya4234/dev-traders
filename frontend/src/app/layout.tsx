@@ -5,6 +5,7 @@ import { ShopProvider } from "@/context/ShopContext";
 import CartDrawer from "@/components/layout/CartDrawer";
 import WishlistDrawer from "@/components/layout/WishlistDrawer";
 import LoginModal from "@/components/layout/LoginModal";
+import WhatsAppWidget from "@/components/ui/WhatsAppWidget";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -26,20 +27,41 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Riya Touch | Premium Women's Innerwear & Lingerie",
+  title: "Riya Touch | Premium Women's Innerwear & Lingerie — Wholesale",
   description:
-    "Shop Riya Touch — premium women's bras, panties, lingerie sets, shapewear & nightwear. Feel Beautiful. Feel Comfortable. Feel Confident.",
+    "Shop Riya Touch — India's trusted wholesale women's innerwear brand. Premium bras, panties, lingerie sets, shapewear & nightwear at wholesale prices. 500+ active dealers across India.",
   keywords: [
     "Riya Touch",
-    "women bras",
-    "women panties",
-    "innerwear",
-    "lingerie",
-    "bra panty set",
-    "sports bra",
-    "shapewear",
-    "nightwear",
+    "women bras wholesale",
+    "women panties wholesale",
+    "innerwear wholesale",
+    "lingerie wholesale India",
+    "bra panty set wholesale",
+    "sports bra wholesale",
+    "shapewear wholesale",
+    "nightwear wholesale",
+    "wholesale innerwear distributor",
+    "women innerwear manufacturer",
   ],
+  openGraph: {
+    title: "Riya Touch | Premium Women's Innerwear & Lingerie — Wholesale",
+    description:
+      "India's trusted wholesale women's innerwear brand. Premium bras, panties, lingerie sets at wholesale prices.",
+    url: "https://riyatouch.com",
+    siteName: "Riya Touch",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Riya Touch | Premium Women's Innerwear",
+    description:
+      "India's trusted wholesale women's innerwear brand. Premium quality, wholesale pricing.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -52,6 +74,43 @@ export default function RootLayout({
       lang="en"
       className={`${playfair.variable} ${inter.variable} ${poppins.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Riya Touch",
+              url: "https://riyatouch.com",
+              logo: "https://riyatouch.com/products/logo.png",
+              description: "India's trusted wholesale women's innerwear brand. Premium bras, panties, lingerie sets at wholesale prices.",
+              contactPoint: {
+                "@type": "ContactPoint",
+                telephone: "+91-9205778531",
+                contactType: "customer service",
+              },
+              sameAs: [],
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "Riya Touch",
+              url: "https://riyatouch.com",
+              potentialAction: {
+                "@type": "SearchAction",
+                target: "https://riyatouch.com/l/lingerie?search={search_term_string}",
+                "query-input": "required name=search_term_string",
+              },
+            }),
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col font-sans">
         <Script
           src="https://accounts.google.com/gsi/client"
@@ -62,6 +121,7 @@ export default function RootLayout({
           <CartDrawer />
           <WishlistDrawer />
           <LoginModal />
+          <WhatsAppWidget />
         </ShopProvider>
       </body>
     </html>

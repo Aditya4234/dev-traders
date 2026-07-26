@@ -494,3 +494,72 @@ export async function getWholesellerDashboard() {
     };
   }>("/wholeseller/dashboard");
 }
+
+// ─── Stock Management (Admin) ───
+export async function getInventory(params?: { search?: string; lowStock?: boolean; page?: number; limit?: number }) {
+  const query = new URLSearchParams();
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== "") query.set(key, String(value));
+    });
+  }
+  const qs = query.toString();
+  return fetchAPI<{
+    success: boolean;
+    products: { _id: string; name: string; image: string; sku: string; stock: number; category: string; price: number }[];
+    pagination: Pagination;
+  }>(`/products${qs ? `?${qs}` : ""}`);
+}
+
+export async function updateProductStock(id: string, stock: number) {
+  return fetchAPI<{ success: boolean; product: Product }>(`/products/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({ stock }),
+  });
+}
+
+// ─── Product Catalog Management (Admin) ───
+export async function createProduct(data: Partial<Product>) {
+  return fetchAPI<{ success: boolean; product: Product }>("/products", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateProduct(id: string, data: Partial<Product>) {
+  return fetchAPI<{ success: boolean; product: Product }>(`/products/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteProduct(id: string) {
+  return fetchAPI<{ success: boolean; message: string }>(`/products/${id}`, {
+    method: "DELETE",
+  });
+}
+
+// ─── Bulk Order (WhatsApp) ───
+export async function sendBulkOrderWhatsApp(items: { name: string; quantity: number; size?: string }[]) {
+  const itemList = items.map((item) => `• ${item.name} (Qty: ${item.quantity}${item.size ? `, Size: ${item.size}` : ""})`).join("%0A");
+  const msg = encodeURIComponent(`*Bulk Order Request*%0A%0AItems:%0A${itemList}%0A%0APlease share the total price and availability.`);
+  window.open(`https://wa.me/919205778531?text=${msg}`, "_blank");
+}
+
+// ─── Loyalty Points ───
+export async function getLoyaltyPoints() {
+  return fetchAPI<{ success: boolean; points: number; history: { type: string; points: number; description: string; createdAt: string }[] }>("/auth/loyalty");
+}
+
+// ─── Delivery Slots ───
+export async function getDeliverySlots() {
+  return fetchAPI<{
+    success: boolean;
+    slots: { id: string; date: string; label: string; available: boolean }[];
+  }>("/orders/slots");
+}
+
+// ─── Customer Management (Admin) ───
+export async function getCustomerDetails(id: string) {
+  return fetchAPI<{ success: boolean; user: User; orders: OrderData[]; totalSpent: number }>(`/admin/users/${id}`);
+}

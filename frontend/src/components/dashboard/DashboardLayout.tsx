@@ -32,6 +32,11 @@ import {
   Send,
   Shield,
   BarChart3,
+  Package,
+  Truck,
+  Award,
+  Box,
+  Users,
 } from 'lucide-react'
 import { useShop } from '@/context/ShopContext'
 
@@ -66,6 +71,7 @@ function getNavSections(role: string): NavSection[] {
   ]
 
   if (isWholeseller) {
+    sections[1].items.unshift({ label: 'Bulk Order', href: '/dashboard/bulk-order', icon: <Box size={18} /> })
     sections[1].items.unshift({ label: 'Wholesale Catalog', href: '/shop', icon: <Store size={18} /> })
     sections.unshift({
       title: 'Admin',
@@ -82,12 +88,16 @@ function getNavSections(role: string): NavSection[] {
         { label: 'Outstanding', href: '/dashboard/outstanding', icon: <AlertCircle size={18} /> },
         { label: 'Credit Ledger', href: '/dashboard/credit-ledger', icon: <Receipt size={18} /> },
         { label: 'Wallet', href: '/dashboard/wallet', icon: <Wallet size={18} /> },
+        { label: 'Loyalty Points', href: '/dashboard/loyalty', icon: <Award size={18} /> },
       ],
     })
     sections.push({
-      title: 'Products',
+      title: 'Products & Inventory',
       items: [
         { label: 'Price List', href: '/dashboard/price-list', icon: <FileText size={18} /> },
+        { label: 'Product Catalog', href: '/dashboard/products', icon: <Package size={18} /> },
+        { label: 'Stock Management', href: '/dashboard/stock', icon: <Box size={18} /> },
+        { label: 'Dispatch', href: '/dashboard/dispatch', icon: <Truck size={18} /> },
       ],
     })
   }
@@ -101,6 +111,12 @@ function getNavSections(role: string): NavSection[] {
       ],
     })
   } else {
+    sections.push({
+      title: 'Rewards',
+      items: [
+        { label: 'Loyalty Points', href: '/dashboard/loyalty', icon: <Award size={18} /> },
+      ],
+    })
     sections.push({
       title: 'Support',
       items: [

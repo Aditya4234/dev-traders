@@ -120,7 +120,10 @@ export default function LingerieCatalog({ categoryFilter, initialBadge, initialS
         return (
           product.name.toLowerCase().includes(query) ||
           product.category.toLowerCase().includes(query) ||
-          product.brand.toLowerCase().includes(query)
+          product.brand.toLowerCase().includes(query) ||
+          (product.sizes && product.sizes.some(s => s.toLowerCase().includes(query))) ||
+          String(product.discountPrice).includes(query) ||
+          String(product.price).includes(query)
         );
       })
       .sort((a, b) => {
@@ -167,7 +170,7 @@ export default function LingerieCatalog({ categoryFilter, initialBadge, initialS
             <div className="relative w-full sm:w-64">
               <input
                 type="text"
-                placeholder="Search styles..."
+                placeholder="Search by name, brand, size, price..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-full border border-soft-pink-dark bg-soft-pink/20 py-2.5 pl-4 pr-10 text-sm outline-none focus:border-rose-gold focus:ring-1 focus:ring-rose-gold"

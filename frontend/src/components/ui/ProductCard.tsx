@@ -276,14 +276,14 @@ export default function ProductCard({ product, className }: ProductCardProps) {
                 {formatPrice(product.discountPrice)}
               </span>
               {product.price > product.discountPrice && (
-                <span className="text-xs text-muted line-through sm:text-sm">
-                  {formatPrice(product.price)}
-                </span>
-              )}
-              {discount > 0 && (
-                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-600 sm:text-[10px]">
-                  Save {discount}%
-                </span>
+                <>
+                  <span className="text-xs text-muted line-through sm:text-sm">
+                    {formatPrice(product.price)}
+                  </span>
+                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-600 sm:text-[10px]">
+                    MRP {discount}% OFF
+                  </span>
+                </>
               )}
             </div>
           </div>
@@ -384,14 +384,24 @@ export default function ProductCard({ product, className }: ProductCardProps) {
                 </div>
 
                 {/* Price */}
-                <div className="mb-4 flex items-baseline gap-3">
-                  <span className="font-serif text-3xl font-semibold text-charcoal">
-                    {formatPrice(product.discountPrice)}
-                  </span>
-                  {product.price > product.discountPrice && (
-                    <span className="text-lg text-muted line-through">
-                      {formatPrice(product.price)}
+                <div className="mb-4 flex flex-col gap-1">
+                  <div className="flex items-baseline gap-3">
+                    <span className="font-serif text-3xl font-semibold text-charcoal">
+                      {formatPrice(product.discountPrice)}
                     </span>
+                    {product.price > product.discountPrice && (
+                      <span className="text-lg text-muted line-through">
+                        {formatPrice(product.price)}
+                      </span>
+                    )}
+                  </div>
+                  {product.price > product.discountPrice && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-emerald-600">
+                        You save {formatPrice(product.price - product.discountPrice)} ({discount}% OFF)
+                      </span>
+                      <span className="text-[10px] text-muted">MRP incl. of all taxes</span>
+                    </div>
                   )}
                 </div>
 
