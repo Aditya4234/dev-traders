@@ -186,4 +186,63 @@ router.put("/:id/status", protect, adminOnly, async (req: Request, res: Response
   }
 });
 
+// GET /api/orders/:id/status - Poll order status (for real-time tracking)
+router.get("/:id/status", protect, async (req: AuthRequest, res: Response) => {
+  try {
+    const order = await Order.findById(req.params.id).select("status updatedAt");
+    if (!order) {
+      res.status(404).json({ success: false, message: "Order not found" });
+      return;
+    }
+    if (req.user?.role !== "admin" && req.user?.role !== "dealer" && order.user?.toString() !== req.user?.id) {
+      res.status(403).json({ success: false, message: "Access denied" });
+      return;
+    }
+    res.json({ success: true, status: order.status, updatedAt: order.updatedAt });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// GET /api/orders/:id/stream - SSE for real-time order tracking
+router.get("/:id/stream", protect, async (req: AuthRequest, res: Response) => {
+  try {
+    const order = await Order.findById(req.params.id).select("status user");
+    if (!order) {
+      res.status(404).json({ success: false, message: "Order not found" });
+      return;
+    }
+    if (req.user?.role !== "admin" && req.user?.role !== "dealer" && order.user?.toString() !== req.user?.id) {
+      res.status(403).json({ success: false, message: "Access denied" });
+      return;
+    }
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
+
+    let lastStatus = order.status;
+
+    const interval = setInterval(async () => {
+      try {
+        const updated = await Order.findById(req.params.id).select("status updatedAt");
+        if (updated && updated.status !== lastStatus) {
+          lastStatus = updated.status;
+          res.write(`data: ${JSON.stringify({ status: updated.status, updatedAt: updated.updatedAt })}\n\n`);
+        }
+      } catch {
+        // ignore
+      }
+    }, 5000);
+
+    req.on("close", () => {
+      clearInterval(interval);
+      res.end();
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 export default router;

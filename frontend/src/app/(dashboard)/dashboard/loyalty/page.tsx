@@ -7,11 +7,12 @@ import * as api from "@/lib/api";
 import { useShop } from "@/context/ShopContext";
 
 interface PointsTransaction {
-  id: string;
+  _id: string;
   date: string;
   description: string;
   points: number;
-  type: "earned" | "redeemed" | "bonus";
+  type: "earned" | "redeemed" | "bonus" | "adjustment";
+  createdAt: string;
 }
 
 interface EarnOption {
@@ -23,22 +24,13 @@ interface EarnOption {
 interface RedeemOption {
   discount: string;
   points: number;
+  value: number;
 }
 
 const tiers = [
   { name: "Bronze", min: 0, max: 999, color: "text-amber-600", bg: "bg-amber-50" },
   { name: "Silver", min: 1000, max: 4999, color: "text-gray-500", bg: "bg-gray-50" },
   { name: "Gold", min: 5000, max: Infinity, color: "text-yellow-500", bg: "bg-yellow-50" },
-];
-
-const mockTransactions: PointsTransaction[] = [
-  { id: "1", date: "2026-07-20", description: "Order #ORD-8A3F placed", points: 120, type: "earned" },
-  { id: "2", date: "2026-07-18", description: "Referral bonus – Priya S.", points: 100, type: "bonus" },
-  { id: "3", date: "2026-07-15", description: "Order #ORD-7B2E placed", points: 85, type: "earned" },
-  { id: "4", date: "2026-07-12", description: "Redeemed ₹500 off coupon", points: -900, type: "redeemed" },
-  { id: "5", date: "2026-07-10", description: "Order #ORD-6C1D placed", points: 200, type: "earned" },
-  { id: "6", date: "2026-07-08", description: "Profile completion bonus", points: 50, type: "bonus" },
-  { id: "7", date: "2026-07-05", description: "Review posted – Satin Bra Set", points: 25, type: "bonus" },
 ];
 
 const earnOptions: EarnOption[] = [
@@ -49,21 +41,66 @@ const earnOptions: EarnOption[] = [
 ];
 
 const redeemOptions: RedeemOption[] = [
-  { discount: "₹100 off", points: 200 },
-  { discount: "₹500 off", points: 900 },
-  { discount: "₹1000 off", points: 1700 },
+  { discount: "₹100 off", points: 200, value: 100 },
+  { discount: "₹500 off", points: 900, value: 500 },
+  { discount: "₹1000 off", points: 1700, value: 1000 },
 ];
 
 export default function LoyaltyPage() {
   const { user } = useShop();
-  const [totalPoints] = useState(2450);
+  const [totalPoints, setTotalPoints] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [transactions] = useState<PointsTransaction[]>(mockTransactions);
+  const [transactions, setTransactions] = useState<PointsTransaction[]>([]);
+  const [redeeming, setRedeeming] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(timer);
+    async function load() {
+      try {
+        const res = await api.getLoyaltyAccount();
+        if (res.success) {
+          setTotalPoints(res.account?.totalPoints || 0);
+          setTransactions(
+            (res.transactions || []).map((t: any) => ({
+              ...t,
+              date: t.createdAt,
+            }))
+          );
+        }
+      } catch {
+        // empty
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, []);
+
+  const handleRedeem = async (option: RedeemOption) => {
+    if (totalPoints < option.points || redeeming) return;
+    setRedeeming(true);
+    try {
+      const res = await api.redeemLoyaltyPoints({
+        points: option.points,
+        description: `Redeemed ${option.discount} coupon`,
+      });
+      if (res.success) {
+        setTotalPoints(res.account.totalPoints);
+        const newTx: PointsTransaction = {
+          _id: Date.now().toString(),
+          createdAt: new Date().toISOString(),
+          date: new Date().toISOString(),
+          description: `Redeemed ${option.discount} coupon`,
+          points: -option.points,
+          type: "redeemed",
+        };
+        setTransactions((prev) => [newTx, ...prev]);
+      }
+    } catch {
+      // silent
+    } finally {
+      setRedeeming(false);
+    }
+  };
 
   const pointsValue = totalPoints * 0.5;
 
@@ -260,15 +297,16 @@ export default function LoyaltyPage() {
                       {option.points.toLocaleString()} points
                     </p>
                     <button
-                      disabled={!canRedeem}
+                      disabled={!canRedeem || redeeming}
+                      onClick={() => handleRedeem(option)}
                       className={`mt-4 flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold transition-colors ${
-                        canRedeem
+                        canRedeem && !redeeming
                           ? "bg-[var(--primary)] text-white hover:opacity-90"
                           : "bg-gray-200 text-gray-400 cursor-not-allowed"
                       }`}
                       style={{ fontFamily: "var(--font-poppins)" }}
                     >
-                      Redeem <ArrowRight size={12} />
+                      {redeeming ? "Redeeming..." : <>Redeem <ArrowRight size={12} /></>}
                     </button>
                   </div>
                 );
@@ -287,7 +325,7 @@ export default function LoyaltyPage() {
             <div className="mt-4 space-y-3">
               {transactions.map((tx) => (
                 <div
-                  key={tx.id}
+                  key={tx._id}
                   className="flex items-center gap-4 rounded-xl border border-[var(--border)]/30 p-4 transition-colors hover:bg-[var(--accent)]/50"
                 >
                   <div

@@ -10,7 +10,9 @@ import {
   Clock,
   Send,
   ArrowRight,
+  CheckCircle,
 } from "lucide-react";
+import { submitContactForm } from "@/lib/api";
 
 const contactInfo = [
   {
@@ -52,12 +54,23 @@ export default function ContactPage() {
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
-    setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
+    setSubmitting(true);
+    setError("");
+    try {
+      await submitContactForm(formData);
+      setSubmitted(true);
+      setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
+    } catch {
+      setError("Failed to send message. Please try again.");
+    } finally {
+      setSubmitting(false);
+      setTimeout(() => setSubmitted(false), 4000);
+    }
   };
 
   return (
@@ -147,8 +160,15 @@ export default function ContactPage() {
               </h2>
 
               {submitted && (
-                <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 font-[family-name:var(--font-poppins)]">
+                <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 flex items-center gap-3 text-sm text-emerald-700 font-[family-name:var(--font-poppins)]">
+                  <CheckCircle size={18} />
                   Thank you! Your message has been sent. We&apos;ll get back to you soon.
+                </div>
+              )}
+
+              {error && (
+                <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 font-[family-name:var(--font-poppins)]">
+                  {error}
                 </div>
               )}
 
@@ -237,13 +257,23 @@ export default function ContactPage() {
                 </div>
                 <button
                   type="submit"
-                  className="btn-primary group inline-flex items-center gap-2"
+                  disabled={submitting}
+                  className="btn-primary group inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Send Message
-                  <Send
-                    size={16}
-                    className="transition-transform duration-300 group-hover:translate-x-0.5"
-                  />
+                  {submitting ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      Send Message
+                      <Send
+                        size={16}
+                        className="transition-transform duration-300 group-hover:translate-x-0.5"
+                      />
+                    </>
+                  )}
                 </button>
               </form>
             </motion.div>

@@ -23,6 +23,12 @@ import paymentRoutes from "./routes/payment";
 import recommendationRoutes from "./routes/recommendations";
 import notificationRoutes from "./routes/notifications";
 import wholesellerRoutes from "./routes/wholeseller";
+import contactRoutes from "./routes/contact";
+import loyaltyRoutes from "./routes/loyalty";
+import couponRoutes from "./routes/coupons";
+import creditRoutes from "./routes/credit";
+import outstandingRoutes from "./routes/outstanding";
+import wishlistRoutes from "./routes/wishlist";
 import { initRedis } from "./services/redis";
 import { apiLimiter, authLimiter, searchLimiter, paymentLimiter } from "./middleware/rateLimiter";
 
@@ -113,6 +119,12 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/wholeseller", wholesellerRoutes);
+app.use("/api/contact", contactRoutes);
+app.use("/api/loyalty", loyaltyRoutes);
+app.use("/api/coupons", couponRoutes);
+app.use("/api/credit", creditRoutes);
+app.use("/api/outstanding", outstandingRoutes);
+app.use("/api/wishlist", wishlistRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {
