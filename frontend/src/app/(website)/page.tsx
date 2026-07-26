@@ -563,6 +563,61 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ═══════════════════════════════════════════════ PRODUCT VIDEO SHOWCASE ═══════════════════════════════════════════════ */}
+      <section className="py-24 bg-white">
+        <div className="mx-auto max-w-7xl px-4 md:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-14 text-center"
+          >
+            <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary font-[family-name:var(--font-poppins)]">
+              Product Showcase
+            </span>
+            <h2 className="mt-3 font-[family-name:var(--font-playfair)] text-3xl font-light text-dark-text md:text-4xl">
+              See Our Collection in Action
+            </h2>
+          </motion.div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            {[0, 1].map((idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: idx * 0.15 }}
+                className="group overflow-hidden rounded-[20px] border border-border/50 bg-white shadow-lg transition-shadow duration-300 hover:shadow-2xl"
+              >
+                <div className="relative aspect-[4/5] overflow-hidden sm:aspect-video">
+                  <video
+                    src={idx === 0 ? "/video%20product/product%201.mp4" : "/video%20product/product2.mp4"}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    preload="auto"
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+                </div>
+                <div className="p-5 text-center">
+                  <h3 className="font-[family-name:var(--font-playfair)] text-lg font-semibold text-dark-text">
+                    {idx === 0 ? "Premium Bra Collection" : "Lingerie & Panty Range"}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted font-[family-name:var(--font-poppins)]">
+                    {idx === 0
+                      ? "Soft, comfortable & designed for everyday luxury"
+                      : "Wholesale prices on trending styles & designs"}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ═══════════════════════════════════════════════ WHY CHOOSE US ═══════════════════════════════════════════════ */}
       <section className="py-24 gradient-soft">
         <div className="mx-auto max-w-7xl px-4 md:px-6 lg:px-8">
