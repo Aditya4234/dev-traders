@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import Newsletter from "../models/Newsletter";
+import { protect, adminOnly, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
@@ -27,7 +28,7 @@ router.post("/subscribe", async (req: Request, res: Response) => {
 });
 
 // GET /api/newsletter/subscribers (Admin)
-router.get("/subscribers", async (_req: Request, res: Response) => {
+router.get("/subscribers", protect, adminOnly, async (_req: Request, res: Response) => {
   try {
     const subscribers = await Newsletter.find({ isActive: true }).sort("-createdAt");
     res.json({ success: true, subscribers });

@@ -1,12 +1,12 @@
 import { Router, Request, Response } from "express";
 import Order from "../models/Order";
-import { protect, AuthRequest } from "../middleware/auth";
+import { protect, optionalAuth, adminOnly, AuthRequest } from "../middleware/auth";
 import { sendOrderNotification } from "../services/notification";
 
 const router = Router();
 
 // POST /api/orders - Create order
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", optionalAuth, async (req: AuthRequest, res: Response) => {
   try {
     const { items, customer, paymentMethod, whatsappSent } = req.body;
 
@@ -28,7 +28,7 @@ router.post("/", async (req: Request, res: Response) => {
     const shipping = subtotal >= 999 ? 0 : 49;
     const total = subtotal + shipping;
 
-    const order = await Order.create({
+    const orderData: any = {
       items,
       customer,
       subtotal,
@@ -36,7 +36,13 @@ router.post("/", async (req: Request, res: Response) => {
       total,
       paymentMethod: paymentMethod || "cod",
       whatsappSent: whatsappSent || false,
-    });
+    };
+
+    if (req.user?.id) {
+      orderData.user = req.user.id;
+    }
+
+    const order = await Order.create(orderData);
 
     // Send WhatsApp/SMS notification to admin
     sendOrderNotification(order).catch((err) =>
@@ -50,7 +56,7 @@ router.post("/", async (req: Request, res: Response) => {
 });
 
 // GET /api/orders - Get all orders (admin)
-router.get("/", async (_req: Request, res: Response) => {
+router.get("/", protect, adminOnly, async (_req: Request, res: Response) => {
   try {
     const orders = await Order.find().sort("-createdAt");
     res.json({ success: true, orders });
@@ -84,7 +90,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 });
 
 // PUT /api/orders/:id/status (Admin)
-router.put("/:id/status", async (req: Request, res: Response) => {
+router.put("/:id/status", protect, adminOnly, async (req: Request, res: Response) => {
   try {
     const { status } = req.body;
     const order = await Order.findByIdAndUpdate(

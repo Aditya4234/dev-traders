@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import HeroSlide from "../models/HeroSlide";
+import { protect, adminOnly, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
@@ -14,7 +15,7 @@ router.get("/", async (_req: Request, res: Response) => {
 });
 
 // POST /api/hero-slides (Admin)
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", protect, adminOnly, async (req: Request, res: Response) => {
   try {
     const slide = await HeroSlide.create(req.body);
     res.status(201).json({ success: true, slide });
@@ -24,7 +25,7 @@ router.post("/", async (req: Request, res: Response) => {
 });
 
 // PUT /api/hero-slides/:id (Admin)
-router.put("/:id", async (req: Request, res: Response) => {
+router.put("/:id", protect, adminOnly, async (req: Request, res: Response) => {
   try {
     const slide = await HeroSlide.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -41,7 +42,7 @@ router.put("/:id", async (req: Request, res: Response) => {
 });
 
 // DELETE /api/hero-slides/:id (Admin)
-router.delete("/:id", async (req: Request, res: Response) => {
+router.delete("/:id", protect, adminOnly, async (req: Request, res: Response) => {
   try {
     const slide = await HeroSlide.findByIdAndDelete(req.params.id);
     if (!slide) {

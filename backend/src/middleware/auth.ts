@@ -112,3 +112,19 @@ export const generateToken = (userId: string): string => {
     expiresIn: process.env.JWT_EXPIRE as string || "7d",
   } as jwt.SignOptions);
 };
+
+export const adminOnly = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  if (!req.user) {
+    res.status(401).json({ success: false, message: "Not authorized" });
+    return;
+  }
+  if (req.user.role !== "admin") {
+    res.status(403).json({ success: false, message: "Admin access only" });
+    return;
+  }
+  next();
+};

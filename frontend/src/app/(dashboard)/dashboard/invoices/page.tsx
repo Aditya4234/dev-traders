@@ -1,11 +1,12 @@
 'use client'
 
-import { FileText, Download, Eye, Calendar, Loader2 } from 'lucide-react'
+import { FileText, Download, Eye, Calendar, Loader2, Plus } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import * as api from '@/lib/api'
 import { generateInvoicePDF } from '@/lib/invoice-pdf'
 import { useShop } from '@/context/ShopContext'
+import Link from 'next/link'
 
 interface InvoiceItem {
   name: string
@@ -110,11 +111,19 @@ export default function InvoicesPage() {
         </div>
         <div className="flex items-center gap-2">
           {user && (
-            <div className="text-right mr-2">
+            <div className="text-right mr-2 hidden sm:block">
               <p className="text-xs font-semibold text-[var(--dark-text)]">{user.name}</p>
               <p className="text-[10px] text-[var(--muted)]">{user.email}</p>
             </div>
           )}
+          <Link
+            href="/dashboard/invoices/create"
+            className="flex items-center gap-1.5 rounded-xl bg-[var(--primary)] px-4 py-2 text-xs font-semibold text-white shadow-md transition-all hover:shadow-lg"
+            style={{ fontFamily: 'var(--font-poppins)' }}
+          >
+            <Plus size={14} />
+            Create Invoice
+          </Link>
         </div>
       </div>
 

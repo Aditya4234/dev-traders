@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: "Riya Touch"
+    orgId: 1
+    folder: "Riya Touch"
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import Category from "../models/Category";
+import { protect, adminOnly, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
@@ -28,7 +29,7 @@ router.get("/:slug", async (req: Request, res: Response) => {
 });
 
 // POST /api/categories (Admin)
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", protect, adminOnly, async (req: Request, res: Response) => {
   try {
     const category = await Category.create(req.body);
     res.status(201).json({ success: true, category });
@@ -38,7 +39,7 @@ router.post("/", async (req: Request, res: Response) => {
 });
 
 // PUT /api/categories/:id (Admin)
-router.put("/:id", async (req: Request, res: Response) => {
+router.put("/:id", protect, adminOnly, async (req: Request, res: Response) => {
   try {
     const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -55,7 +56,7 @@ router.put("/:id", async (req: Request, res: Response) => {
 });
 
 // DELETE /api/categories/:id (Admin)
-router.delete("/:id", async (req: Request, res: Response) => {
+router.delete("/:id", protect, adminOnly, async (req: Request, res: Response) => {
   try {
     const category = await Category.findByIdAndDelete(req.params.id);
     if (!category) {

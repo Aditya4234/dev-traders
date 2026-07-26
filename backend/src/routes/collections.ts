@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import Collection from "../models/Collection";
+import { protect, adminOnly, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
@@ -33,7 +34,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 });
 
 // POST /api/collections (Admin)
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", protect, adminOnly, async (req: Request, res: Response) => {
   try {
     const collection = await Collection.create(req.body);
     res.status(201).json({ success: true, collection });
@@ -43,7 +44,7 @@ router.post("/", async (req: Request, res: Response) => {
 });
 
 // PUT /api/collections/:id (Admin)
-router.put("/:id", async (req: Request, res: Response) => {
+router.put("/:id", protect, adminOnly, async (req: Request, res: Response) => {
   try {
     const collection = await Collection.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -60,7 +61,7 @@ router.put("/:id", async (req: Request, res: Response) => {
 });
 
 // DELETE /api/collections/:id (Admin)
-router.delete("/:id", async (req: Request, res: Response) => {
+router.delete("/:id", protect, adminOnly, async (req: Request, res: Response) => {
   try {
     const collection = await Collection.findByIdAndDelete(req.params.id);
     if (!collection) {

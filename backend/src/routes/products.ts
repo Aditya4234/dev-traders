@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import Product from "../models/Product";
+import { protect, adminOnly, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
@@ -152,7 +153,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 });
 
 // POST /api/products (Admin)
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", protect, adminOnly, async (req: Request, res: Response) => {
   try {
     const product = await Product.create(req.body);
     res.status(201).json({ success: true, product });
@@ -162,7 +163,7 @@ router.post("/", async (req: Request, res: Response) => {
 });
 
 // PUT /api/products/:id (Admin)
-router.put("/:id", async (req: Request, res: Response) => {
+router.put("/:id", protect, adminOnly, async (req: Request, res: Response) => {
   try {
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -179,7 +180,7 @@ router.put("/:id", async (req: Request, res: Response) => {
 });
 
 // DELETE /api/products/:id (Admin)
-router.delete("/:id", async (req: Request, res: Response) => {
+router.delete("/:id", protect, adminOnly, async (req: Request, res: Response) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {

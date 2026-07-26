@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: riya-mongo
+  namespace: riya-touch
+  labels:
+    app: riya-mongo
+spec:
+  serviceName: riya-mongo
+  replicas: 1
+  selector:
+    matchLabels:
+      app: riya-mongo
+  template:
+    metadata:
+      labels:
+        app: riya-mongo
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:7
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongo-data
+              mountPath: /data/db
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+  volumeClaimTemplates:
+    - metadata:
+        name: mongo-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 20Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: riya-mongo
+  namespace: riya-touch
+  labels:
+    app: riya-mongo
+spec:
+  selector:
+    app: riya-mongo
+  ports:
+    - port: 27017
+      targetPort: 27017
+  clusterIP: None

@@ -153,6 +153,36 @@ export async function subscribeNewsletter(email: string) {
 }
 
 // ─── Invoices ───
+export async function createInvoice(data: {
+  customer: {
+    name: string;
+    phone: string;
+    address: string;
+    city: string;
+    state: string;
+    pincode: string;
+    gstNumber?: string;
+  };
+  items: {
+    productId: string;
+    name: string;
+    hsnCode: string;
+    quantity: number;
+    unitPrice: number;
+    discount?: number;
+    gstRate: number;
+  }[];
+  shippingCharges?: number;
+  discount?: number;
+  notes?: string;
+  placeOfSupply: string;
+}) {
+  return fetchAPI<{ success: boolean; invoice: any }>("/billing/invoice", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
 export async function getInvoices(params?: { status?: string; page?: number; limit?: number }) {
   const query = new URLSearchParams();
   if (params) {

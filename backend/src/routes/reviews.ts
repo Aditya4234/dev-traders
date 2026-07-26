@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import Review from "../models/Review";
+import { protect, adminOnly, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
@@ -28,8 +29,8 @@ router.post("/", async (req: Request, res: Response) => {
   }
 });
 
-// DELETE /api/reviews/:id
-router.delete("/:id", async (req: Request, res: Response) => {
+// DELETE /api/reviews/:id (Admin)
+router.delete("/:id", protect, adminOnly, async (req: Request, res: Response) => {
   try {
     const review = await Review.findByIdAndDelete(req.params.id);
     if (!review) {

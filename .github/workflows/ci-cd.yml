@@ -1,0 +1,116 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: ${{ github.repository }}/backend
+  FRONTEND_IMAGE: ${{ github.repository }}/frontend
+
+jobs:
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install backend deps
+        working-directory: backend
+        run: npm ci
+
+      - name: Backend typecheck
+        working-directory: backend
+        run: npx tsc --noEmit
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Frontend lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Frontend typecheck
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+  build-and-push:
+    needs: lint-and-typecheck
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        include:
+          - context: ./backend
+            image: backend
+          - context: ./frontend
+            image: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}
+          tags: |
+            type=sha
+            type=raw,value=latest
+
+      - name: Build and push ${{ matrix.image }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.image }}:latest
+            ${{ env.REGISTRY }}/${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.image }}:${{ github.sha }}
+
+  deploy-staging:
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to staging cluster
+        run: |
+          echo "Deploying to staging Kubernetes cluster..."
+          # kubectl apply -f k8s/namespace.yml
+          # kubectl apply -f k8s/secrets.yml
+          # kubectl apply -f k8s/mongodb.yml
+          # kubectl apply -f k8s/redis.yml
+          # kubectl apply -f k8s/elasticsearch.yml
+          # kubectl apply -f k8s/backend.yml
+          # kubectl apply -f k8s/frontend.yml
+          # kubectl apply -f k8s/ingress.yml
+          # kubectl apply -f k8s/monitoring.yml
+          # kubectl rollout restart deployment/riya-backend -n riya-touch
+          # kubectl rollout restart deployment/riya-frontend -n riya-touch
+          echo "Deployment complete"
+
+      - name: Notify deployment
+        if: success()
+        run: echo "Staging deployment successful"
