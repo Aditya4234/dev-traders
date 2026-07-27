@@ -143,7 +143,14 @@ export default function WholesellerDashboardPage() {
         if (active) setLoading(false);
       }
     })();
-    return () => { active = false; };
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      if (!active) return;
+      getWholesellerDashboard()
+        .then((res) => { if (active && res?.success) setData(res.dashboard); })
+        .catch(() => {});
+    }, 30000);
+    return () => { active = false; clearInterval(interval); };
   }, []);
 
   if (loading) {

@@ -2,12 +2,12 @@ import { Router, Response } from "express";
 import Product from "../models/Product";
 import Order from "../models/Order";
 import User from "../models/User";
-import { protect, adminOnly, AuthRequest } from "../middleware/auth";
+import { protect, wholesellerOnly, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
 // GET /api/admin/stats - Dashboard statistics
-router.get("/stats", protect, adminOnly, async (req: AuthRequest, res: Response) => {
+router.get("/stats", protect, wholesellerOnly, async (req: AuthRequest, res: Response) => {
   try {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -198,8 +198,8 @@ router.get("/users/search", protect, async (req: AuthRequest, res: Response) => 
   }
 });
 
-// GET /api/admin/users - List all users with login/activity data (admin only)
-router.get("/users", protect, adminOnly, async (req: AuthRequest, res: Response) => {
+// GET /api/admin/users - List all users with login/activity data (admin/dealer)
+router.get("/users", protect, wholesellerOnly, async (req: AuthRequest, res: Response) => {
   try {
     const { page = "1", limit = "50", role, search } = req.query as Record<string, string>;
 
@@ -235,7 +235,7 @@ router.get("/users", protect, adminOnly, async (req: AuthRequest, res: Response)
 });
 
 // GET /api/admin/overview - Comprehensive admin overview
-router.get("/overview", protect, adminOnly, async (req: AuthRequest, res: Response) => {
+router.get("/overview", protect, wholesellerOnly, async (req: AuthRequest, res: Response) => {
   try {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);

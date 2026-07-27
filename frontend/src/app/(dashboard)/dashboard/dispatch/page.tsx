@@ -43,7 +43,7 @@ export default function DispatchPage() {
     let active = true;
     (async () => {
       try {
-        const data = await api.getMyOrders();
+        const data = await api.getAllOrders();
         if (active) setOrders(data.orders || []);
       } catch {
         if (active) setOrders([]);

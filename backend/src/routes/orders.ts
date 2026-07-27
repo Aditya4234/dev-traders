@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import Order from "../models/Order";
 import Product from "../models/Product";
-import { protect, optionalAuth, adminOnly, AuthRequest } from "../middleware/auth";
+import { protect, optionalAuth, wholesellerOnly, AuthRequest } from "../middleware/auth";
 import { sendOrderNotification } from "../services/notification";
 
 const router = Router();
@@ -74,7 +74,7 @@ router.post("/", optionalAuth, async (req: AuthRequest, res: Response) => {
 });
 
 // GET /api/orders - Get all orders (admin)
-router.get("/", protect, adminOnly, async (_req: Request, res: Response) => {
+router.get("/", protect, wholesellerOnly, async (_req: Request, res: Response) => {
   try {
     const orders = await Order.find().sort("-createdAt");
     res.json({ success: true, orders });
@@ -162,8 +162,8 @@ router.get("/:id", protect, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// PUT /api/orders/:id/status (Admin)
-router.put("/:id/status", protect, adminOnly, async (req: Request, res: Response) => {
+// PUT /api/orders/:id/status (Admin/Dealer)
+router.put("/:id/status", protect, wholesellerOnly, async (req: Request, res: Response) => {
   try {
     const { status } = req.body;
     const validStatuses = ["pending", "confirmed", "shipped", "delivered", "cancelled"];

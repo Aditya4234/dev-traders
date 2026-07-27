@@ -161,6 +161,10 @@ export async function getMyOrders() {
   return fetchAPI<{ success: boolean; orders: OrderData[] }>("/orders/my");
 }
 
+export async function getAllOrders() {
+  return fetchAPI<{ success: boolean; orders: OrderData[] }>("/orders");
+}
+
 export async function getMyOrderStats() {
   return fetchAPI<{
     success: boolean;
