@@ -257,16 +257,18 @@ export default function LoginPage() {
                   <label className="text-[11px] font-semibold uppercase tracking-wider text-dark-text/80 font-[family-name:var(--font-poppins)]">
                     Full Name
                   </label>
-                  <div className="relative">
+                  <div className="relative flex items-center">
+                    <span className="pointer-events-none absolute left-4 flex h-full items-center">
+                      <User className="h-[18px] w-[18px] text-muted" />
+                    </span>
                     <input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Enter your name"
-                      className="input-luxury pl-12"
+                      className="input-luxury pl-[44px]"
                       required
                     />
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted" />
                   </div>
                 </div>
               )}
@@ -275,21 +277,23 @@ export default function LoginPage() {
                 <label className="text-[11px] font-semibold uppercase tracking-wider text-dark-text/80 font-[family-name:var(--font-poppins)]">
                   Email Address
                 </label>
-                <div className="relative">
+                <div className="relative flex items-center">
+                  <span className="pointer-events-none absolute left-4 flex h-full items-center">
+                    <Mail className="h-[18px] w-[18px] text-muted" />
+                  </span>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@example.com"
-                    className="input-luxury pl-12"
+                    className="input-luxury pl-[44px]"
                     required
                   />
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted" />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <label className="text-[11px] font-semibold uppercase tracking-wider text-dark-text/80 font-[family-name:var(--font-poppins)]">
                     Password
                   </label>
@@ -302,20 +306,22 @@ export default function LoginPage() {
                     </Link>
                   )}
                 </div>
-                <div className="relative">
+                <div className="relative flex items-center">
+                  <span className="pointer-events-none absolute left-4 flex h-full items-center">
+                    <Lock className="h-[18px] w-[18px] text-muted" />
+                  </span>
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
-                    className="input-luxury pl-12 pr-12"
+                    className="input-luxury pl-[44px] pr-[44px]"
                     required
                   />
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted" />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-dark-text transition-colors"
+                    className="absolute right-0 flex h-full w-[44px] items-center justify-center text-muted hover:text-dark-text transition-colors"
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -341,7 +347,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full btn-primary flex items-center justify-center gap-2 py-4 mt-2 disabled:opacity-50"
+                className="btn-primary flex w-full items-center justify-center gap-2 py-4 mt-2 disabled:opacity-50"
               >
                 {loading ? (
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -355,7 +361,7 @@ export default function LoginPage() {
             </form>
 
             {/* Divider */}
-            <div className="my-6 flex items-center gap-4">
+            <div className="my-5 flex items-center gap-4">
               <div className="h-px flex-1 bg-border" />
               <span className="text-[10px] uppercase tracking-wider text-muted font-[family-name:var(--font-poppins)]">
                 or continue with
@@ -364,8 +370,8 @@ export default function LoginPage() {
             </div>
 
             {/* Google Login */}
-            <div className="w-full flex justify-center">
-              <div ref={googleBtnRef} className="w-full [&>div]:w-full" />
+            <div className="w-full">
+              <div ref={googleBtnRef} className="mx-auto w-full [&>div]:mx-auto [&>div]:w-full" />
             </div>
 
             {/* Toggle Mode */}
