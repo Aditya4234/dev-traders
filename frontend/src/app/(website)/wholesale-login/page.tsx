@@ -24,6 +24,12 @@ declare global {
   }
 }
 
+interface FieldErrors {
+  email?: string;
+  password?: string;
+  name?: string;
+}
+
 export default function WholesaleLoginPage() {
   const router = useRouter();
   const { loginWithApi, registerWithApi, googleLoginWithApi, user, getSavedCredentials } = useShop();
@@ -37,15 +43,17 @@ export default function WholesaleLoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const googleBtnRef = useRef<HTMLDivElement>(null);
   const googleInitRef = useRef(false);
+  const errorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (user) {
       if (user.role === "admin" || user.role === "dealer") {
         router.push("/dashboard/wholeseller");
       } else {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setError("This account is registered as a customer. Please use the customer login page.");
       }
     }
@@ -73,6 +81,7 @@ export default function WholesaleLoginPage() {
         client_id: clientId,
         callback: async (response: { credential: string }) => {
           setError("");
+          setFieldErrors({});
           setLoading(true);
           try {
             await googleLoginWithApi(response.credential);
@@ -114,12 +123,58 @@ export default function WholesaleLoginPage() {
     return () => clearInterval(interval);
   }, [googleLoginWithApi, router]);
 
+  function validateField(field: string, value: string): string | undefined {
+    if (field === "email") {
+      if (!value.trim()) return "Email is required";
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Enter a valid email address";
+    }
+    if (field === "password") {
+      if (!value) return "Password is required";
+      if (value.length < 6) return "Password must be at least 6 characters";
+    }
+    if (field === "name") {
+      if (!value.trim()) return "Full name is required";
+    }
+    return undefined;
+  }
+
+  function validateAll(): FieldErrors {
+    const errors: FieldErrors = {};
+    const emailErr = validateField("email", email);
+    const passwordErr = validateField("password", password);
+    if (emailErr) errors.email = emailErr;
+    if (passwordErr) errors.password = passwordErr;
+    if (isSignUp) {
+      const nameErr = validateField("name", name);
+      if (nameErr) errors.name = nameErr;
+    }
+    return errors;
+  }
+
+  function handleBlur(field: string) {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    const err = validateField(field, field === "email" ? email : field === "password" ? password : name);
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      if (err) {
+        (next as Record<string, string>)[field] = err;
+      } else {
+        delete (next as Record<string, string>)[field];
+      }
+      return next;
+    });
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (!email || !password || (isSignUp && !name)) {
-      setError("Please fill out all required fields.");
+    const errors = validateAll();
+    setFieldErrors(errors);
+    setTouched({ email: true, password: true, ...(isSignUp ? { name: true } : {}) });
+
+    if (Object.keys(errors).length > 0) {
+      errorRef.current?.focus();
       return;
     }
 
@@ -152,6 +207,13 @@ export default function WholesaleLoginPage() {
       setLoading(false);
     }
   };
+
+  function toggleSignUp() {
+    setIsSignUp((v) => !v);
+    setError("");
+    setFieldErrors({});
+    setTouched({});
+  }
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -215,7 +277,7 @@ export default function WholesaleLoginPage() {
           transition={{ duration: 0.6 }}
           className="w-full max-w-md"
         >
-          <Link href="/" className="mb-10 block text-center">
+          <Link href="/" className="mb-10 block text-center" aria-label="Back to home">
             <span className="font-[family-name:var(--font-playfair)] text-2xl font-semibold tracking-[0.04em] text-dark-text sm:text-3xl">
               RIYA{" "}
               <span className="text-primary">TOUCH</span>
@@ -238,12 +300,22 @@ export default function WholesaleLoginPage() {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} noValidate className="space-y-5">
+              {/* Screen-reader error announcement */}
+              <div aria-live="assertive" className="sr-only">
+                {(error || Object.keys(fieldErrors).length > 0) && (
+                  <span>{error || Object.values(fieldErrors).join(". ")}</span>
+                )}
+              </div>
+
               {error && (
                 <motion.div
+                  ref={errorRef}
+                  role="alert"
+                  tabIndex={-1}
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl bg-red-50 p-4 text-xs text-red-500 border border-red-100"
+                  className="rounded-2xl bg-red-50 p-4 text-xs text-red-500 border border-red-100 focus:outline-none focus:ring-2 focus:ring-red-300"
                 >
                   {error}
                 </motion.div>
@@ -252,76 +324,121 @@ export default function WholesaleLoginPage() {
               {isSignUp && (
                 <>
                   <div className="space-y-2">
-                    <label className="text-[11px] font-semibold uppercase tracking-wider text-dark-text/80 font-[family-name:var(--font-poppins)]">
+                    <label htmlFor="ws-name" className="text-[11px] font-semibold uppercase tracking-wider text-dark-text/80 font-[family-name:var(--font-poppins)]">
                       Full Name
                     </label>
-                    <div className="relative">
+                    <div className="relative flex items-center">
+                      <span className="pointer-events-none absolute left-4 flex h-full items-center">
+                        <User className="h-[18px] w-[18px] text-muted" />
+                      </span>
                       <input
+                        id="ws-name"
                         type="text"
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        onChange={(e) => {
+                          setName(e.target.value);
+                          if (touched.name) {
+                            const err = validateField("name", e.target.value);
+                            setFieldErrors((prev) => {
+                              const next = { ...prev };
+                              if (err) next.name = err;
+                              else delete next.name;
+                              return next;
+                            });
+                          }
+                        }}
+                        onBlur={() => handleBlur("name")}
                         placeholder="Enter your name"
-                        className="input-luxury pl-12"
-                        required
+                        aria-invalid={!!fieldErrors.name}
+                        aria-describedby={fieldErrors.name ? "ws-name-error" : undefined}
+                        className={`input-luxury pl-[44px] ${fieldErrors.name && touched.name ? "border-red-400 focus:border-red-500 focus:shadow-[0_0_0_4px_rgba(239,68,68,0.1)]" : ""}`}
                       />
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted" />
                     </div>
+                    {fieldErrors.name && touched.name && (
+                      <p id="ws-name-error" className="text-[11px] text-red-500 mt-1" role="alert">{fieldErrors.name}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[11px] font-semibold uppercase tracking-wider text-dark-text/80 font-[family-name:var(--font-poppins)]">
+                    <label htmlFor="ws-company" className="text-[11px] font-semibold uppercase tracking-wider text-dark-text/80 font-[family-name:var(--font-poppins)]">
                       Company Name
                     </label>
-                    <div className="relative">
+                    <div className="relative flex items-center">
+                      <span className="pointer-events-none absolute left-4 flex h-full items-center">
+                        <Building2 className="h-[18px] w-[18px] text-muted" />
+                      </span>
                       <input
+                        id="ws-company"
                         type="text"
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         placeholder="Your shop / business name"
-                        className="input-luxury pl-12"
+                        className="input-luxury pl-[44px]"
                       />
-                      <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted" />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[11px] font-semibold uppercase tracking-wider text-dark-text/80 font-[family-name:var(--font-poppins)]">
+                    <label htmlFor="ws-dealer-id" className="text-[11px] font-semibold uppercase tracking-wider text-dark-text/80 font-[family-name:var(--font-poppins)]">
                       Dealer ID (if any)
                     </label>
-                    <div className="relative">
+                    <div className="relative flex items-center">
+                      <span className="pointer-events-none absolute left-4 flex h-full items-center">
+                        <Hash className="h-[18px] w-[18px] text-muted" />
+                      </span>
                       <input
+                        id="ws-dealer-id"
                         type="text"
                         value={dealerId}
                         onChange={(e) => setDealerId(e.target.value)}
                         placeholder="e.g. RT-1234"
-                        className="input-luxury pl-12"
+                        className="input-luxury pl-[44px]"
                       />
-                      <Hash className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted" />
                     </div>
                   </div>
                 </>
               )}
 
               <div className="space-y-2">
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-dark-text/80 font-[family-name:var(--font-poppins)]">
+                <label htmlFor="ws-email" className="text-[11px] font-semibold uppercase tracking-wider text-dark-text/80 font-[family-name:var(--font-poppins)]">
                   Email Address
                 </label>
-                <div className="relative">
+                <div className="relative flex items-center">
+                  <span className="pointer-events-none absolute left-4 flex h-full items-center">
+                    <Mail className="h-[18px] w-[18px] text-muted" />
+                  </span>
                   <input
+                    id="ws-email"
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (touched.email) {
+                        const err = validateField("email", e.target.value);
+                        setFieldErrors((prev) => {
+                          const next = { ...prev };
+                          if (err) next.email = err;
+                          else delete next.email;
+                          return next;
+                        });
+                      }
+                    }}
+                    onBlur={() => handleBlur("email")}
                     placeholder="name@example.com"
-                    className="input-luxury pl-12"
-                    required
+                    autoComplete="email"
+                    aria-invalid={!!fieldErrors.email}
+                    aria-describedby={fieldErrors.email ? "ws-email-error" : undefined}
+                    className={`input-luxury pl-[44px] ${fieldErrors.email && touched.email ? "border-red-400 focus:border-red-500 focus:shadow-[0_0_0_4px_rgba(239,68,68,0.1)]" : ""}`}
                   />
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted" />
                 </div>
+                {fieldErrors.email && touched.email && (
+                  <p id="ws-email-error" className="text-[11px] text-red-500 mt-1" role="alert">{fieldErrors.email}</p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="text-[11px] font-semibold uppercase tracking-wider text-dark-text/80 font-[family-name:var(--font-poppins)]">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="ws-password" className="text-[11px] font-semibold uppercase tracking-wider text-dark-text/80 font-[family-name:var(--font-poppins)]">
                     Password
                   </label>
                   {!isSignUp && (
@@ -333,36 +450,57 @@ export default function WholesaleLoginPage() {
                     </Link>
                   )}
                 </div>
-                <div className="relative">
+                <div className="relative flex items-center">
+                  <span className="pointer-events-none absolute left-4 flex h-full items-center">
+                    <Lock className="h-[18px] w-[18px] text-muted" />
+                  </span>
                   <input
+                    id="ws-password"
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (touched.password) {
+                        const err = validateField("password", e.target.value);
+                        setFieldErrors((prev) => {
+                          const next = { ...prev };
+                          if (err) next.password = err;
+                          else delete next.password;
+                          return next;
+                        });
+                      }
+                    }}
+                    onBlur={() => handleBlur("password")}
                     placeholder="Enter your password"
-                    className="input-luxury pl-12 pr-12"
-                    required
+                    autoComplete={isSignUp ? "new-password" : "current-password"}
+                    aria-invalid={!!fieldErrors.password}
+                    aria-describedby={fieldErrors.password ? "ws-password-error" : undefined}
+                    className={`input-luxury pl-[44px] pr-[44px] ${fieldErrors.password && touched.password ? "border-red-400 focus:border-red-500 focus:shadow-[0_0_0_4px_rgba(239,68,68,0.1)]" : ""}`}
                   />
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-muted" />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-dark-text transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute right-0 flex h-full w-[44px] items-center justify-center text-muted hover:text-dark-text transition-colors focus:outline-none focus:text-dark-text"
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
+                {fieldErrors.password && touched.password && (
+                  <p id="ws-password-error" className="text-[11px] text-red-500 mt-1" role="alert">{fieldErrors.password}</p>
+                )}
               </div>
 
               {!isSignUp && (
                 <div className="flex items-center gap-3">
                   <input
                     type="checkbox"
-                    id="remember"
+                    id="ws-remember"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
                   />
-                  <label htmlFor="remember" className="text-xs text-muted cursor-pointer">
+                  <label htmlFor="ws-remember" className="text-xs text-muted cursor-pointer select-none">
                     Remember Me
                   </label>
                 </div>
@@ -371,7 +509,8 @@ export default function WholesaleLoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 rounded-full bg-[#0f3460] py-4 text-sm font-semibold uppercase tracking-wider text-white transition-all duration-300 hover:bg-[#1a1a2e] shadow-lg mt-2 disabled:opacity-50 font-[family-name:var(--font-poppins)]"
+                aria-label={isSignUp ? "Register as dealer" : "Sign in"}
+                className="w-full flex items-center justify-center gap-2 rounded-full bg-[#0f3460] py-4 text-sm font-semibold uppercase tracking-wider text-white transition-all duration-300 hover:bg-[#1a1a2e] hover:shadow-xl active:scale-[0.98] shadow-lg mt-2 disabled:opacity-50 disabled:cursor-not-allowed font-[family-name:var(--font-poppins)] focus:outline-none focus:ring-2 focus:ring-[#0f3460] focus:ring-offset-2"
               >
                 {loading ? (
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -384,7 +523,7 @@ export default function WholesaleLoginPage() {
               </button>
             </form>
 
-            <div className="my-6 flex items-center gap-4">
+            <div className="my-5 flex items-center gap-4">
               <div className="h-px flex-1 bg-border" />
               <span className="text-[10px] uppercase tracking-wider text-muted font-[family-name:var(--font-poppins)]">
                 or continue with
@@ -392,8 +531,8 @@ export default function WholesaleLoginPage() {
               <div className="h-px flex-1 bg-border" />
             </div>
 
-            <div className="w-full flex justify-center">
-              <div ref={googleBtnRef} className="w-full [&>div]:w-full" />
+            <div className="w-full">
+              <div ref={googleBtnRef} className="mx-auto w-full [&>div]:mx-auto [&>div]:w-full" />
             </div>
 
             <div className="mt-6 text-center text-xs text-muted">
@@ -401,11 +540,8 @@ export default function WholesaleLoginPage() {
                 <p>
                   Already a dealer?{" "}
                   <button
-                    onClick={() => {
-                      setIsSignUp(false);
-                      setError("");
-                    }}
-                    className="font-semibold text-primary hover:text-primary-dark transition-colors font-[family-name:var(--font-poppins)]"
+                    onClick={toggleSignUp}
+                    className="font-semibold text-primary hover:text-primary-dark transition-colors font-[family-name:var(--font-poppins)] focus:outline-none focus:underline"
                   >
                     Sign In
                   </button>
@@ -414,11 +550,8 @@ export default function WholesaleLoginPage() {
                 <p>
                   New wholeseller?{" "}
                   <button
-                    onClick={() => {
-                      setIsSignUp(true);
-                      setError("");
-                    }}
-                    className="font-semibold text-primary hover:text-primary-dark transition-colors font-[family-name:var(--font-poppins)]"
+                    onClick={toggleSignUp}
+                    className="font-semibold text-primary hover:text-primary-dark transition-colors font-[family-name:var(--font-poppins)] focus:outline-none focus:underline"
                   >
                     Register as Dealer
                   </button>
