@@ -32,8 +32,8 @@ const contactInfo = [
   {
     icon: Mail,
     title: "Email",
-    detail: "info@riyatouch.com",
-    href: "mailto:info@riyatouch.com",
+    detail: "guptadharmendra280@gmail.com",
+    href: "mailto:guptadharmendra280@gmail.com",
     desc: "For business inquiries",
   },
   {

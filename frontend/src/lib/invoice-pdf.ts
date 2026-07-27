@@ -198,7 +198,7 @@ export async function generateInvoicePDF(invoice: InvoiceData): Promise<void> {
   doc.setTextColor(80, 80, 80);
   doc.text("Plot 123, Industrial Area", rightBoxX + 4, y + 17);
   doc.text("Rajasthan, India - 302001", rightBoxX + 4, y + 22);
-  doc.text("GSTIN: 08XXXXX1234X1Z5", rightBoxX + 4, y + 27);
+  doc.text("GSTIN: 09BZKPP9250K1ZL", rightBoxX + 4, y + 27);
   doc.text("Ph: +91 9205778531", rightBoxX + 4, y + 32);
 
   y += 38;

@@ -106,11 +106,11 @@ export default function Footer() {
                 +91 9205778531
               </a>
               <a
-                href="mailto:hello@riyatouch.co"
+                href="mailto:guptadharmendra280@gmail.com"
                 className="flex items-center gap-3 text-sm text-white/60 transition-colors hover:text-white"
               >
                 <Mail size={15} className="text-primary-light/70" />
-                hello@riyatouch.co
+                guptadharmendra280@gmail.com
               </a>
               <div className="flex items-start gap-3 text-sm text-white/60">
                 <MapPin size={15} className="mt-0.5 shrink-0 text-primary-light/70" />
@@ -287,7 +287,7 @@ export default function Footer() {
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2">
             <BadgeCheck size={14} className="text-primary-light/70" />
             <span className="text-[11px] font-medium text-white/50">
-              GSTIN: 09ABCDE1234F1Z5
+              GSTIN: 09BZKPP9250K1ZL
             </span>
           </div>
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2">

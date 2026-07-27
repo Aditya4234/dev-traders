@@ -27,7 +27,7 @@ export default function PrivacyPage() {
             <li>To improve our products and services</li>
           </ul>
           <h2 className="text-lg font-semibold text-[var(--dark-text)]">Contact Us</h2>
-          <p>For privacy-related inquiries, email us at hello@riyatouch.co</p>
+          <p>For privacy-related inquiries, email us at guptadharmendra280@gmail.com</p>
         </div>
       </div>
     </div>

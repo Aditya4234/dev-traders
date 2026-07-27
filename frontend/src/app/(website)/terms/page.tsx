@@ -24,7 +24,7 @@ export default function TermsPage() {
           <h2 className="text-lg font-semibold text-[var(--dark-text)]">Orders</h2>
           <p>An order confirmation does not constitute acceptance. We reserve the right to cancel orders due to pricing errors or stock limitations.</p>
           <h2 className="text-lg font-semibold text-[var(--dark-text)]">Contact</h2>
-          <p>For questions about these terms, contact us at hello@riyatouch.co</p>
+          <p>For questions about these terms, contact us at guptadharmendra280@gmail.com</p>
         </div>
       </div>
     </div>

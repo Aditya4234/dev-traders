@@ -4,7 +4,7 @@ import nodemailer from "nodemailer";
 dotenv.config();
 
 const ADMIN_WHATSAPP = "919205778531";
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "riyatouch@gmail.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "guptadharmendra280@gmail.com";
 
 interface OrderItem {
   name: string;
@@ -220,7 +220,7 @@ async function sendEmail(
       subject: `🛒 New Order #${shortId} — ${formatPrice(total)}`,
       text,
       html,
-      replyTo: "riyatouch@gmail.com",
+      replyTo: "guptadharmendra280@gmail.com",
     });
     console.log(`[Notification] Email sent for order #${shortId} to ${ADMIN_EMAIL}`);
     return true;
