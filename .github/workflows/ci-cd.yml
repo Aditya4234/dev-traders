@@ -8,8 +8,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  BACKEND_IMAGE: ${{ github.repository_owner }}/dev-traders/backend
-  FRONTEND_IMAGE: ${{ github.repository_owner }}/dev-traders/frontend
 
 jobs:
   lint-and-typecheck:
@@ -61,6 +59,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set lowercase image name
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_NAME=${OWNER}/dev-traders/${{ matrix.image }}" >> "$GITHUB_ENV"
+
       - name: Log in to Container Registry
         uses: docker/login-action@v3
         with:
@@ -68,23 +71,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}
-          tags: |
-            type=sha
-            type=raw,value=latest
-
       - name: Build and push ${{ matrix.image }}
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.context }}
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dev-traders/${{ matrix.image }}:latest
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dev-traders/${{ matrix.image }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
   deploy-staging:
     needs: build-and-push
@@ -98,17 +92,6 @@ jobs:
       - name: Deploy to staging cluster
         run: |
           echo "Deploying to staging Kubernetes cluster..."
-          # kubectl apply -f k8s/namespace.yml
-          # kubectl apply -f k8s/secrets.yml
-          # kubectl apply -f k8s/mongodb.yml
-          # kubectl apply -f k8s/redis.yml
-          # kubectl apply -f k8s/elasticsearch.yml
-          # kubectl apply -f k8s/backend.yml
-          # kubectl apply -f k8s/frontend.yml
-          # kubectl apply -f k8s/ingress.yml
-          # kubectl apply -f k8s/monitoring.yml
-          # kubectl rollout restart deployment/riya-backend -n riya-touch
-          # kubectl rollout restart deployment/riya-frontend -n riya-touch
           echo "Deployment complete"
 
       - name: Notify deployment
