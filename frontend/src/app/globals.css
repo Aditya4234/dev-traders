@@ -423,3 +423,43 @@ input:focus, textarea:focus, select:focus {
   background: rgba(239, 68, 68, 0.1);
   color: #DC2626;
 }
+
+/* ─── Invoice Preview Modal — Clean Text Rendering ─── */
+.invoice-preview {
+  font-family: 'Inter', 'Roboto', 'Arial', system-ui, sans-serif;
+  letter-spacing: 0;
+  word-spacing: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.invoice-preview * {
+  letter-spacing: 0;
+  word-spacing: normal;
+  line-height: 1.5;
+}
+
+.invoice-preview table {
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+.invoice-preview th,
+.invoice-preview td {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+  line-height: 1.5;
+}
+
+.invoice-preview th {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+/* Numbers should not break mid-digit */
+.invoice-preview td.whitespace-nowrap {
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+}

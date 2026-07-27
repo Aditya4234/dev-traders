@@ -238,20 +238,20 @@ export default function CreateInvoicePage() {
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="space-y-6 pb-12">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard/invoices" className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--muted)] transition-colors hover:bg-[var(--accent)] hover:text-[var(--dark-text)]">
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="space-y-4 sm:space-y-6 pb-12">
+      <div className="flex items-center gap-3">
+        <Link href="/dashboard/invoices" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[var(--muted)] transition-colors hover:bg-[var(--accent)] hover:text-[var(--dark-text)]">
           <ArrowLeft size={18} />
         </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--dark-text)]" style={{ fontFamily: 'var(--font-playfair)' }}>Create Invoice</h1>
-          <p className="text-sm text-[var(--muted)]">Wholeseller - fill details to generate a new tax invoice</p>
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-[var(--dark-text)]" style={{ fontFamily: 'var(--font-playfair)' }}>Create Invoice</h1>
+          <p className="text-xs sm:text-sm text-[var(--muted)]">Wholeseller - fill details to generate a new tax invoice</p>
         </div>
       </div>
 
       {/* Send To (User Search) */}
-      <div className="rounded-2xl border bg-white/80 backdrop-blur-sm p-6" style={{ borderColor: 'var(--border)' }}>
-        <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-[var(--primary)]" style={{ fontFamily: 'var(--font-poppins)' }}>Send Invoice To</h2>
+      <div className="rounded-2xl border bg-white/80 backdrop-blur-sm p-4 sm:p-6" style={{ borderColor: 'var(--border)' }}>
+        <h2 className="mb-3 sm:mb-4 text-xs sm:text-sm font-bold uppercase tracking-wider text-[var(--primary)]" style={{ fontFamily: 'var(--font-poppins)' }}>Send Invoice To</h2>
         {selectedUser ? (
           <div className="flex items-center gap-3 rounded-xl border border-[var(--primary)]/20 bg-[var(--primary)]/5 p-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary)]/10 text-[var(--primary)]">
@@ -309,8 +309,8 @@ export default function CreateInvoicePage() {
       </div>
 
       {/* Customer Details */}
-      <div className="rounded-2xl border bg-white/80 backdrop-blur-sm p-6" style={{ borderColor: 'var(--border)' }}>
-        <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-[var(--primary)]" style={{ fontFamily: 'var(--font-poppins)' }}>Customer Details</h2>
+      <div className="rounded-2xl border bg-white/80 backdrop-blur-sm p-4 sm:p-6" style={{ borderColor: 'var(--border)' }}>
+        <h2 className="mb-3 sm:mb-4 text-xs sm:text-sm font-bold uppercase tracking-wider text-[var(--primary)]" style={{ fontFamily: 'var(--font-poppins)' }}>Customer Details</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Name *</label>
@@ -347,25 +347,25 @@ export default function CreateInvoicePage() {
       </div>
 
       {/* Line Items */}
-      <div className="rounded-2xl border bg-white/80 backdrop-blur-sm p-6" style={{ borderColor: 'var(--border)' }}>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--primary)]" style={{ fontFamily: 'var(--font-poppins)' }}>Line Items</h2>
+      <div className="rounded-2xl border bg-white/80 backdrop-blur-sm p-4 sm:p-6" style={{ borderColor: 'var(--border)' }}>
+        <div className="mb-3 sm:mb-4 flex items-center justify-between">
+          <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[var(--primary)]" style={{ fontFamily: 'var(--font-poppins)' }}>Line Items</h2>
           <button onClick={addItem} className="flex items-center gap-1.5 rounded-xl bg-[var(--primary)]/10 px-3 py-1.5 text-xs font-semibold text-[var(--primary)] transition-colors hover:bg-[var(--primary)]/20">
             <Plus size={14} /> Add Item
           </button>
         </div>
         <div className="space-y-4">
           {items.map((item, idx) => (
-            <div key={idx} className="rounded-xl border border-[var(--border)]/60 bg-[var(--accent)]/30 p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <span className="text-xs font-bold text-[var(--muted)]" style={{ fontFamily: 'var(--font-poppins)' }}>Item {idx + 1}</span>
+            <div key={idx} className="rounded-xl border border-[var(--border)]/60 bg-[var(--accent)]/30 p-3 sm:p-4">
+              <div className="mb-2 sm:mb-3 flex items-center justify-between">
+                <span className="text-[11px] sm:text-xs font-bold text-[var(--muted)]" style={{ fontFamily: 'var(--font-poppins)' }}>Item {idx + 1}</span>
                 {items.length > 1 && (
                   <button onClick={() => removeItem(idx)} className="rounded-lg p-1 text-red-400 transition-colors hover:bg-red-50 hover:text-red-500">
                     <Trash2 size={14} />
                   </button>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3 sm:grid-cols-3 lg:grid-cols-6">
                 <div className="col-span-2 sm:col-span-3 lg:col-span-2">
                   <label className="mb-1 block text-[10px] font-semibold text-[var(--muted)]">Product Name *</label>
                   <input value={item.name} onChange={e => updateItem(idx, 'name', e.target.value)} className="input-luxury text-sm" placeholder="Product name" />
@@ -399,8 +399,8 @@ export default function CreateInvoicePage() {
       </div>
 
       {/* Additional Details */}
-      <div className="rounded-2xl border bg-white/80 backdrop-blur-sm p-6" style={{ borderColor: 'var(--border)' }}>
-        <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-[var(--primary)]" style={{ fontFamily: 'var(--font-poppins)' }}>Additional Details</h2>
+      <div className="rounded-2xl border bg-white/80 backdrop-blur-sm p-4 sm:p-6" style={{ borderColor: 'var(--border)' }}>
+        <h2 className="mb-3 sm:mb-4 text-xs sm:text-sm font-bold uppercase tracking-wider text-[var(--primary)]" style={{ fontFamily: 'var(--font-poppins)' }}>Additional Details</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
             <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Place of Supply *</label>
@@ -425,9 +425,9 @@ export default function CreateInvoicePage() {
       </div>
 
       {/* Summary */}
-      <div className="rounded-2xl border bg-white/80 backdrop-blur-sm p-6" style={{ borderColor: 'var(--border)' }}>
-        <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-[var(--primary)]" style={{ fontFamily: 'var(--font-poppins)' }}>Invoice Summary</h2>
-        <div className="w-full max-w-sm space-y-2 ml-auto">
+      <div className="rounded-2xl border bg-white/80 backdrop-blur-sm p-4 sm:p-6" style={{ borderColor: 'var(--border)' }}>
+        <h2 className="mb-3 sm:mb-4 text-xs sm:text-sm font-bold uppercase tracking-wider text-[var(--primary)]" style={{ fontFamily: 'var(--font-poppins)' }}>Invoice Summary</h2>
+        <div className="w-full sm:max-w-sm space-y-2 ml-auto">
           <div className="flex justify-between text-sm"><span className="text-[var(--muted)]">Subtotal</span><span className="text-[var(--dark-text)]">₹{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
           {itemDiscount > 0 && <div className="flex justify-between text-sm"><span className="text-[var(--muted)]">Item Discount</span><span className="text-red-500">-₹{itemDiscount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>}
           {discount > 0 && <div className="flex justify-between text-sm"><span className="text-[var(--muted)]">Additional Discount</span><span className="text-red-500">-₹{discount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>}
@@ -442,11 +442,11 @@ export default function CreateInvoicePage() {
       </div>
 
       {/* Submit */}
-      <div className="flex justify-end gap-3">
-        <Link href="/dashboard/invoices" className="rounded-xl border border-[var(--border)] px-6 py-2.5 text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--accent)]" style={{ fontFamily: 'var(--font-poppins)' }}>
+      <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
+        <Link href="/dashboard/invoices" className="rounded-xl border border-[var(--border)] px-6 py-2.5 text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-[var(--accent)] text-center" style={{ fontFamily: 'var(--font-poppins)' }}>
           Cancel
         </Link>
-        <button onClick={handleSubmit} disabled={!canSubmit || submitting} className="btn-primary flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+        <button onClick={handleSubmit} disabled={!canSubmit || submitting} className="btn-primary flex items-center justify-center gap-2 rounded-xl px-6 py-2.5 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
           {submitting ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
           {submitting ? 'Creating...' : 'Create Invoice'}
         </button>
