@@ -201,7 +201,7 @@ export async function createInvoice(data: {
     gstNumber?: string;
   };
   items: {
-    productId: string;
+    productId?: string;
     name: string;
     hsnCode: string;
     quantity: number;
@@ -659,5 +659,64 @@ export async function toggleWishlistItem(productId: string) {
   return fetchAPI<{ success: boolean; action: string; wishlist: { products: Product[] } }>(`/wishlist/toggle`, {
     method: "POST",
     body: JSON.stringify({ productId }),
+  });
+}
+
+// ─── Support Tickets ───
+export interface Ticket {
+  _id: string;
+  userId: string;
+  ticketId: string;
+  subject: string;
+  message: string;
+  category: string;
+  priority: "low" | "medium" | "high";
+  status: "open" | "in-progress" | "resolved" | "closed";
+  replies: { message: string; by: string; date: string }[];
+  createdAt: string;
+}
+
+export async function createTicket(data: {
+  subject: string;
+  message: string;
+  category: string;
+  priority?: string;
+}) {
+  return fetchAPI<{ success: boolean; ticket: Ticket }>("/tickets", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getMyTickets(params?: { status?: string; page?: number; limit?: number }) {
+  const query = new URLSearchParams();
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== "") query.set(key, String(value));
+    });
+  }
+  const qs = query.toString();
+  return fetchAPI<{
+    success: boolean;
+    tickets: Ticket[];
+    pagination: Pagination;
+  }>(`/tickets${qs ? `?${qs}` : ""}`);
+}
+
+export async function getTicketStats() {
+  return fetchAPI<{
+    success: boolean;
+    stats: { open: number; inProgress: number; resolved: number; closed: number; total: number };
+  }>("/tickets/stats");
+}
+
+export async function getTicket(id: string) {
+  return fetchAPI<{ success: boolean; ticket: Ticket }>(`/tickets/${id}`);
+}
+
+export async function replyToTicket(id: string, message: string) {
+  return fetchAPI<{ success: boolean; ticket: Ticket }>(`/tickets/${id}/reply`, {
+    method: "POST",
+    body: JSON.stringify({ message }),
   });
 }

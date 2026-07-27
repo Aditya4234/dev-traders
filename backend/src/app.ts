@@ -29,6 +29,7 @@ import couponRoutes from "./routes/coupons";
 import creditRoutes from "./routes/credit";
 import outstandingRoutes from "./routes/outstanding";
 import wishlistRoutes from "./routes/wishlist";
+import ticketRoutes from "./routes/tickets";
 import { initRedis } from "./services/redis";
 import { apiLimiter, authLimiter, searchLimiter, paymentLimiter } from "./middleware/rateLimiter";
 
@@ -125,6 +126,7 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/credit", creditRoutes);
 app.use("/api/outstanding", outstandingRoutes);
 app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/tickets", ticketRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {

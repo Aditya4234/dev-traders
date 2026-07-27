@@ -174,7 +174,7 @@ export default function CreateInvoicePage() {
     if (!canSubmit) return
     setSubmitting(true)
     try {
-      await api.createInvoice({
+      const payload = {
         customer: {
           name: customer.name,
           phone: customer.phone,
@@ -185,7 +185,6 @@ export default function CreateInvoicePage() {
           gstNumber: customer.gstNumber || undefined,
         },
         items: items.map(i => ({
-          productId: '',
           name: i.name,
           hsnCode: i.hsnCode,
           quantity: i.quantity,
@@ -198,7 +197,9 @@ export default function CreateInvoicePage() {
         notes: notes || undefined,
         placeOfSupply,
         userId: selectedUser?._id || undefined,
-      })
+      }
+      console.log("[Invoice] Submitting payload:", JSON.stringify(payload, null, 2))
+      await api.createInvoice(payload)
       setSuccess(true)
       setTimeout(() => router.push('/dashboard/invoices'), 1500)
     } catch (err: unknown) {

@@ -52,7 +52,7 @@ export interface IInvoice extends Document {
 }
 
 const invoiceItemSchema = new Schema<IInvoiceItem>({
-  product: { type: Schema.Types.ObjectId, ref: "Product", required: true },
+  product: { type: Schema.Types.ObjectId, ref: "Product" },
   name: { type: String, required: true },
   hsnCode: { type: String, required: true },
   quantity: { type: Number, required: true, min: 1 },

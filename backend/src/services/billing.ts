@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Invoice from "../models/Invoice";
 
 let invoiceCounter = 0;
@@ -95,6 +96,26 @@ export interface CreateInvoiceInput {
 }
 
 export async function createInvoice(input: CreateInvoiceInput) {
+  // Validate items
+  if (!input.items || input.items.length === 0) {
+    throw new Error("At least one item is required");
+  }
+
+  for (const item of input.items) {
+    if (!item.name || !item.name.trim()) {
+      throw new Error("Each item must have a product name");
+    }
+    if (!item.hsnCode || !item.hsnCode.trim()) {
+      throw new Error(`HSN code is required for "${item.name}"`);
+    }
+    if (!item.quantity || item.quantity < 1) {
+      throw new Error(`Quantity must be at least 1 for "${item.name}"`);
+    }
+    if (item.unitPrice === undefined || item.unitPrice < 0) {
+      throw new Error(`Unit price is required for "${item.name}"`);
+    }
+  }
+
   const invoiceNumber = await getNextInvoiceNumber();
   const isInterState = input.customer.state !== process.env.BUSINESS_STATE;
 
@@ -115,7 +136,10 @@ export async function createInvoice(input: CreateInvoiceInput) {
     totalIGST += igst;
 
     return {
-      product: item.productId,
+      // Only set product if it's a valid ObjectId; omit otherwise
+      ...(item.productId && mongoose.Types.ObjectId.isValid(item.productId)
+        ? { product: new mongoose.Types.ObjectId(item.productId) }
+        : {}),
       name: item.name,
       hsnCode: item.hsnCode,
       quantity: item.quantity,

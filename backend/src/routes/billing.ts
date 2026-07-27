@@ -9,9 +9,29 @@ const router = Router();
 router.post("/invoice", protect, wholesellerOnly, async (req: AuthRequest, res: Response) => {
   try {
     const input: CreateInvoiceInput = req.body;
+
+    // Validate required fields
+    if (!input.customer?.name || !input.customer?.phone || !input.customer?.city || !input.customer?.state || !input.customer?.pincode) {
+      res.status(400).json({ success: false, message: "Customer name, phone, city, state, and pincode are required" });
+      return;
+    }
+    if (!input.placeOfSupply) {
+      res.status(400).json({ success: false, message: "Place of supply is required" });
+      return;
+    }
+    if (!input.items || input.items.length === 0) {
+      res.status(400).json({ success: false, message: "At least one item is required" });
+      return;
+    }
+
     const invoice = await createInvoice(input);
     res.status(201).json({ success: true, invoice });
   } catch (error: any) {
+    // Return validation errors as 400, not 500
+    if (error.message.includes("required") || error.message.includes("must have") || error.message.includes("must be at least")) {
+      res.status(400).json({ success: false, message: error.message });
+      return;
+    }
     res.status(500).json({ success: false, message: error.message });
   }
 });

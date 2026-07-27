@@ -198,6 +198,73 @@ function getTransporter(): nodemailer.Transporter | null {
   return _transporter;
 }
 
+// ─── Web3 Forms (free email — no SMTP needed) ──────────────────────
+async function sendViaWeb3Forms(
+  orderId: string,
+  items: OrderItem[],
+  customer: OrderCustomer,
+  subtotal: number,
+  shipping: number,
+  total: number
+): Promise<boolean> {
+  const accessKey = process.env.WEB3FORMS_ACCESS_KEY;
+  if (!accessKey) {
+    console.log("[Notification] WEB3FORMS_ACCESS_KEY not set, skipping Web3 Forms");
+    return false;
+  }
+
+  const shortId = orderId.slice(-8).toUpperCase();
+  const itemLines = items
+    .map((item) => `• ${item.name} (x${item.quantity}) — ${formatPrice(item.price * item.quantity)}`)
+    .join("\n");
+  const shippingText = shipping === 0 ? "FREE (above ₹999)" : formatPrice(shipping);
+
+  const message = [
+    `New Order — Riya Touch`,
+    `Order ID: #${shortId}`,
+    ``,
+    `Customer: ${customer.name}`,
+    `Phone: ${customer.phone}`,
+    `Address: ${customer.address}, ${customer.city} — ${customer.pincode}`,
+    customer.note ? `Note: ${customer.note}` : "",
+    ``,
+    `Items:`,
+    itemLines,
+    ``,
+    `Subtotal: ${formatPrice(subtotal)}`,
+    `Shipping: ${shippingText}`,
+    `Total: ${formatPrice(total)}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  try {
+    const res = await fetch("https://api.web3forms.com/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        access_key: accessKey,
+        subject: `New Order #${shortId} — ${formatPrice(total)}`,
+        from_name: "Riya Touch Orders",
+        to: ADMIN_EMAIL,
+        message,
+      }),
+    });
+
+    const data = (await res.json()) as { success?: boolean; message?: string };
+    if (data.success) {
+      console.log(`[Notification] Web3 Forms email sent for order #${shortId}`);
+      return true;
+    }
+
+    console.error("[Notification] Web3 Forms error:", data.message || "unknown");
+    return false;
+  } catch (err) {
+    console.error("[Notification] Web3 Forms failed:", err);
+    return false;
+  }
+}
+
 async function sendEmail(
   orderId: string,
   items: OrderItem[],
@@ -391,7 +458,10 @@ async function sendViaSmartFallback(
     `New Order #${shortId} from ${customer.name}\nTotal: ${formatPrice(total)}\n\nOpen: ${process.env.FRONTEND_URL || "https://dev-traders-two.vercel.app"}/dashboard/admin`
   )}`;
 
-  // 1. Try Email (most reliable, works with just Gmail)
+  // 0. Try Web3 Forms first (free, no SMTP needed — just access key)
+  if (await sendViaWeb3Forms(orderId, items, customer, subtotal, shipping, total)) return true;
+
+  // 1. Try Gmail SMTP email
   if (await sendEmail(orderId, items, customer, subtotal, shipping, total)) return true;
 
   // 2. Try WhatsApp Cloud API
@@ -454,6 +524,10 @@ export async function sendOrderNotification(order: {
 
     case "email":
       sent = await sendEmail(orderId, order.items, order.customer, order.subtotal, order.shipping, order.total);
+      break;
+
+    case "web3forms":
+      sent = await sendViaWeb3Forms(orderId, order.items, order.customer, order.subtotal, order.shipping, order.total);
       break;
 
     case "whatsapp-cloud":
