@@ -8,8 +8,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  BACKEND_IMAGE: ${{ github.repository }}/backend
-  FRONTEND_IMAGE: ${{ github.repository }}/frontend
+  BACKEND_IMAGE: ${{ github.repository_owner }}/dev-traders/backend
+  FRONTEND_IMAGE: ${{ github.repository_owner }}/dev-traders/frontend
 
 jobs:
   lint-and-typecheck:
@@ -83,8 +83,8 @@ jobs:
           context: ${{ matrix.context }}
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.image }}:latest
-            ${{ env.REGISTRY }}/${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.image }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dev-traders/${{ matrix.image }}:latest
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/dev-traders/${{ matrix.image }}:${{ github.sha }}
 
   deploy-staging:
     needs: build-and-push
