@@ -3,16 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import Image from "next/image";
 import {
   Users,
   Package,
   IndianRupee,
   ShoppingCart,
   UserCheck,
-  UserX,
   TrendingUp,
-  TrendingDown,
   Clock,
   CheckCircle2,
   XCircle,
@@ -22,13 +19,10 @@ import {
   BarChart3,
   Activity,
   Search,
-  ArrowRight,
   AlertTriangle,
   Shield,
   RefreshCw,
   Calendar,
-  Download,
-  Eye,
 } from "lucide-react";
 import {
   BarChart,
@@ -158,10 +152,21 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (isWholeseller) {
-      void fetchOverview();
-      void fetchUsers();
+      (async () => {
+        try {
+          const [overviewData, usersData] = await Promise.all([
+            api.getAdminOverview(),
+            api.getAdminUsers({ page: 1, limit: 10 }),
+          ]);
+          if (overviewData.success) setOverview(overviewData.overview);
+          if (usersData.success) {
+            setUsers(usersData.users || []);
+            setUserPagination(usersData.pagination);
+          }
+        } catch { /* ignore */ }
+      })();
     }
-  }, [fetchOverview, fetchUsers, isWholeseller]);
+  }, [isWholeseller]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

@@ -17,7 +17,6 @@ import {
   PieChart as PieChartIcon,
   ArrowRight,
   RefreshCw,
-  Calendar,
   Download,
   MessageSquare,
   ExternalLink,
@@ -133,8 +132,19 @@ export default function WholesellerDashboardPage() {
   }, []);
 
   useEffect(() => {
-    void fetchData();
-  }, [fetchData]);
+    let active = true;
+    (async () => {
+      try {
+        const res = await getWholesellerDashboard();
+        if (active && res?.success) setData(res.dashboard);
+      } catch {
+        // dashboard may not have data yet
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, []);
 
   if (loading) {
     return (

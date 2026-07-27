@@ -1,7 +1,7 @@
 'use client'
 
 import { Search, ShieldAlert, Download, Tag } from 'lucide-react'
-import { useState, useEffect, useCallback } from 'react'
+  import { useState, useEffect } from 'react'
 import { useShop } from '@/context/ShopContext'
 import * as api from '@/lib/api'
 import type { Product } from '@/types'
@@ -21,19 +21,21 @@ export default function PriceListPage() {
   const [loading, setLoading] = useState(true)
   const [selectedTier, setSelectedTier] = useState(0)
 
-  const fetchProducts = useCallback(async () => {
-    try {
-      setLoading(true)
-      const res = await api.getProducts({ limit: 100 })
-      if (res?.success) setProducts(res.products || [])
-    } catch {
-      // fallback
-    } finally {
-      setLoading(false)
-    }
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        setLoading(true)
+        const res = await api.getProducts({ limit: 100 })
+        if (active && res?.success) setProducts(res.products || [])
+      } catch {
+        // fallback
+      } finally {
+        if (active) setLoading(false)
+      }
+    })();
+    return () => { active = false; };
   }, [])
-
-  useEffect(() => { fetchProducts() }, [fetchProducts])
 
   const filtered = products.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||

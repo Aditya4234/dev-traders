@@ -30,7 +30,6 @@ import {
   HeadphonesIcon,
   ExternalLink,
   CheckCircle2,
-  XCircle,
 } from "lucide-react";
 import {
   AreaChart,

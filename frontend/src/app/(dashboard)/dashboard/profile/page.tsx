@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { User, Mail, Phone, Save, Check, Loader2, MapPin, Lock } from "lucide-react";
+import { User, Mail, Phone, Save, Check, Loader2, Lock } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
 
 export default function ProfilePage() {

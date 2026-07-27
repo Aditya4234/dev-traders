@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CreditCard, ArrowUpRight, ArrowDownLeft, Loader2, ShieldAlert } from 'lucide-react'
+import { CreditCard, ArrowUpRight, ArrowDownLeft, Loader2 } from 'lucide-react'
 import { getInvoices } from '@/lib/api'
 import type { InvoiceData } from '@/types'
 import { useShop } from '@/context/ShopContext'
@@ -73,6 +73,7 @@ export default function PaymentsPage() {
       }
     }
     load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (

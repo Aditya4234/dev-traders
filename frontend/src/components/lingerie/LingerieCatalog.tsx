@@ -64,6 +64,7 @@ export default function LingerieCatalog({ categoryFilter, initialBadge, initialS
 
   useEffect(() => {
     if (initialSearch) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSearchQuery(initialSearch);
     }
   }, [initialSearch]);

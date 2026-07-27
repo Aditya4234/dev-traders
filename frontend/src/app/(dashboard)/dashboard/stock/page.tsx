@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Package, Search, AlertTriangle, ArrowRight } from "lucide-react";
+import { Package, Search, AlertTriangle } from "lucide-react";
 import * as api from "@/lib/api";
 
 interface InventoryItem {
@@ -23,33 +23,33 @@ export default function StockManagementPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<number>(0);
 
-  const fetchProducts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await api.getInventory({ search, lowStock: lowStockFilter || undefined, limit: 100 });
-      if (res?.success) {
-        setProducts(
-          res.products.map((p) => ({
-            _id: p._id,
-            name: p.name,
-            image: p.image,
-            sku: p.sku || "",
-            stock: p.stock || 0,
-            category: p.category,
-            price: p.price,
-          }))
-        );
-      }
-    } catch {
-      // fallback
-    } finally {
-      setLoading(false);
-    }
-  }, [search, lowStockFilter]);
-
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    let active = true;
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await api.getInventory({ search, lowStock: lowStockFilter || undefined, limit: 100 });
+        if (active && res?.success) {
+          setProducts(
+            res.products.map((p) => ({
+              _id: p._id,
+              name: p.name,
+              image: p.image,
+              sku: p.sku || "",
+              stock: p.stock || 0,
+              category: p.category,
+              price: p.price,
+            }))
+          );
+        }
+      } catch {
+        // fallback
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, [search, lowStockFilter]);
 
   const handleUpdateStock = async (id: string, newStock: number) => {
     try {

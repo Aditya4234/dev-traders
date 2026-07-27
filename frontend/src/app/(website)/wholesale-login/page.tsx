@@ -45,6 +45,7 @@ export default function WholesaleLoginPage() {
       if (user.role === "admin" || user.role === "dealer") {
         router.push("/dashboard/wholeseller");
       } else {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setError("This account is registered as a customer. Please use the customer login page.");
       }
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Truck, Package, CheckCircle2, Clock, Filter } from "lucide-react";
 import * as api from "@/lib/api";
@@ -39,21 +39,20 @@ export default function DispatchPage() {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const loadOrders = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await api.getMyOrders();
-      setOrders(data.orders || []);
-    } catch {
-      setOrders([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    loadOrders();
-  }, [loadOrders]);
+    let active = true;
+    (async () => {
+      try {
+        const data = await api.getMyOrders();
+        if (active) setOrders(data.orders || []);
+      } catch {
+        if (active) setOrders([]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, []);
 
   const filteredOrders =
     filter === "all" ? orders : orders.filter((o) => o.status === filter);

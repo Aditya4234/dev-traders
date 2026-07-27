@@ -36,7 +36,6 @@ import {
   Truck,
   Award,
   Box,
-  Users,
 } from 'lucide-react'
 import { useShop } from '@/context/ShopContext'
 

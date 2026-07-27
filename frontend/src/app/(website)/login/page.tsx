@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Mail, Lock, User, ArrowRight, Eye, EyeOff, ShoppingBag } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
 
 declare global {
@@ -41,6 +41,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (user) {
       if (user.role === "admin" || user.role === "dealer") {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setError("This account is registered as a wholeseller. Please use the wholeseller login page.");
       } else {
         router.push("/dashboard");

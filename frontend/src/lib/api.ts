@@ -586,18 +586,18 @@ export async function submitContactForm(data: { name: string; email: string; pho
 
 // ─── Loyalty ───
 export async function getLoyaltyAccount() {
-  return fetchAPI<{ success: boolean; account: any; transactions: any[] }>(`/loyalty`);
+  return fetchAPI<{ success: boolean; account: { totalPoints: number; tier: string }; transactions: Record<string, string | number>[] }>(`/loyalty`);
 }
 
 export async function earnLoyaltyPoints(data: { points: number; description?: string; orderId?: string }) {
-  return fetchAPI<{ success: boolean; account: any }>(`/loyalty/earn`, {
+  return fetchAPI<{ success: boolean; account: { totalPoints: number; tier: string } }>(`/loyalty/earn`, {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export async function redeemLoyaltyPoints(data: { points: number; description?: string }) {
-  return fetchAPI<{ success: boolean; account: any }>(`/loyalty/redeem`, {
+  return fetchAPI<{ success: boolean; account: { totalPoints: number; tier: string } }>(`/loyalty/redeem`, {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -605,18 +605,18 @@ export async function redeemLoyaltyPoints(data: { points: number; description?: 
 
 // ─── Coupons ───
 export async function getCoupons() {
-  return fetchAPI<{ success: boolean; coupons: any[] }>(`/coupons`);
+  return fetchAPI<{ success: boolean; coupons: Record<string, string | number | boolean>[] }>(`/coupons`);
 }
 
 export async function validateCoupon(data: { code: string; orderAmount?: number }) {
-  return fetchAPI<{ success: boolean; coupon: any; discount: number }>(`/coupons/validate`, {
+  return fetchAPI<{ success: boolean; coupon: { code: string; discountType: string; discountValue: number; description: string }; discount: number }>(`/coupons/validate`, {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
-export async function createCoupon(data: any) {
-  return fetchAPI<{ success: boolean; coupon: any }>(`/coupons`, {
+export async function createCoupon(data: Record<string, unknown>) {
+  return fetchAPI<{ success: boolean; coupon: Record<string, unknown> }>(`/coupons`, {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -624,18 +624,18 @@ export async function createCoupon(data: any) {
 
 // ─── Credit Ledger ───
 export async function getCreditAccount() {
-  return fetchAPI<{ success: boolean; account: any; entries: any[] }>(`/credit`);
+  return fetchAPI<{ success: boolean; account: { currentBalance: number; creditLimit: number; totalPaid: number }; entries: Record<string, string | number>[] }>(`/credit`);
 }
 
 export async function addCredit(data: { userId: string; amount: number; description?: string; orderId?: string; invoiceId?: string }) {
-  return fetchAPI<{ success: boolean; entry: any; account: any }>(`/credit/credit`, {
+  return fetchAPI<{ success: boolean; entry: Record<string, unknown>; account: { currentBalance: number } }>(`/credit/credit`, {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export async function debitCredit(data: { userId: string; amount: number; description?: string; orderId?: string; invoiceId?: string }) {
-  return fetchAPI<{ success: boolean; entry: any; account: any }>(`/credit/debit`, {
+  return fetchAPI<{ success: boolean; entry: Record<string, unknown>; account: { currentBalance: number } }>(`/credit/debit`, {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -643,20 +643,20 @@ export async function debitCredit(data: { userId: string; amount: number; descri
 
 // ─── Outstanding ───
 export async function getOutstanding() {
-  return fetchAPI<{ success: boolean; outstanding: any; orders: any[] }>(`/outstanding`);
+  return fetchAPI<{ success: boolean; outstanding: { pendingOrders: number; totalPending: number; creditBalance: number; totalOutstanding: number }; orders: OrderData[] }>(`/outstanding`);
 }
 
 export async function getOutstandingAll() {
-  return fetchAPI<{ success: boolean; dealers: any[] }>(`/outstanding/all`);
+  return fetchAPI<{ success: boolean; dealers: { dealer: User; creditBalance: number; creditLimit: number; pendingOrders: number; pendingAmount: number; totalOutstanding: number }[] }>(`/outstanding/all`);
 }
 
 // ─── Wishlist ───
 export async function getWishlist() {
-  return fetchAPI<{ success: boolean; wishlist: { products: any[] } }>(`/wishlist`);
+  return fetchAPI<{ success: boolean; wishlist: { products: Product[] } }>(`/wishlist`);
 }
 
 export async function toggleWishlistItem(productId: string) {
-  return fetchAPI<{ success: boolean; action: string; wishlist: { products: any[] } }>(`/wishlist/toggle`, {
+  return fetchAPI<{ success: boolean; action: string; wishlist: { products: Product[] } }>(`/wishlist/toggle`, {
     method: "POST",
     body: JSON.stringify({ productId }),
   });

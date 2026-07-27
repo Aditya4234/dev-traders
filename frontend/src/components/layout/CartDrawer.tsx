@@ -34,6 +34,7 @@ interface OrderForm {
   city: string;
   pincode: string;
   note: string;
+  deliverySlot: string;
 }
 
 const WHATSAPP_NUMBER = "919205778531";
@@ -80,6 +81,7 @@ export default function CartDrawer() {
     city: "",
     pincode: "",
     note: "",
+    deliverySlot: "",
   });
 
   useEffect(() => {
@@ -713,9 +715,9 @@ Riya Touch se order karne ke liye shukriya! 💕
                           <button
                             key={slot.value}
                             type="button"
-                            onClick={() => setOrderForm({ ...orderForm, deliverySlot: slot.value } as any)}
+                            onClick={() => setOrderForm({ ...orderForm, deliverySlot: slot.value })}
                             className={`rounded-xl border px-3 py-2.5 text-[11px] font-medium transition-all ${
-                              (orderForm as any).deliverySlot === slot.value
+                              orderForm.deliverySlot === slot.value
                                 ? "border-rose-gold bg-rose-gold/10 text-rose-gold-dark"
                                 : "border-soft-pink-dark bg-soft-pink/20 text-muted hover:border-rose-gold/50"
                             }`}

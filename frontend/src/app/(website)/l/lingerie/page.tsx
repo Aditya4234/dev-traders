@@ -15,36 +15,28 @@ function LingeriePageContent() {
 
   useEffect(() => {
     const searchParam = searchParams.get("search");
+    const catParam = searchParams.get("category");
+
     if (searchParam) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInitialSearch(searchParam);
-      // Scroll to catalog after search param is set
-      const timer = setTimeout(() => {
-        const catalogElement = document.getElementById("catalog");
-        if (catalogElement) {
-          catalogElement.scrollIntoView({ behavior: "smooth" });
-        }
-      }, 500);
-      return () => clearTimeout(timer);
     }
 
-    const catParam = searchParams.get("category");
-    if (!catParam) return;
+    if (catParam) {
+      const mapping: Record<string, string> = {
+        "bras": "Bras",
+        "panties": "Panties",
+        "bra-panty-sets": "Lingerie Sets",
+        "sports-bras": "Bras",
+        "lingerie-sets": "Lingerie Sets",
+        "shapewear": "Shapewear",
+        "bridal-lingerie": "Bridal Lingerie",
+        "maternity-bras": "Maternity Bras"
+      };
+      const categoryName = mapping[catParam.toLowerCase()] || catParam;
+      requestAnimationFrame(() => { setSelectedCategory(categoryName); });
+    }
 
-    // Map URL friendly strings back to display category names
-    const mapping: Record<string, string> = {
-      "bras": "Bras",
-      "panties": "Panties",
-      "bra-panty-sets": "Lingerie Sets",
-      "sports-bras": "Bras", // fall back or map to Bras
-      "lingerie-sets": "Lingerie Sets",
-      "shapewear": "Shapewear",
-      "bridal-lingerie": "Bridal Lingerie",
-      "maternity-bras": "Maternity Bras"
-    };
-    
-    const categoryName = mapping[catParam.toLowerCase()] || catParam;
-    requestAnimationFrame(() => { setSelectedCategory(categoryName); });
-    
     const timer = setTimeout(() => {
       const catalogElement = document.getElementById("catalog");
       if (catalogElement) {

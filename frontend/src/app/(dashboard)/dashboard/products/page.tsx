@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Plus, Edit2, Trash2, X, Package, Search } from "lucide-react";
 import * as api from "@/lib/api";
@@ -38,23 +38,21 @@ export default function ProductsPage() {
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  const fetchProducts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await api.getProducts({ limit: 100 });
-      if (res?.success) {
-        setProducts(res.products);
-      }
-    } catch {
-      // fallback
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    let active = true;
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await api.getProducts({ limit: 100 });
+        if (active && res?.success) setProducts(res.products);
+      } catch {
+        // fallback
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, []);
 
   const filtered = products.filter(
     (p) =>

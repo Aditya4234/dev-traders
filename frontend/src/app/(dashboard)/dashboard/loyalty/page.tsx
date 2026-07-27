@@ -1,14 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Star, Gift, Trophy, Clock, ArrowRight } from "lucide-react";
 import * as api from "@/lib/api";
-import { useShop } from "@/context/ShopContext";
 
 interface PointsTransaction {
   _id: string;
-  date: string;
   description: string;
   points: number;
   type: "earned" | "redeemed" | "bonus" | "adjustment";
@@ -47,11 +45,11 @@ const redeemOptions: RedeemOption[] = [
 ];
 
 export default function LoyaltyPage() {
-  const { user } = useShop();
   const [totalPoints, setTotalPoints] = useState(0);
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<PointsTransaction[]>([]);
   const [redeeming, setRedeeming] = useState(false);
+  const txIdRef = useRef(0);
 
   useEffect(() => {
     async function load() {
@@ -60,9 +58,12 @@ export default function LoyaltyPage() {
         if (res.success) {
           setTotalPoints(res.account?.totalPoints || 0);
           setTransactions(
-            (res.transactions || []).map((t: any) => ({
-              ...t,
-              date: t.createdAt,
+            (res.transactions || []).map((t: Record<string, string | number>) => ({
+              _id: String(t._id),
+              createdAt: String(t.createdAt),
+              description: String(t.description),
+              points: Number(t.points),
+              type: t.type as PointsTransaction["type"],
             }))
           );
         }
@@ -86,9 +87,8 @@ export default function LoyaltyPage() {
       if (res.success) {
         setTotalPoints(res.account.totalPoints);
         const newTx: PointsTransaction = {
-          _id: Date.now().toString(),
+          _id: `local-${txIdRef.current++}`,
           createdAt: new Date().toISOString(),
-          date: new Date().toISOString(),
           description: `Redeemed ${option.discount} coupon`,
           points: -option.points,
           type: "redeemed",
@@ -356,7 +356,7 @@ export default function LoyaltyPage() {
                       className="text-xs text-[var(--muted)]"
                       style={{ fontFamily: "var(--font-poppins)" }}
                     >
-                      {new Date(tx.date).toLocaleDateString("en-IN", {
+                      {new Date(tx.createdAt).toLocaleDateString("en-IN", {
                         day: "2-digit",
                         month: "short",
                         year: "numeric",
