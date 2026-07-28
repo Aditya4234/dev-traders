@@ -1,0 +1,15 @@
+node_modules
+.next
+.vercel
+.git
+.gitignore
+README.md
+CLAUDE.md
+AGENTS.md
+Dockerfile
+.dockerignore
+.env*
+!.env.example
+*.tsbuildinfo
+next-env.d.ts
+out
