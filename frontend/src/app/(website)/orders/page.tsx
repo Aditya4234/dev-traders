@@ -103,21 +103,21 @@ export default function OrdersPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
+    if (!user) return;
 
+    let cancelled = false;
     getMyOrders()
       .then((res) => {
-        if (res.success) {
+        if (!cancelled && res.success) {
           setOrders(res.orders || []);
         }
       })
       .catch((err) => {
-        setError(err.message || "Failed to load orders");
+        if (!cancelled) setError(err.message || "Failed to load orders");
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
   }, [user]);
 
   if (!user) {

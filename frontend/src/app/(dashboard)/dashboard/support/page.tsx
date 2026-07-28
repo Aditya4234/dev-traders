@@ -97,7 +97,7 @@ export default function SupportPage() {
       refetch();
     }, 30000);
     return () => clearInterval(interval);
-  }, [filter]);
+  }, [filter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const resetForm = () => {
     setSubject("");

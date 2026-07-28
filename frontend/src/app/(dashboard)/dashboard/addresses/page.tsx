@@ -22,20 +22,19 @@ export default function AddressesPage() {
   });
 
   useEffect(() => {
-    loadAddresses();
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.getAddresses();
+        if (!cancelled && res.success) setAddresses(res.addresses || []);
+      } catch {
+        // empty state
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
-
-  async function loadAddresses() {
-    try {
-      setLoading(true);
-      const res = await api.getAddresses();
-      if (res.success) setAddresses(res.addresses || []);
-    } catch {
-      // empty state
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const handleSave = async () => {
     if (!form.name || !form.phone || !form.address || !form.city || !form.pincode) return;

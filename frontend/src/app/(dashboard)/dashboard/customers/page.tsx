@@ -31,34 +31,35 @@ export default function CustomersPage() {
   const [roleFilter, setRoleFilter] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [trigger, setTrigger] = useState(0);
 
   useEffect(() => {
-    loadCustomers();
-  }, [page, roleFilter]);
-
-  async function loadCustomers() {
-    try {
-      setLoading(true);
-      const res = await getAdminUsers({
-        page,
-        limit: 20,
-        role: roleFilter || undefined,
-        search: search || undefined,
-      });
-      if (res.success) {
-        setCustomers(res.users || []);
-        setTotalPages(res.pagination?.pages || 1);
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await getAdminUsers({
+          page,
+          limit: 20,
+          role: roleFilter || undefined,
+          search: search || undefined,
+        });
+        if (!cancelled && res.success) {
+          setCustomers(res.users || []);
+          setTotalPages(res.pagination?.pages || 1);
+        }
+      } catch {
+        // empty state
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    } catch {
-      // empty state
-    } finally {
-      setLoading(false);
-    }
-  }
+    })();
+    return () => { cancelled = true; };
+  }, [page, roleFilter, trigger]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSearch = () => {
     setPage(1);
-    loadCustomers();
+    setTrigger((t) => t + 1);
   };
 
   return (

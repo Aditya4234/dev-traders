@@ -48,14 +48,15 @@ export default function WholesaleLoginPage() {
   const googleBtnRef = useRef<HTMLDivElement>(null);
   const googleInitRef = useRef(false);
   const errorRef = useRef<HTMLDivElement>(null);
+  const customerRedirectMsg = user && user.role !== "admin" && user.role !== "dealer"
+    ? "This account is registered as a customer. Please use the customer login page."
+    : "";
+
+  const displayError = customerRedirectMsg || error;
 
   useEffect(() => {
-    if (user) {
-      if (user.role === "admin" || user.role === "dealer") {
-        router.push("/dashboard/wholeseller");
-      } else {
-        setError("This account is registered as a customer. Please use the customer login page.");
-      }
+    if (user && (user.role === "admin" || user.role === "dealer")) {
+      router.push("/dashboard/wholeseller");
     }
   }, [user, router]);
 
@@ -303,12 +304,12 @@ export default function WholesaleLoginPage() {
             <form onSubmit={handleSubmit} noValidate className="space-y-5">
               {/* Screen-reader error announcement */}
               <div aria-live="assertive" className="sr-only">
-                {(error || Object.keys(fieldErrors).length > 0) && (
-                  <span>{error || Object.values(fieldErrors).join(". ")}</span>
+                {(displayError || Object.keys(fieldErrors).length > 0) && (
+                  <span>{displayError || Object.values(fieldErrors).join(". ")}</span>
                 )}
               </div>
 
-              {error && (
+              {displayError && (
                 <motion.div
                   ref={errorRef}
                   role="alert"
@@ -317,7 +318,7 @@ export default function WholesaleLoginPage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="rounded-2xl bg-red-50 p-4 text-xs text-red-500 border border-red-100 focus:outline-none focus:ring-2 focus:ring-red-300"
                 >
-                  {error}
+                  {displayError}
                 </motion.div>
               )}
 

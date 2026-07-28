@@ -37,7 +37,6 @@ export default function CreditLedgerPage() {
             const date = new Date(entry.createdAt as string)
             const type = entry.type === 'credit' ? 'credit' as const : 'debit' as const
             const amount = Number(entry.amount) || 0
-            const orderId = entry.orderId as { total?: number; status?: string } | undefined
             return {
               id: String(entry._id || ''),
               date,

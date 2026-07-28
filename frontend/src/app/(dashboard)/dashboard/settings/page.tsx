@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Bell,
@@ -17,16 +17,16 @@ import { updateProfile } from "@/lib/api";
 
 export default function SettingsPage() {
   const { user, logout, refreshUser } = useShop();
-  const [notifications, setNotifications] = useState(user?.preferences?.notifications ?? true);
-  const [emailUpdates, setEmailUpdates] = useState(user?.preferences?.emailUpdates ?? true);
+  const [notifications, setNotifications] = useState(true);
+  const [emailUpdates, setEmailUpdates] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
 
-  useEffect(() => {
-    if (user?.preferences) {
-      setNotifications(user.preferences.notifications);
-      setEmailUpdates(user.preferences.emailUpdates);
-    }
-  }, [user]);
+  if (!prefsLoaded && user?.preferences) {
+    setNotifications(user.preferences.notifications);
+    setEmailUpdates(user.preferences.emailUpdates);
+    setPrefsLoaded(true);
+  }
 
   const handleToggleNotifications = async (value: boolean) => {
     setNotifications(value);
