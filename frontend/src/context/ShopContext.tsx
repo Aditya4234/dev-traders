@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import { Product, User } from "@/types";
 import * as api from "@/lib/api";
 
@@ -57,9 +57,22 @@ function normalizeProduct(p: Product): Product {
   return { ...p, id: p.id || p._id || "" };
 }
 
+let _cart: CartItem[] = [];
+let _wishlist: Product[] = [];
+let _listeners: Array<() => void> = [];
+
+function notifyListeners() {
+  for (const l of _listeners) l();
+}
+
+function subscribe(cb: () => void) {
+  _listeners = [..._listeners, cb];
+  return () => { _listeners = _listeners.filter(l => l !== cb); };
+}
+
 export function ShopProvider({ children }: { children: React.ReactNode }) {
-  const [cart, setCart] = useState<CartItem[]>(() => loadFromStorage<CartItem[]>("riya_touch_cart", []));
-  const [wishlist, setWishlist] = useState<Product[]>(() => loadFromStorage<Product[]>("riya_touch_wishlist", []));
+  const cart = useSyncExternalStore(subscribe, () => _cart, () => [] as CartItem[]);
+  const wishlist = useSyncExternalStore(subscribe, () => _wishlist, () => [] as Product[]);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -68,6 +81,12 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const [orderPlacedAt, setOrderPlacedAt] = useState(0);
+
+  useEffect(() => {
+    _cart = loadFromStorage<CartItem[]>("riya_touch_cart", []);
+    _wishlist = loadFromStorage<Product[]>("riya_touch_wishlist", []);
+    notifyListeners();
+  }, []);
 
   const markOrderPlaced = useCallback(() => {
     setOrderPlacedAt(Date.now());
@@ -100,14 +119,14 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
           const wishData = await api.getWishlist();
           if (wishData.success && wishData.wishlist?.products) {
             const apiProducts = wishData.wishlist.products.map(normalizeProduct);
-            setWishlist((prev) => {
-              const apiIds = new Set(apiProducts.map((p) => p.id));
-              const merged = [...apiProducts];
-              for (const p of prev) {
-                if (!apiIds.has(p.id)) merged.push(p);
-              }
-              return merged;
-            });
+            const apiIds = new Set(apiProducts.map((p) => p.id));
+            const merged = [...apiProducts];
+            for (const p of _wishlist) {
+              if (!apiIds.has(p.id)) merged.push(p);
+            }
+            _wishlist = merged;
+            localStorage.setItem("riya_touch_wishlist", JSON.stringify(_wishlist));
+            notifyListeners();
           }
         } catch {
           // keep localStorage wishlist on failure
@@ -132,33 +151,28 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     void (async () => { await refreshUser(); })();
   }, [refreshUser]);
 
-  useEffect(() => {
-    localStorage.setItem("riya_touch_cart", JSON.stringify(cart));
-  }, [cart]);
-
-  useEffect(() => {
-    localStorage.setItem("riya_touch_wishlist", JSON.stringify(wishlist));
-  }, [wishlist]);
-
   const addToCart = useCallback((product: Product, quantity = 1, size?: string) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find(
-        (item) => item.product.id === product.id && item.size === (size || undefined)
+    const existingItem = _cart.find(
+      (item) => item.product.id === product.id && item.size === (size || undefined)
+    );
+    if (existingItem) {
+      _cart = _cart.map((item) =>
+        item.product.id === product.id && item.size === (size || undefined)
+          ? { ...item, quantity: item.quantity + quantity }
+          : item
       );
-      if (existingItem) {
-        return prevCart.map((item) =>
-          item.product.id === product.id && item.size === (size || undefined)
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      }
-      return [...prevCart, { product, quantity }];
-    });
+    } else {
+      _cart = [..._cart, { product, quantity }];
+    }
+    localStorage.setItem("riya_touch_cart", JSON.stringify(_cart));
+    notifyListeners();
     setCartOpen(true);
   }, []);
 
   const removeFromCart = useCallback((productId: string) => {
-    setCart((prevCart) => prevCart.filter((item) => item.product.id !== productId));
+    _cart = _cart.filter((item) => item.product.id !== productId);
+    localStorage.setItem("riya_touch_cart", JSON.stringify(_cart));
+    notifyListeners();
   }, []);
 
   const updateQuantity = useCallback((productId: string, quantity: number) => {
@@ -166,11 +180,11 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       removeFromCart(productId);
       return;
     }
-    setCart((prevCart) =>
-      prevCart.map((item) =>
-        item.product.id === productId ? { ...item, quantity } : item
-      )
+    _cart = _cart.map((item) =>
+      item.product.id === productId ? { ...item, quantity } : item
     );
+    localStorage.setItem("riya_touch_cart", JSON.stringify(_cart));
+    notifyListeners();
   }, [removeFromCart]);
 
   const toggleWishlist = useCallback(async (product: Product) => {
@@ -178,25 +192,26 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       try {
         const data = await api.toggleWishlistItem(product.id || product._id || "");
         if (data.success && data.wishlist?.products) {
-          setWishlist(data.wishlist.products.map(normalizeProduct));
+          _wishlist = data.wishlist.products.map(normalizeProduct);
+          localStorage.setItem("riya_touch_wishlist", JSON.stringify(_wishlist));
+          notifyListeners();
         }
         return;
       } catch {
         // fall through to localStorage fallback
       }
     }
-    setWishlist((prevWishlist) => {
-      const exists = prevWishlist.some((item) => item.id === product.id);
-      if (exists) {
-        return prevWishlist.filter((item) => item.id !== product.id);
-      }
-      return [...prevWishlist, product];
-    });
+    const exists = _wishlist.some((item) => item.id === product.id);
+    _wishlist = exists
+      ? _wishlist.filter((item) => item.id !== product.id)
+      : [..._wishlist, product];
+    localStorage.setItem("riya_touch_wishlist", JSON.stringify(_wishlist));
+    notifyListeners();
   }, [user]);
 
   const isInWishlist = useCallback((productId: string) => {
-    return wishlist.some((item) => item.id === productId);
-  }, [wishlist]);
+    return _wishlist.some((item) => item.id === productId);
+  }, []);
 
   const login = useCallback((name: string, email: string) => {
     const userData: User = {
@@ -274,7 +289,9 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const clearCart = useCallback(() => {
-    setCart([]);
+    _cart = [];
+    localStorage.setItem("riya_touch_cart", JSON.stringify(_cart));
+    notifyListeners();
   }, []);
 
   return (

@@ -51,7 +51,6 @@ const socialLinks = [
 ];
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [newsletterMsg, setNewsletterMsg] = useState("");
@@ -303,7 +302,7 @@ export default function Footer() {
       <div className="border-t border-white/[0.06] bg-black/20">
         <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-4 px-4 py-6 sm:px-6 md:flex-row md:px-8 lg:px-12">
           <p className="text-[11px] text-white/30">
-            &copy; {currentYear} Riya Touch. All rights reserved.
+            &copy; <span suppressHydrationWarning>{new Date().getFullYear()}</span> Riya Touch. All rights reserved.
           </p>
           <div className="flex items-center gap-1 text-[11px] text-white/30">
             <span>Made with</span>

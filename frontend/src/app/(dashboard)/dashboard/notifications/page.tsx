@@ -11,13 +11,24 @@ interface Notification {
   message: string
   read: boolean
   createdAt: string
+  timeAgo?: string
+}
+
+function computeTimeAgo(date: string): string {
+  const diff = Date.now() - new Date(date).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'Just now'
+  if (mins < 60) return `${mins}m ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  return `${days}d ago`
 }
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [unreadCount, setUnreadCount] = useState(0)
-  const [mountedAt] = useState(() => Date.now())
 
   useEffect(() => {
     let cancelled = false
@@ -25,7 +36,11 @@ export default function NotificationsPage() {
       try {
         const res = await getNotifications({ limit: 50 })
         if (!cancelled) {
-          setNotifications(res.notifications || [])
+          const notifs = (res.notifications || []).map((n: Notification) => ({
+            ...n,
+            timeAgo: computeTimeAgo(n.createdAt),
+          }))
+          setNotifications(notifs)
           setUnreadCount(res.unreadCount || 0)
         }
       } catch {
@@ -44,17 +59,6 @@ export default function NotificationsPage() {
       setNotifications(prev => prev.map(n => ({ ...n, read: true })))
       setUnreadCount(0)
     } catch {}
-  }
-
-  const getTimeAgo = (date: string) => {
-    const diff = mountedAt - new Date(date).getTime()
-    const mins = Math.floor(diff / 60000)
-    if (mins < 1) return 'Just now'
-    if (mins < 60) return `${mins}m ago`
-    const hours = Math.floor(mins / 60)
-    if (hours < 24) return `${hours}h ago`
-    const days = Math.floor(hours / 24)
-    return `${days}d ago`
   }
 
   return (
@@ -99,7 +103,7 @@ export default function NotificationsPage() {
                 <p className="text-xs text-[var(--muted)]">{n.message}</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[var(--muted)]">{getTimeAgo(n.createdAt)}</span>
+                <span className="text-xs text-[var(--muted)]" suppressHydrationWarning>{n.timeAgo}</span>
                 {!n.read && <div className="h-2.5 w-2.5 rounded-full bg-[var(--primary)]" />}
               </div>
             </div>
