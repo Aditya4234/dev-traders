@@ -8,6 +8,10 @@ export interface User {
   companyName: string | null;
   dealerId: string | null;
   permissions: string[];
+  preferences?: {
+    notifications: boolean;
+    emailUpdates: boolean;
+  };
 }
 
 export interface Product {
@@ -161,4 +165,15 @@ export interface SearchResult {
   role: string;
   companyName?: string;
   dealerId?: string;
+}
+
+export interface AddressData {
+  _id: string;
+  label: string;
+  name: string;
+  phone: string;
+  address: string;
+  city: string;
+  pincode: string;
+  isDefault: boolean;
 }

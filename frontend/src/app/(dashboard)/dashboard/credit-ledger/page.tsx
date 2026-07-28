@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { BookOpen, ArrowUpRight, ArrowDownLeft, Loader2, ShieldAlert } from 'lucide-react'
-import { getInvoices } from '@/lib/api'
-import type { InvoiceData } from '@/types'
+import { getCreditAccount } from '@/lib/api'
 import { useShop } from '@/context/ShopContext'
 
 interface LedgerEntry {
@@ -27,32 +26,32 @@ export default function CreditLedgerPage() {
     if (!isWholeseller) return
     async function load() {
       try {
-        const res = await getInvoices({ limit: 100 })
-        const invoices = res.invoices || []
+        const res = await getCreditAccount()
+        if (!res?.success) return
 
-        const ledger = invoices
-          .map((inv: InvoiceData) => ({
-            id: inv.invoiceNumber,
-            date: new Date(inv.createdAt),
-            description: inv.status === 'paid' ? `${inv.invoiceNumber} Payment` : `${inv.invoiceNumber} Purchase`,
-            amount: inv.status === 'paid' ? (inv.paidAmount || inv.totalAmount) : inv.totalAmount,
-            type: inv.status === 'paid' ? 'credit' as const : 'debit' as const,
-          }))
-          .sort((a, b) => a.date.getTime() - b.date.getTime())
+        const account = res.account
+        const rawEntries = res.entries || []
 
-        let running = 0
-        const withBalance = ledger.map(e => {
-          if (e.type === 'credit') running += e.amount
-          else running -= e.amount
-          return {
-            ...e,
-            dateStr: e.date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-            balance: running,
-          }
-        }).reverse()
+        const ledger = rawEntries
+          .map((entry: Record<string, string | number | { total?: number; status?: string }>) => {
+            const date = new Date(entry.createdAt as string)
+            const type = entry.type === 'credit' ? 'credit' as const : 'debit' as const
+            const amount = Number(entry.amount) || 0
+            const orderId = entry.orderId as { total?: number; status?: string } | undefined
+            return {
+              id: String(entry._id || ''),
+              date,
+              description: String(entry.description || (type === 'credit' ? 'Credit Added' : 'Payment')),
+              amount,
+              type,
+              dateStr: date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+              balance: Number(entry.balance) || 0,
+            }
+          })
+          .sort((a, b) => b.date.getTime() - a.date.getTime())
 
-        setEntries(withBalance)
-        setCurrentBalance(running)
+        setEntries(ledger)
+        setCurrentBalance(account?.currentBalance || 0)
       } catch {
         // empty state
       } finally {
@@ -115,7 +114,7 @@ export default function CreditLedgerPage() {
             <tbody>
               {entries.map(e => (
                 <tr key={e.id + e.dateStr} className="border-b transition-colors hover:bg-[var(--accent)]/50" style={{ borderColor: 'var(--border)' }}>
-                  <td className="px-6 py-4 font-medium text-[var(--dark-text)]">{e.id}</td>
+                  <td className="px-6 py-4 font-medium text-[var(--dark-text)]">{e.id.slice(-8).toUpperCase()}</td>
                   <td className="px-6 py-4 text-[var(--muted)]">{e.dateStr}</td>
                   <td className="px-6 py-4 text-[var(--muted)]">{e.description}</td>
                   <td className="px-6 py-4">

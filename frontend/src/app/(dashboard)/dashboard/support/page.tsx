@@ -92,6 +92,13 @@ export default function SupportPage() {
     return () => { active = false; };
   }, [filter]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetch();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [filter]);
+
   const resetForm = () => {
     setSubject("");
     setMessage("");

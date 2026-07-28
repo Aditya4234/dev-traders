@@ -50,7 +50,6 @@ const productsData = [
   { name: "Back-Less Plane Bra", brand: "Riya Touch", price: 208, discountPrice: 208, rating: 4.7, reviewCount: 0, image: "/products/image.png", category: "Non-Padded Bras", badge: "new", sizes: ["30/75"] },
   { name: "Pulse Panty (3 PCS Pack)", brand: "Pulse", price: 145, discountPrice: 145, rating: 4.7, reviewCount: 0, image: "/products/PULSE.png", category: "Cotton Panties", badge: "new", sizes: ["XL"] },
   { name: "Juliyat Panty (3 PCS Pack)", brand: "Juliyat", price: 130, discountPrice: 130, rating: 4.7, reviewCount: 0, image: "/products/JULIYAT.png", category: "Cotton Panties", badge: "new", sizes: ["L"] },
-  { name: "Riya Touch Mini Panty (3 PCS Pack)", brand: "Riya Touch", price: 132, discountPrice: 132, rating: 4.7, reviewCount: 0, image: "/products/riya touch.png", category: "Hipsters", badge: "new", sizes: ["S"] },
   { name: "Riya Touch Nice Panty (3 PCS Pack)", brand: "Riya Touch", price: 154, discountPrice: 154, rating: 4.7, reviewCount: 0, image: "/products/NICE1.png", category: "Hipsters", badge: "new", sizes: ["XL"] },
   { name: "Riya Touch Pushpa Seamless Panty (3 PCS Pack)", brand: "Riya Touch", price: 106, discountPrice: 106, rating: 4.7, reviewCount: 0, image: "/products/PUSHPA.png", category: "Seamless Panties", badge: "new", sizes: ["XXL"] },
 ];

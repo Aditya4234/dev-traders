@@ -256,7 +256,7 @@ router.post("/reset-password", async (req: Request, res: Response) => {
 // PUT /api/auth/profile
 router.put("/profile", protect, async (req: AuthRequest, res: Response) => {
   try {
-    const { name, phone, companyName, dealerId } = req.body;
+    const { name, phone, companyName, dealerId, preferences } = req.body;
     const user = await User.findById(req.user?.id);
     if (!user) {
       res.status(404).json({ success: false, message: "User not found" });
@@ -267,6 +267,11 @@ router.put("/profile", protect, async (req: AuthRequest, res: Response) => {
     if (phone) user.phone = phone;
     if (companyName) user.companyName = companyName;
     if (dealerId) user.dealerId = dealerId;
+    if (preferences) {
+      if (!user.preferences) user.preferences = { notifications: true, emailUpdates: true };
+      if (typeof preferences.notifications === 'boolean') user.preferences.notifications = preferences.notifications;
+      if (typeof preferences.emailUpdates === 'boolean') user.preferences.emailUpdates = preferences.emailUpdates;
+    }
     await user.save();
 
     res.json({

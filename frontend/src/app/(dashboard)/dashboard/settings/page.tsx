@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Bell,
@@ -10,13 +10,49 @@ import {
   ChevronRight,
   Moon,
   Globe,
+  Loader2,
 } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
+import { updateProfile } from "@/lib/api";
 
 export default function SettingsPage() {
-  const { logout } = useShop();
-  const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  const { user, logout, refreshUser } = useShop();
+  const [notifications, setNotifications] = useState(user?.preferences?.notifications ?? true);
+  const [emailUpdates, setEmailUpdates] = useState(user?.preferences?.emailUpdates ?? true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (user?.preferences) {
+      setNotifications(user.preferences.notifications);
+      setEmailUpdates(user.preferences.emailUpdates);
+    }
+  }, [user]);
+
+  const handleToggleNotifications = async (value: boolean) => {
+    setNotifications(value);
+    setSaving(true);
+    try {
+      await updateProfile({ name: user?.name || "", preferences: { notifications: value, emailUpdates } });
+      await refreshUser();
+    } catch {
+      setNotifications(!value);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleEmailUpdates = async (value: boolean) => {
+    setEmailUpdates(value);
+    setSaving(true);
+    try {
+      await updateProfile({ name: user?.name || "", preferences: { notifications, emailUpdates: value } });
+      await refreshUser();
+    } catch {
+      setEmailUpdates(!value);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -52,14 +88,46 @@ export default function SettingsPage() {
               </div>
             </div>
             <button
-              onClick={() => setNotifications(!notifications)}
+              onClick={() => handleToggleNotifications(!notifications)}
+              disabled={saving}
               className={`relative h-6 w-11 rounded-full transition-colors ${
                 notifications ? "bg-primary" : "bg-border"
               }`}
             >
+              {saving && <Loader2 size={12} className="absolute -right-4 animate-spin text-muted" />}
               <span
                 className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
                   notifications ? "translate-x-5" : "translate-x-0.5"
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
+        {/* Email Updates */}
+        <div className="luxury-card p-5 sm:p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                <Bell size={18} className="text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-dark-text font-[family-name:var(--font-poppins)]">
+                  Email Updates
+                </p>
+                <p className="text-xs text-muted">Receive order confirmations via email</p>
+              </div>
+            </div>
+            <button
+              onClick={() => handleToggleEmailUpdates(!emailUpdates)}
+              disabled={saving}
+              className={`relative h-6 w-11 rounded-full transition-colors ${
+                emailUpdates ? "bg-primary" : "bg-border"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                  emailUpdates ? "translate-x-5" : "translate-x-0.5"
                 }`}
               />
             </button>
@@ -77,21 +145,10 @@ export default function SettingsPage() {
                 <p className="text-sm font-semibold text-dark-text font-[family-name:var(--font-poppins)]">
                   Dark Mode
                 </p>
-                <p className="text-xs text-muted">Toggle dark theme</p>
+                <p className="text-xs text-muted">Coming soon</p>
               </div>
             </div>
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`relative h-6 w-11 rounded-full transition-colors ${
-                darkMode ? "bg-primary" : "bg-border"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                  darkMode ? "translate-x-5" : "translate-x-0.5"
-                }`}
-              />
-            </button>
+            <span className="text-xs text-muted bg-gray-100 px-3 py-1 rounded-full font-[family-name:var(--font-poppins)]">Soon</span>
           </div>
         </div>
 

@@ -1,6 +1,8 @@
 import { Router, Request, Response } from "express";
 import Order from "../models/Order";
 import Product from "../models/Product";
+import Notification from "../models/Notification";
+import User from "../models/User";
 import { protect, optionalAuth, wholesellerOnly, AuthRequest } from "../middleware/auth";
 import { sendOrderNotification } from "../services/notification";
 
@@ -66,6 +68,25 @@ router.post("/", optionalAuth, async (req: AuthRequest, res: Response) => {
     sendOrderNotification(order).catch((err: any) =>
       console.error("[Order] Notification failed:", err)
     );
+
+    // Create in-app notification for all wholeseller (admin/dealer) users
+    try {
+      const wholesellerUsers = await User.find({ role: { $in: ["admin", "dealer"] } }).select("_id");
+      if (wholesellerUsers.length > 0) {
+        const shortId = String(order._id).slice(-8).toUpperCase();
+        const itemNames = order.items.map((i: any) => i.name).join(", ");
+        const notifications = wholesellerUsers.map((u: any) => ({
+          user: u._id,
+          title: "New Order Received",
+          message: `Order #${shortId} from ${customer.name} — ₹${total.toLocaleString("en-IN")} (${itemNames})`,
+          type: "order" as const,
+          link: "/dashboard/orders",
+        }));
+        await Notification.insertMany(notifications);
+      }
+    } catch (err: any) {
+      console.error("[Order] In-app notification failed:", err);
+    }
 
     res.status(201).json({ success: true, order });
   } catch (error: any) {

@@ -122,6 +122,8 @@ export default function DashboardPage() {
   useEffect(() => {
     if (isWholeseller) {
       void (async () => { await fetchStats(); })();
+      const interval = setInterval(() => { void fetchStats(); }, 30000);
+      return () => clearInterval(interval);
     }
   }, [fetchStats, orderPlacedAt, isWholeseller]);
 

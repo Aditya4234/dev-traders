@@ -15,6 +15,10 @@ export interface IUser extends Document {
   loginCount: number;
   resetPasswordToken?: string;
   resetPasswordExpiry?: Date;
+  preferences: {
+    notifications: boolean;
+    emailUpdates: boolean;
+  };
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -39,6 +43,10 @@ const userSchema = new Schema<IUser>(
     loginCount: { type: Number, default: 0 },
     resetPasswordToken: { type: String, select: false },
     resetPasswordExpiry: { type: Date, select: false },
+    preferences: {
+      notifications: { type: Boolean, default: true },
+      emailUpdates: { type: Boolean, default: true },
+    },
   },
   { timestamps: true }
 );

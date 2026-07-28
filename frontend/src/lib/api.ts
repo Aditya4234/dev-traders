@@ -11,6 +11,7 @@ import type {
   InvoiceData,
   OrderData,
   SearchResult,
+  AddressData,
 } from "@/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
@@ -135,6 +136,21 @@ export async function googleLogin(credential: string) {
 
 export async function getMe() {
   return fetchAPI<{ success: boolean; user: User }>("/auth/me");
+}
+
+// ─── Profile ───
+export async function updateProfile(data: { name: string; phone?: string; preferences?: { notifications: boolean; emailUpdates: boolean } }) {
+  return fetchAPI<{ success: boolean; user: User }>("/auth/profile", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function changePassword(data: { currentPassword: string; newPassword: string }) {
+  return fetchAPI<{ success: boolean; message: string }>("/auth/change-password", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
 }
 
 // ─── Orders ───
@@ -663,6 +679,45 @@ export async function toggleWishlistItem(productId: string) {
   return fetchAPI<{ success: boolean; action: string; wishlist: { products: Product[] } }>(`/wishlist/toggle`, {
     method: "POST",
     body: JSON.stringify({ productId }),
+  });
+}
+
+// ─── Addresses ───
+export async function getAddresses() {
+  return fetchAPI<{ success: boolean; addresses: AddressData[] }>("/addresses");
+}
+
+export async function createAddress(data: {
+  label?: string;
+  name: string;
+  phone: string;
+  address: string;
+  city: string;
+  pincode: string;
+  isDefault?: boolean;
+}) {
+  return fetchAPI<{ success: boolean; address: AddressData }>("/addresses", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateAddress(id: string, data: Partial<AddressData>) {
+  return fetchAPI<{ success: boolean; address: AddressData }>(`/addresses/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteAddress(id: string) {
+  return fetchAPI<{ success: boolean; message: string }>(`/addresses/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function setDefaultAddress(id: string) {
+  return fetchAPI<{ success: boolean; address: AddressData }>(`/addresses/${id}/default`, {
+    method: "PUT",
   });
 }
 

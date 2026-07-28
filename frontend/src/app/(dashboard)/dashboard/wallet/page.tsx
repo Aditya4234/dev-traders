@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Wallet as WalletIcon, ArrowUpRight, ArrowDownLeft, Loader2, ShieldAlert } from 'lucide-react'
-import { getInvoices } from '@/lib/api'
-import type { InvoiceData } from '@/types'
+import { getCreditAccount } from '@/lib/api'
 import { useShop } from '@/context/ShopContext'
 
 interface WalletTransaction {
@@ -25,36 +24,24 @@ export default function WalletPage() {
     if (!isWholeseller) return
     async function load() {
       try {
-        const [paidRes, pendingRes] = await Promise.all([
-          getInvoices({ status: 'paid', limit: 50 }),
-          getInvoices({ status: 'pending', limit: 50 }),
-        ])
+        const res = await getCreditAccount()
+        if (!res?.success) return
 
-        const paidInvoices = paidRes.invoices || []
-        const pendingInvoices = pendingRes.invoices || []
+        const account = res.account
+        const rawEntries = res.entries || []
 
-        const txns = [
-          ...paidInvoices.map((inv: InvoiceData) => ({
-            id: inv._id,
-            date: new Date(inv.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-            type: 'debit' as const,
-            description: `Payment for ${inv.invoiceNumber}`,
-            amount: inv.paidAmount || inv.totalAmount,
-          })),
-          ...pendingInvoices.map((inv: InvoiceData) => ({
-            id: inv._id,
-            date: new Date(inv.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-            type: 'credit' as const,
-            description: `Invoice ${inv.invoiceNumber} pending`,
-            amount: inv.totalAmount - (inv.paidAmount || 0),
-          })),
-        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        const txns = rawEntries
+          .map((entry: Record<string, string | number>) => ({
+            id: String(entry._id || ''),
+            date: new Date(entry.createdAt as string).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+            type: (entry.type === 'credit' ? 'credit' : 'debit') as 'credit' | 'debit',
+            description: String(entry.description || (entry.type === 'credit' ? 'Credit Added' : 'Payment')),
+            amount: Number(entry.amount) || 0,
+          }))
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
         setTransactions(txns)
-
-        const totalPaid = paidInvoices.reduce((s, i) => s + (i.paidAmount || i.totalAmount), 0)
-        const totalPending = pendingInvoices.reduce((s, i) => s + (i.totalAmount - (i.paidAmount || 0)), 0)
-        setBalance(totalPending - totalPaid)
+        setBalance(account?.currentBalance || 0)
       } catch {
         // empty state
       } finally {

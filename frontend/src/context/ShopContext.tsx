@@ -53,6 +53,10 @@ function loadFromStorage<T>(key: string, fallback: T): T {
   }
 }
 
+function normalizeProduct(p: Product): Product {
+  return { ...p, id: p.id || p._id || "" };
+}
+
 export function ShopProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>(() => loadFromStorage<CartItem[]>("riya_touch_cart", []));
   const [wishlist, setWishlist] = useState<Product[]>(() => loadFromStorage<Product[]>("riya_touch_wishlist", []));
@@ -92,6 +96,22 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       if (data.success && data.user) {
         setUser(data.user);
         localStorage.setItem("riya_touch_user", JSON.stringify(data.user));
+        try {
+          const wishData = await api.getWishlist();
+          if (wishData.success && wishData.wishlist?.products) {
+            const apiProducts = wishData.wishlist.products.map(normalizeProduct);
+            setWishlist((prev) => {
+              const apiIds = new Set(apiProducts.map((p) => p.id));
+              const merged = [...apiProducts];
+              for (const p of prev) {
+                if (!apiIds.has(p.id)) merged.push(p);
+              }
+              return merged;
+            });
+          }
+        } catch {
+          // keep localStorage wishlist on failure
+        }
       } else {
         localStorage.removeItem("riya_touch_token");
         localStorage.removeItem("riya_touch_user");
@@ -153,7 +173,18 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     );
   }, [removeFromCart]);
 
-  const toggleWishlist = useCallback((product: Product) => {
+  const toggleWishlist = useCallback(async (product: Product) => {
+    if (user) {
+      try {
+        const data = await api.toggleWishlistItem(product.id || product._id || "");
+        if (data.success && data.wishlist?.products) {
+          setWishlist(data.wishlist.products.map(normalizeProduct));
+        }
+        return;
+      } catch {
+        // fall through to localStorage fallback
+      }
+    }
     setWishlist((prevWishlist) => {
       const exists = prevWishlist.some((item) => item.id === product.id);
       if (exists) {
@@ -161,7 +192,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       }
       return [...prevWishlist, product];
     });
-  }, []);
+  }, [user]);
 
   const isInWishlist = useCallback((productId: string) => {
     return wishlist.some((item) => item.id === productId);

@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, RotateCcw, CheckCircle, Info } from "lucide-react";
-import { products } from "@/data/mock-data";
+import { getProducts } from "@/lib/api";
+import { products as fallbackProducts } from "@/data/mock-data";
 import ProductCard from "@/components/ui/ProductCard";
+import type { Product } from "@/types";
 
 export default function BraFitCalculator() {
   const [step, setStep] = useState<"intro" | "band" | "cup" | "issues" | "result">("intro");
+  const [allProducts, setAllProducts] = useState<Product[]>(fallbackProducts);
   
   // Inputs
   const [underbust, setUnderbust] = useState<number>(30); // in inches
@@ -17,7 +20,30 @@ export default function BraFitCalculator() {
   // Results
   const [calculatedSize, setCalculatedSize] = useState<string>("");
   const [advice, setAdvice] = useState<string[]>([]);
-  const [recommendedProducts, setRecommendedProducts] = useState<typeof products>([]);
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    getProducts({ limit: 50 })
+      .then((data) => {
+        if (data.success && data.products.length > 0) {
+          setAllProducts(
+            data.products.map((p: Product) => ({
+              id: p._id || p.id,
+              name: p.name,
+              brand: p.brand,
+              price: p.price,
+              discountPrice: p.discountPrice,
+              rating: p.rating,
+              reviewCount: p.reviewCount,
+              image: p.image,
+              category: p.category,
+              badge: p.badge,
+            }))
+          );
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleIssueToggle = (issue: string) => {
     if (fitIssues.includes(issue)) {
@@ -80,13 +106,13 @@ export default function BraFitCalculator() {
     setAdvice(recommendations);
 
     // 4. Recommend products based on issues and categories
-    let filtered = products.filter((p) => 
+    let filtered = allProducts.filter((p) => 
       recommendedCategories.some(cat => p.category === cat)
     );
 
     // If no exact match, fallback to any bras
     if (filtered.length === 0) {
-      filtered = products.filter((p) => p.category.includes("Bras"));
+      filtered = allProducts.filter((p) => p.category.includes("Bras"));
     }
 
     setRecommendedProducts(filtered.slice(0, 3));

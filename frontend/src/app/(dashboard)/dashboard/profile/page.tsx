@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { User, Mail, Phone, Save, Check, Loader2, Lock } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
+import { updateProfile, changePassword } from "@/lib/api";
 
 export default function ProfilePage() {
   const { user, refreshUser } = useShop();
@@ -38,17 +39,7 @@ export default function ProfilePage() {
       return;
     }
     try {
-      const token = localStorage.getItem("riya_touch_token");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/auth/profile`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ name: name.trim(), phone: phone.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to update profile");
+      await updateProfile({ name: name.trim(), phone: phone.trim() });
       setSaved(true);
       refreshUser?.();
       setTimeout(() => setSaved(false), 2000);
@@ -79,17 +70,7 @@ export default function ProfilePage() {
 
     setPasswordSaving(true);
     try {
-      const token = localStorage.getItem("riya_touch_token");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/auth/change-password`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to change password");
+      await changePassword({ currentPassword, newPassword });
       setPasswordSaved(true);
       setCurrentPassword("");
       setNewPassword("");

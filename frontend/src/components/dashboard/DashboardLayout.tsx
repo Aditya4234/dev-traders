@@ -147,6 +147,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [ratingHover, setRatingHover] = useState(0)
   const [ratingText, setRatingText] = useState('')
   const [ratingSubmitted, setRatingSubmitted] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   const userName = user?.name || 'Partner'
   const companyName = user?.companyName || 'Riya Touch'
@@ -188,6 +189,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       });
     }
   }, [justLoggedIn, setJustLoggedIn])
+
+  useEffect(() => {
+    if (!user) return
+    const fetchUnread = async () => {
+      try {
+        const token = localStorage.getItem('riya_touch_token')
+        if (!token) return
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/notifications?limit=1`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setUnreadCount(data.unreadCount || 0)
+        }
+      } catch {}
+    }
+    fetchUnread()
+    const interval = setInterval(fetchUnread, 30000)
+    return () => clearInterval(interval)
+  }, [user])
 
   if (authLoading) {
     return (
@@ -483,7 +504,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <Link href="/dashboard/notifications" className="relative flex h-9 w-9 items-center justify-center rounded-xl text-[var(--dark-text)]/70 transition-colors hover:bg-[var(--accent)] hover:text-[var(--dark-text)]">
             <Bell size={18} />
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[var(--primary)] shadow-sm ring-2 ring-white" />
+            {unreadCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--primary)] px-1 text-[9px] font-bold text-white shadow-sm ring-2 ring-white">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </Link>
 
           <button
