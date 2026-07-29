@@ -151,21 +151,25 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (isWholeseller) {
-      (async () => {
-        try {
-          const [overviewData, usersData] = await Promise.all([
-            api.getAdminOverview(),
-            api.getAdminUsers({ page: 1, limit: 10 }),
-          ]);
-          if (overviewData.success) setOverview(overviewData.overview);
-          if (usersData.success) {
-            setUsers(usersData.users || []);
-            setUserPagination(usersData.pagination);
-          }
-        } catch { /* ignore */ }
-      })();
-    }
+    if (!isWholeseller) return;
+    let mounted = true;
+    const fetchData = async () => {
+      try {
+        const [overviewData, usersData] = await Promise.all([
+          api.getAdminOverview(),
+          api.getAdminUsers({ page: 1, limit: 10 }),
+        ]);
+        if (!mounted) return;
+        if (overviewData.success) setOverview(overviewData.overview);
+        if (usersData.success) {
+          setUsers(usersData.users || []);
+          setUserPagination(usersData.pagination);
+        }
+      } catch { /* ignore */ }
+    };
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => { mounted = false; clearInterval(interval); };
   }, [isWholeseller]);
 
   useEffect(() => {

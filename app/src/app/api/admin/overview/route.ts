@@ -16,6 +16,12 @@ export async function GET(request: NextRequest) {
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const sevenDaysAgoStart = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+    sevenDaysAgoStart.setHours(0, 0, 0, 0);
 
     const [
       totalUsers,
@@ -30,22 +36,17 @@ export async function GET(request: NextRequest) {
       ordersToday,
       ordersThisWeek,
       ordersThisMonth,
-      pendingOrders,
-      deliveredOrders,
-      cancelledOrders,
-      confirmedOrders,
-      shippedOrders,
-      totalRevenueAgg,
-      revenueThisMonthAgg,
+      orderStatusCounts,
+      revenueAgg,
       revenueTodayAgg,
-      revenueThisWeekAgg,
-      codOrders,
-      onlineOrders,
-      whatsappOrders,
+      revenueWeekAgg,
+      revenueMonthAgg,
+      paymentCounts,
       totalProducts,
       activeProducts,
-      lowStockProducts,
       recentOrders,
+      lowStockData,
+      dailySalesAgg,
     ] = await Promise.all([
       User.countDocuments(),
       User.countDocuments({ role: 'customer' }),
@@ -59,64 +60,56 @@ export async function GET(request: NextRequest) {
       Order.countDocuments({ createdAt: { $gte: startOfDay } }),
       Order.countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
       Order.countDocuments({ createdAt: { $gte: startOfMonth } }),
-      Order.countDocuments({ status: 'pending' }),
-      Order.countDocuments({ status: 'delivered' }),
-      Order.countDocuments({ status: 'cancelled' }),
-      Order.countDocuments({ status: 'confirmed' }),
-      Order.countDocuments({ status: 'shipped' }),
+      Order.aggregate([
+        { $group: { _id: '$status', count: { $sum: 1 } } },
+      ]),
       Order.aggregate([{ $group: { _id: null, total: { $sum: '$total' } } }]),
+      Order.aggregate([{ $match: { createdAt: { $gte: startOfDay } } }, { $group: { _id: null, total: { $sum: '$total' } } }]),
+      Order.aggregate([{ $match: { createdAt: { $gte: sevenDaysAgo } } }, { $group: { _id: null, total: { $sum: '$total' } } }]),
+      Order.aggregate([{ $match: { createdAt: { $gte: startOfMonth } } }, { $group: { _id: null, total: { $sum: '$total' } } }]),
       Order.aggregate([
-        { $match: { createdAt: { $gte: startOfMonth } } },
-        { $group: { _id: null, total: { $sum: '$total' } } },
+        { $group: { _id: '$paymentMethod', count: { $sum: 1 } } },
       ]),
-      Order.aggregate([
-        { $match: { createdAt: { $gte: startOfDay } } },
-        { $group: { _id: null, total: { $sum: '$total' } } },
-      ]),
-      Order.aggregate([
-        { $match: { createdAt: { $gte: sevenDaysAgo } } },
-        { $group: { _id: null, total: { $sum: '$total' } } },
-      ]),
-      Order.countDocuments({ paymentMethod: 'cod' }),
-      Order.countDocuments({ paymentMethod: 'online' }),
-      Order.countDocuments({ whatsappSent: true }),
       Product.countDocuments(),
       Product.countDocuments({ isActive: true }),
-      0,
       Order.find().sort('-createdAt').limit(10).lean(),
+      (async () => {
+        try {
+          const { default: Inventory } = await import('@/lib/models/Inventory');
+          return await Inventory.find({ quantity: { $lte: 10, $gt: 0 } })
+            .populate('product', 'name image')
+            .select('product quantity sku')
+            .limit(10)
+            .lean();
+        } catch { return []; }
+      })(),
+      Order.aggregate([
+        { $match: { createdAt: { $gte: sevenDaysAgoStart } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            sales: { $sum: '$total' },
+            orders: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
     ]);
 
-    const lowStockData = await import('@/lib/models/Inventory').then(async (mod: any) => {
-      const Inventory = mod.default;
-      const lowStock = await Inventory.find({ $and: [{ quantity: { $lte: 10 } }, { quantity: { $gt: 0 } }] })
-        .populate('product', 'name image')
-        .select('product quantity sku')
-        .limit(10)
-        .lean();
-      return lowStock;
-    }).catch(() => []);
-
-    const totalRevenue = totalRevenueAgg[0]?.total || 0;
-    const revenueThisMonth = revenueThisMonthAgg[0]?.total || 0;
+    const statusMap = Object.fromEntries(orderStatusCounts.map((o: any) => [o._id, o.count]));
+    const paymentMap = Object.fromEntries(paymentCounts.map((p: any) => [p._id, p.count]));
+    const totalRevenue = revenueAgg[0]?.total || 0;
     const revenueToday = revenueTodayAgg[0]?.total || 0;
-    const revenueThisWeek = revenueThisWeekAgg[0]?.total || 0;
-    const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+    const revenueThisWeek = revenueWeekAgg[0]?.total || 0;
+    const revenueThisMonth = revenueMonthAgg[0]?.total || 0;
 
     const dailySales: { date: string; sales: number; orders: number }[] = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
-      const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-      const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
-      const dayData = await Order.aggregate([
-        { $match: { createdAt: { $gte: dayStart, $lte: dayEnd } } },
-        { $group: { _id: null, sales: { $sum: '$total' }, orders: { $sum: 1 } } },
-      ]);
-      dailySales.push({
-        date: dayStart.toISOString().slice(0, 10),
-        sales: dayData[0]?.sales || 0,
-        orders: dayData[0]?.orders || 0,
-      });
+      const dateStr = d.toISOString().slice(0, 10);
+      const found = dailySalesAgg.find((d: any) => d._id === dateStr);
+      dailySales.push({ date: dateStr, sales: found?.sales || 0, orders: found?.orders || 0 });
     }
 
     return NextResponse.json({
@@ -137,23 +130,23 @@ export async function GET(request: NextRequest) {
           today: ordersToday,
           thisWeek: ordersThisWeek,
           thisMonth: ordersThisMonth,
-          pending: pendingOrders,
-          confirmed: confirmedOrders,
-          shipped: shippedOrders,
-          delivered: deliveredOrders,
-          cancelled: cancelledOrders,
+          pending: statusMap.pending || 0,
+          confirmed: statusMap.confirmed || 0,
+          shipped: statusMap.shipped || 0,
+          delivered: statusMap.delivered || 0,
+          cancelled: statusMap.cancelled || 0,
         },
         revenue: {
           total: totalRevenue,
           today: revenueToday,
           thisWeek: revenueThisWeek,
           thisMonth: revenueThisMonth,
-          avgOrderValue,
+          avgOrderValue: totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0,
         },
         payments: {
-          cod: codOrders,
-          online: onlineOrders,
-          whatsapp: whatsappOrders,
+          cod: paymentMap.cod || 0,
+          online: paymentMap.online || 0,
+          whatsapp: paymentMap.whatsapp || 0,
         },
         products: {
           total: totalProducts,
