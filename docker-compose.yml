@@ -29,17 +29,16 @@ services:
     volumes:
       - es_data:/usr/share/elasticsearch/data
 
-  backend:
-    build: ./backend
+  frontend:
+    build: ./app
     restart: unless-stopped
     ports:
-      - "5000:5000"
+      - "3000:3000"
     depends_on:
       - mongodb
       - redis
       - elasticsearch
     environment:
-      PORT: 5000
       MONGODB_URI: mongodb://mongodb:27017/riya_touch
       REDIS_URL: redis://redis:6379
       ELASTICSEARCH_URL: http://elasticsearch:9200
@@ -48,16 +47,11 @@ services:
       BUSINESS_STATE: ${BUSINESS_STATE:-Rajasthan}
       RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
       RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
-
-  frontend:
-    build: ./frontend
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
-    environment:
-      NEXT_PUBLIC_API_URL: http://backend:5000/api
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      NOTIFICATION_PROVIDER: smart
+      ADMIN_EMAIL: guptadharmendra280@gmail.com
+      FRONTEND_URL: http://localhost:3000
 
   nginx:
     image: nginx:alpine
@@ -70,7 +64,6 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
     depends_on:
       - frontend
-      - backend
 
   prometheus:
     image: prom/prometheus:latest

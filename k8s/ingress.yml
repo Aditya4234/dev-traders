@@ -22,13 +22,6 @@ spec:
     - host: riyatouch.com
       http:
         paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: riya-backend
-                port:
-                  number: 5000
           - path: /
             pathType: Prefix
             backend:
@@ -39,13 +32,6 @@ spec:
     - host: www.riyatouch.com
       http:
         paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: riya-backend
-                port:
-                  number: 5000
           - path: /
             pathType: Prefix
             backend:

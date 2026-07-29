@@ -1,0 +1,58 @@
+import mongoose, { Schema, Document } from "mongoose";
+
+export interface IProduct extends Document {
+  name: string;
+  brand: string;
+  price: number;
+  discountPrice: number;
+  rating: number;
+  reviewCount: number;
+  image: string;
+  category: string;
+  badge?: "new" | "sale" | "bestseller" | "trending";
+  sizes?: string[];
+  isActive: boolean;
+  stock: number;
+  sku: string;
+  dealerPrices: { minQty: number; price: number }[];
+  description: string;
+  weight: number;
+}
+
+const productSchema = new Schema<IProduct>(
+  {
+    name: { type: String, required: true, trim: true },
+    brand: { type: String, required: true, default: "Riya Touch" },
+    price: { type: Number, required: true, min: 0 },
+    discountPrice: { type: Number, required: true, min: 0 },
+    rating: { type: Number, default: 0, min: 0, max: 5 },
+    reviewCount: { type: Number, default: 0, min: 0 },
+    image: { type: String, required: true },
+    category: { type: String, required: true, trim: true },
+    badge: {
+      type: String,
+      enum: ["new", "sale", "bestseller", "trending"],
+    },
+    sizes: [{ type: String }],
+    isActive: { type: Boolean, default: true },
+    stock: { type: Number, default: 0, min: 0 },
+    sku: { type: String, default: "" },
+    dealerPrices: [
+      {
+        minQty: { type: Number, required: true },
+        price: { type: Number, required: true },
+      },
+    ],
+    description: { type: String, default: "" },
+    weight: { type: Number, default: 0 },
+  },
+  { timestamps: true }
+);
+
+productSchema.index({ category: 1 });
+productSchema.index({ badge: 1 });
+productSchema.index({ name: "text", category: "text" });
+productSchema.index({ price: 1 });
+productSchema.index({ rating: -1 });
+
+export default mongoose.model<IProduct>("Product", productSchema);

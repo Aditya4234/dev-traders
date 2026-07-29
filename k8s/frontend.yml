@@ -20,9 +20,9 @@ spec:
           image: riya-touch/frontend:latest
           ports:
             - containerPort: 3000
-          env:
-            - name: NEXT_PUBLIC_API_URL
-              value: "http://riya-backend:5000/api"
+          envFrom:
+            - secretRef:
+                name: riya-touch-secrets
           resources:
             requests:
               cpu: 200m
