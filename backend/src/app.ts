@@ -72,12 +72,18 @@ const mongodbConnections = new Gauge({
 });
 
 // Middleware
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "https://dev-traders.vercel.app",
+  "https://dev-traders-two.vercel.app",
+];
+const frontendUrl = process.env.FRONTEND_URL;
+if (frontendUrl && !allowedOrigins.includes(frontendUrl)) {
+  allowedOrigins.push(frontendUrl);
+}
 app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://dev-traders.vercel.app",
-  ],
+  origin: allowedOrigins,
   credentials: true,
 }));
 app.use(express.json({ limit: "10mb" }));

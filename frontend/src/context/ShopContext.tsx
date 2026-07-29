@@ -95,12 +95,16 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     setOrderPlacedAt(Date.now());
   }, []);
 
-  const setSessionCookie = useCallback((token: string) => {
+  const setSessionCookie = useCallback((token: string, role?: string) => {
     document.cookie = `riya_session=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+    if (role) {
+      document.cookie = `riya_role=${role}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+    }
   }, []);
 
   const clearSessionCookie = useCallback(() => {
     document.cookie = "riya_session=; path=/; max-age=0";
+    document.cookie = "riya_role=; path=/; max-age=0";
   }, []);
 
   const refreshUser = useCallback(async () => {
@@ -111,12 +115,18 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    setSessionCookie(savedToken);
+    const savedUser = localStorage.getItem("riya_touch_user");
+    let savedRole: string | undefined;
+    if (savedUser) {
+      try { savedRole = JSON.parse(savedUser).role } catch {}
+    }
+    setSessionCookie(savedToken, savedRole);
 
     try {
       const data = await api.getMe();
       if (data.success && data.user) {
         setUser(data.user);
+        setSessionCookie(savedToken, data.user.role);
         localStorage.setItem("riya_touch_user", JSON.stringify(data.user));
         try {
           const wishData = await api.getWishlist();
@@ -235,43 +245,46 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
 
   const loginWithApi = useCallback(async (email: string, password: string, remember = false) => {
     const data = await api.login({ email, password });
-    if (data.success) {
-      localStorage.setItem("riya_touch_token", data.token);
-      setSessionCookie(data.token);
-      setUser(data.user);
-      localStorage.setItem("riya_touch_user", JSON.stringify(data.user));
-      if (remember) {
-        localStorage.setItem("riya_touch_remembered_email", email);
-      } else {
-        localStorage.removeItem("riya_touch_remembered_email");
-      }
-      setLoginOpen(false);
-      setJustLoggedIn(true);
+    if (!data.success) {
+      throw new Error(data.message || "Invalid email or password");
     }
+    localStorage.setItem("riya_touch_token", data.token);
+    setSessionCookie(data.token, data.user?.role);
+    setUser(data.user);
+    localStorage.setItem("riya_touch_user", JSON.stringify(data.user));
+    if (remember) {
+      localStorage.setItem("riya_touch_remembered_email", email);
+    } else {
+      localStorage.removeItem("riya_touch_remembered_email");
+    }
+    setLoginOpen(false);
+    setJustLoggedIn(true);
   }, [setSessionCookie]);
 
   const registerWithApi = useCallback(async (name: string, email: string, password: string, options?: { role?: "customer" | "dealer"; companyName?: string; dealerId?: string }) => {
     const data = await api.register({ name, email, password, ...options });
-    if (data.success) {
-      localStorage.setItem("riya_touch_token", data.token);
-      setSessionCookie(data.token);
-      setUser(data.user);
-      localStorage.setItem("riya_touch_user", JSON.stringify(data.user));
-      setLoginOpen(false);
-      setJustLoggedIn(true);
+    if (!data.success) {
+      throw new Error(data.message || "Registration failed");
     }
+    localStorage.setItem("riya_touch_token", data.token);
+    setSessionCookie(data.token, data.user?.role);
+    setUser(data.user);
+    localStorage.setItem("riya_touch_user", JSON.stringify(data.user));
+    setLoginOpen(false);
+    setJustLoggedIn(true);
   }, [setSessionCookie]);
 
   const googleLoginWithApi = useCallback(async (credential: string) => {
     const data = await api.googleLogin(credential);
-    if (data.success) {
-      localStorage.setItem("riya_touch_token", data.token);
-      setSessionCookie(data.token);
-      setUser(data.user);
-      localStorage.setItem("riya_touch_user", JSON.stringify(data.user));
-      setLoginOpen(false);
-      setJustLoggedIn(true);
+    if (!data.success) {
+      throw new Error(data.message || "Google login failed");
     }
+    localStorage.setItem("riya_touch_token", data.token);
+    setSessionCookie(data.token, data.user?.role);
+    setUser(data.user);
+    localStorage.setItem("riya_touch_user", JSON.stringify(data.user));
+    setLoginOpen(false);
+    setJustLoggedIn(true);
   }, [setSessionCookie]);
 
   const logout = useCallback(() => {
