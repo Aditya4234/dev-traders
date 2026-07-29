@@ -298,6 +298,15 @@ export default function InvoicesPage() {
                 <span className="text-xs font-semibold text-gray-500">Invoice Preview</span>
                 <div className="flex items-center gap-1.5">
                   <button
+                    onClick={() => {
+                      handleDownload(viewInvoice)
+                    }}
+                    className="flex items-center gap-1.5 rounded-md bg-[var(--primary)] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
+                  >
+                    <Download size={13} />
+                    PDF
+                  </button>
+                  <button
                     onClick={() => window.print()}
                     className="flex items-center gap-1.5 rounded-md bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200"
                   >
