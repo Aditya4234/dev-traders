@@ -103,7 +103,6 @@ export default function WholesaleLoginPage() {
       window.google.accounts.id.renderButton(googleBtnRef.current, {
         theme: "outline",
         size: "large",
-        width: "100%",
         text: "continue_with",
         shape: "pill",
       });
