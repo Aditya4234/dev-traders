@@ -12,7 +12,7 @@ const WHOLESELLER_PATHS = [
   "/dashboard/wallet",
 ];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("riya_session")?.value;
   const role = request.cookies.get("riya_role")?.value;
