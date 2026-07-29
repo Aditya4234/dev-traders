@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import Product from "@/lib/models/Product";
 import Order from "@/lib/models/Order";
 import { protect, wholesellerOnly } from "@/lib/middleware/auth";
 
