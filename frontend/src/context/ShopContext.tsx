@@ -61,6 +61,9 @@ let _cart: CartItem[] = [];
 let _wishlist: Product[] = [];
 let _listeners: Array<() => void> = [];
 
+const EMPTY_CART: CartItem[] = [];
+const EMPTY_WISHLIST: Product[] = [];
+
 function notifyListeners() {
   for (const l of _listeners) l();
 }
@@ -71,8 +74,8 @@ function subscribe(cb: () => void) {
 }
 
 export function ShopProvider({ children }: { children: React.ReactNode }) {
-  const cart = useSyncExternalStore(subscribe, () => _cart, () => [] as CartItem[]);
-  const wishlist = useSyncExternalStore(subscribe, () => _wishlist, () => [] as Product[]);
+  const cart = useSyncExternalStore(subscribe, () => _cart, () => EMPTY_CART);
+  const wishlist = useSyncExternalStore(subscribe, () => _wishlist, () => EMPTY_WISHLIST);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 

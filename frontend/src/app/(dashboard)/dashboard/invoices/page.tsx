@@ -1,13 +1,13 @@
 'use client'
 
-import { FileText, Download, Eye, Loader2, Plus, X } from 'lucide-react'
+import { FileText, Download, Eye, Loader2, Plus, X, Printer } from 'lucide-react'
+import InvoiceTemplate from '@/components/invoice/InvoiceTemplate'
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import * as api from '@/lib/api'
 import { generateInvoicePDF } from '@/lib/invoice-pdf'
 import { useShop } from '@/context/ShopContext'
 import Link from 'next/link'
-import Image from 'next/image'
 
 interface InvoiceItem {
   name: string
@@ -283,187 +283,73 @@ export default function InvoicesPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
             onClick={() => setViewInvoice(null)}
           >
             <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 40 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="invoice-preview w-full sm:max-w-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-white shadow-2xl"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative max-h-[95vh] overflow-y-auto rounded-lg bg-white shadow-2xl"
               onClick={e => e.stopPropagation()}
             >
-              {/* Mobile Drag Handle */}
-              <div className="sm:hidden flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 rounded-full bg-gray-300" />
-              </div>
-
-              {/* Close Button */}
-              <button
-                onClick={() => setViewInvoice(null)}
-                className="absolute top-3 right-3 sm:static sm:float-right sm:mr-4 sm:mt-4 z-10 rounded-full bg-gray-100 p-1.5 text-gray-500 hover:bg-gray-200 transition-colors"
-              >
-                <X size={16} />
-              </button>
-
-              <div className="p-4 sm:p-6">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-5 sm:mb-6">
-                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                    <Image src="/products/logo.png" alt="DevTraders" width={40} height={40} className="h-8 w-8 sm:h-10 sm:w-10 object-contain shrink-0" />
-                    <div className="min-w-0">
-                      <h2 className="text-base sm:text-lg font-bold text-[#E91E63] leading-snug">DevTraders</h2>
-                      <p className="text-[9px] sm:text-[10px] text-[var(--muted)] leading-snug">Riya Touch Wholesale</p>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0 ml-3">
-                    <span className="inline-block rounded-full bg-[#E91E63] px-2.5 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-[10px] font-bold uppercase text-white leading-snug">Tax Invoice</span>
-                    <p className="mt-1 text-[11px] sm:text-xs text-[var(--muted)] leading-snug">{viewInvoice.invoiceNumber}</p>
-                  </div>
-                </div>
-
-                {/* Invoice Info — stacked on mobile */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-5 sm:mb-6">
-                  <div className="rounded-xl bg-gray-50 p-3 sm:p-4">
-                    <p className="text-[10px] font-bold uppercase text-[#E91E63] mb-2">Bill To</p>
-                    <p className="text-sm font-semibold text-[var(--dark-text)] leading-relaxed break-words">{viewInvoice.customer.name}</p>
-                    <p className="text-xs text-[var(--muted)] leading-relaxed">{viewInvoice.customer.phone}</p>
-                    <p className="text-xs text-[var(--muted)] leading-relaxed break-words">{viewInvoice.customer.address}</p>
-                    <p className="text-xs text-[var(--muted)] leading-relaxed">{viewInvoice.customer.city} - {viewInvoice.customer.pincode}</p>
-                    {viewInvoice.customer.gstNumber && (
-                      <p className="text-xs mt-1 leading-relaxed break-all"><span className="font-semibold">GSTIN:</span> {viewInvoice.customer.gstNumber}</p>
-                    )}
-                  </div>
-                  <div className="rounded-xl bg-gray-50 p-3 sm:p-4">
-                    <p className="text-[10px] font-bold uppercase text-[#E91E63] mb-2">Details</p>
-                    <div className="space-y-1">
-                      <p className="text-xs leading-relaxed"><span className="font-semibold">Date:</span> {new Date(viewInvoice.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-                      <p className="text-xs leading-relaxed"><span className="font-semibold">Status:</span> <span className="capitalize">{viewInvoice.status}</span></p>
-                      <p className="text-xs leading-relaxed"><span className="font-semibold">Supply:</span> {viewInvoice.isInterState ? 'Inter-State' : 'Intra-State'}</p>
-                      <p className="text-xs leading-relaxed"><span className="font-semibold">Place:</span> {viewInvoice.placeOfSupply || 'N/A'}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Items — Desktop Table */}
-                <div className="hidden sm:block mb-6 overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-[var(--border)]">
-                        <th className="py-2 text-left text-[10px] font-semibold text-[var(--muted)] leading-relaxed">#</th>
-                        <th className="py-2 text-left text-[10px] font-semibold text-[var(--muted)] leading-relaxed">Item</th>
-                        <th className="py-2 text-center text-[10px] font-semibold text-[var(--muted)] leading-relaxed">Qty</th>
-                        <th className="py-2 text-right text-[10px] font-semibold text-[var(--muted)] leading-relaxed">Rate</th>
-                        <th className="py-2 text-right text-[10px] font-semibold text-[var(--muted)] leading-relaxed">Taxable</th>
-                        <th className="py-2 text-right text-[10px] font-semibold text-[var(--muted)] leading-relaxed">GST</th>
-                        <th className="py-2 text-right text-[10px] font-semibold text-[var(--muted)] leading-relaxed">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {viewInvoice.items.map((item, i) => (
-                        <tr key={i} className="border-b border-[var(--border)]/50">
-                          <td className="py-2.5 text-[11px] text-[var(--muted)] leading-relaxed">{i + 1}</td>
-                          <td className="py-2.5 text-[11px] font-medium text-[var(--dark-text)] leading-relaxed break-words max-w-[140px]">{item.name}</td>
-                          <td className="py-2.5 text-[11px] text-center text-[var(--muted)] leading-relaxed">{item.quantity}</td>
-                          <td className="py-2.5 text-[11px] text-right text-[var(--muted)] leading-relaxed whitespace-nowrap">₹{item.unitPrice.toLocaleString('en-IN')}</td>
-                          <td className="py-2.5 text-[11px] text-right text-[var(--muted)] leading-relaxed whitespace-nowrap">₹{item.taxableAmount.toLocaleString('en-IN')}</td>
-                          <td className="py-2.5 text-[11px] text-right text-[var(--muted)] leading-relaxed whitespace-nowrap">{item.gstRate}%</td>
-                          <td className="py-2.5 text-[11px] text-right font-semibold text-[var(--dark-text)] leading-relaxed whitespace-nowrap">₹{item.totalAmount.toLocaleString('en-IN')}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Items — Mobile Cards */}
-                <div className="sm:hidden mb-5 space-y-2.5">
-                  <p className="text-[10px] font-bold uppercase text-[#E91E63]">Items</p>
-                  {viewInvoice.items.map((item, i) => (
-                    <div key={i} className="rounded-xl bg-gray-50 p-3">
-                      <div className="flex items-start justify-between gap-2 mb-1.5">
-                        <p className="text-xs font-semibold text-[var(--dark-text)] leading-relaxed break-words min-w-0">{i + 1}. {item.name}</p>
-                        <p className="text-xs font-bold text-[var(--dark-text)] shrink-0 whitespace-nowrap">₹{item.totalAmount.toLocaleString('en-IN')}</p>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-[11px]">
-                        <div>
-                          <span className="text-[var(--muted)]">Qty</span>
-                          <p className="font-medium text-[var(--dark-text)] leading-relaxed">{item.quantity}</p>
-                        </div>
-                        <div>
-                          <span className="text-[var(--muted)]">Rate</span>
-                          <p className="font-medium text-[var(--dark-text)] leading-relaxed whitespace-nowrap">₹{item.unitPrice.toLocaleString('en-IN')}</p>
-                        </div>
-                        <div>
-                          <span className="text-[var(--muted)]">GST</span>
-                          <p className="font-medium text-[var(--dark-text)] leading-relaxed whitespace-nowrap">{item.gstRate}%</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Totals — full width on mobile */}
-                <div className="flex justify-end mb-5 sm:mb-6">
-                  <div className="w-full sm:w-64 space-y-1.5">
-                    <div className="flex justify-between text-xs leading-relaxed"><span className="text-[var(--muted)]">Subtotal</span><span className="text-[var(--dark-text)] whitespace-nowrap">₹{viewInvoice.subtotal.toLocaleString('en-IN')}</span></div>
-                    {viewInvoice.discount > 0 && (
-                      <div className="flex justify-between text-xs leading-relaxed"><span className="text-[var(--muted)]">Discount</span><span className="text-red-500 whitespace-nowrap">-₹{viewInvoice.discount.toLocaleString('en-IN')}</span></div>
-                    )}
-                    <div className="flex justify-between text-xs leading-relaxed"><span className="text-[var(--muted)]">Taxable Amount</span><span className="text-[var(--dark-text)] whitespace-nowrap">₹{viewInvoice.taxableAmount.toLocaleString('en-IN')}</span></div>
-                    {!viewInvoice.isInterState && (
-                      <>
-                        <div className="flex justify-between text-xs leading-relaxed"><span className="text-[var(--muted)]">CGST</span><span className="text-[var(--dark-text)] whitespace-nowrap">₹{viewInvoice.totalCGST.toLocaleString('en-IN')}</span></div>
-                        <div className="flex justify-between text-xs leading-relaxed"><span className="text-[var(--muted)]">SGST</span><span className="text-[var(--dark-text)] whitespace-nowrap">₹{viewInvoice.totalSGST.toLocaleString('en-IN')}</span></div>
-                      </>
-                    )}
-                    {viewInvoice.isInterState && (
-                      <div className="flex justify-between text-xs leading-relaxed"><span className="text-[var(--muted)]">IGST</span><span className="text-[var(--dark-text)] whitespace-nowrap">₹{viewInvoice.totalIGST.toLocaleString('en-IN')}</span></div>
-                    )}
-                    {viewInvoice.shippingCharges > 0 && (
-                      <div className="flex justify-between text-xs leading-relaxed"><span className="text-[var(--muted)]">Shipping</span><span className="text-[var(--dark-text)] whitespace-nowrap">₹{viewInvoice.shippingCharges.toLocaleString('en-IN')}</span></div>
-                    )}
-                    <div className="border-t border-[var(--border)] pt-1.5 flex justify-between text-sm font-bold leading-relaxed">
-                      <span className="text-[var(--dark-text)]">Total</span>
-                      <span className="text-[#E91E63] whitespace-nowrap">₹{viewInvoice.totalAmount.toLocaleString('en-IN')}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Amount in words */}
-                <div className="rounded-xl bg-pink-50 p-3 mb-4">
-                  <p className="text-[10px] font-bold text-[#E91E63] uppercase">Amount in Words</p>
-                  <p className="text-xs text-[var(--dark-text)] mt-0.5 break-words whitespace-normal leading-relaxed">{viewInvoice.amountInWords}</p>
-                </div>
-
-                {/* Footer */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-4 border-t border-[var(--border)]">
-                  <p className="text-[10px] text-[var(--muted)] leading-relaxed">This is a computer-generated invoice.</p>
-                  <div className="text-right">
-                    <div className="w-20 sm:w-24 border-t border-[var(--dark-text)] mb-1" />
-                    <p className="text-[10px] text-[var(--muted)] italic leading-relaxed">Authorized Signatory</p>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-3 mt-4 pt-3 sm:pt-0">
+              {/* Toolbar */}
+              <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b bg-white px-4 py-2">
+                <span className="text-xs font-semibold text-gray-500">Invoice Preview</span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => window.print()}
+                    className="flex items-center gap-1.5 rounded-md bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200"
+                  >
+                    <Printer size={13} />
+                    Print
+                  </button>
                   <button
                     onClick={() => setViewInvoice(null)}
-                    className="flex-1 sm:flex-none rounded-xl border border-[var(--border)] px-4 py-2.5 text-xs font-semibold text-[var(--muted)] hover:bg-[var(--accent)] text-center"
+                    className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                   >
-                    Close
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleDownload(viewInvoice)
-                      setViewInvoice(null)
-                    }}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl bg-[var(--primary)] px-4 py-2.5 text-xs font-semibold text-white hover:opacity-90"
-                  >
-                    <Download size={14} />
-                    Download PDF
+                    <X size={16} />
                   </button>
                 </div>
+              </div>
+
+              <div className="p-2" style={{ transform: 'scale(0.65)', transformOrigin: 'top center', width: '323mm' }}>
+                <InvoiceTemplate
+                  data={{
+                    invoiceNo: viewInvoice.invoiceNumber,
+                    invoiceDate: new Date(viewInvoice.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+                    ewayBillNo: '',
+                    deliveryNote: '',
+                    paymentTerms: '',
+                    referenceNo: '',
+                    buyerOrderNo: '',
+                    dispatchNo: '',
+                    vehicleNo: '',
+                    products: viewInvoice.items.map((item, i) => {
+                      const total = item.unitPrice * item.quantity
+                      const discPct = total > 0 ? Math.round(((item.discount || 0) / total) * 100) : 0
+                      return {
+                        sl: i + 1,
+                        description: item.name,
+                        hsn: item.hsnCode,
+                        quantity: item.quantity,
+                        rate: item.unitPrice,
+                        per: 'Nos',
+                        discount: discPct,
+                        amount: item.taxableAmount,
+                        taxableValue: item.taxableAmount,
+                        cgst: item.cgst,
+                        sgst: item.sgst,
+                      }
+                    }),
+                    subtotal: viewInvoice.subtotal,
+                    cgst: viewInvoice.totalCGST,
+                    sgst: viewInvoice.totalSGST,
+                    roundOff: Math.round(viewInvoice.totalAmount) - viewInvoice.totalAmount,
+                    grandTotal: viewInvoice.totalAmount,
+                    amountInWords: viewInvoice.amountInWords || 'N/A',
+                  }}
+                />
               </div>
             </motion.div>
           </motion.div>
