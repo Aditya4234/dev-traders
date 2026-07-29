@@ -346,7 +346,7 @@ export default function InvoiceTemplate({ data }: { data: InvoiceData }) {
           </div>
           <div className="col">
             <div className="r"><span className="k">Invoice Date</span><span className="v">{p.invoiceDate}</span></div>
-            <div className="r"><span className="k">Buyer's Order No.</span><span className="v">{p.buyerOrderNo}</span></div>
+            <div className="r"><span className="k">Buyer&rsquo;s Order No.</span><span className="v">{p.buyerOrderNo}</span></div>
             <div className="r"><span className="k">Dispatch Doc No.</span><span className="v">{p.dispatchNo}</span></div>
             <div className="r"><span className="k">Vehicle Number</span><span className="v">{p.vehicleNo}</span></div>
             <div className="r"><span className="k">Terms of Delivery</span><span className="v">F.O.R. Destination</span></div>
