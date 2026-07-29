@@ -1,8 +1,6 @@
 import mongoose from "mongoose";
 import Invoice from "@/lib/models/Invoice";
 
-let invoiceCounter = 0;
-
 async function getNextInvoiceNumber(): Promise<string> {
   const now = new Date();
   const fy = now.getMonth() >= 3
