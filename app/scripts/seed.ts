@@ -6,6 +6,7 @@ import HeroSlide from "@/lib/models/HeroSlide";
 import Review from "@/lib/models/Review";
 
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://adityadeveloper10x_db_user:A6ZAA5VXuP7HIsNp@cluster0.y9pnvta.mongodb.net/riya_touch";
+// ⚠️ Keep MONGODB_URI in sync with .env.local and Vercel env vars
 
 const categoriesData = [
   { name: "Bras", slug: "bras", image: "/products/image1.png", sortOrder: 1 },
