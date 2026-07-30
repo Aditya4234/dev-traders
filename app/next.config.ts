@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  output: process.env.VERCEL ? undefined : "standalone",
   turbopack: {
     root: process.cwd(),
   },
@@ -17,9 +17,7 @@ const nextConfig: NextConfig = {
     "express-validator",
   ],
   images: {
-    dangerouslyAllowSVG: true,
-    contentDispositionType: "attachment",
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    contentDispositionType: "inline",
     remotePatterns: [
       {
         protocol: "https",
