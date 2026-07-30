@@ -19,8 +19,19 @@ export function getTokenFromHeader(request: Request): string | null {
   return auth.split(" ")[1];
 }
 
+export function getTokenFromCookie(request: Request): string | null {
+  const cookieHeader = request.headers.get("cookie");
+  if (!cookieHeader) return null;
+  const match = cookieHeader.match(/(?:^|;\s*)riya_session=([^;]*)/);
+  return match ? match[1] : null;
+}
+
+export function getToken(request: Request): string | null {
+  return getTokenFromHeader(request) || getTokenFromCookie(request);
+}
+
 export async function protect(request: Request): Promise<AuthUser> {
-  const token = getTokenFromHeader(request);
+  const token = getToken(request);
   if (!token) {
     throw Object.assign(new Error("Not authorized"), { status: 401 });
   }
@@ -48,7 +59,7 @@ export async function protect(request: Request): Promise<AuthUser> {
 }
 
 export async function optionalAuth(request: Request): Promise<AuthUser | null> {
-  const token = getTokenFromHeader(request);
+  const token = getToken(request);
   if (!token) return null;
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string };

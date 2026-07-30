@@ -106,6 +106,7 @@ export interface InvoiceData {
     phone: string;
     address: string;
     city: string;
+    state: string;
     pincode: string;
     gstNumber?: string;
   };

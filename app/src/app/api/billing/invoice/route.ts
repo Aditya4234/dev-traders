@@ -24,6 +24,6 @@ export async function POST(request: NextRequest) {
     if (error.message.includes("required") || error.message.includes("must have") || error.message.includes("must be at least")) {
       return NextResponse.json({ success: false, message: error.message }, { status: 400 });
     }
-    return NextResponse.json({ success: false, message: error.message }, { status: error.status || 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: error.status || 500 });
   }
 }

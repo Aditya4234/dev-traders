@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import jwt from "jsonwebtoken";
 
 const WHOLESELLER_PATHS = [
   "/dashboard/wholeseller",
@@ -14,28 +15,29 @@ const WHOLESELLER_PATHS = [
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get("riya_session")?.value;
-  const role = request.cookies.get("riya_role")?.value;
 
-  if (token) {
+  if (!pathname.startsWith("/dashboard")) {
     return NextResponse.next();
   }
 
-  if (pathname.startsWith("/dashboard")) {
-    const isWholesellerPath = WHOLESELLER_PATHS.some(p => pathname === p || pathname.startsWith(p + "/"));
-
-    if (isWholesellerPath || role === "admin" || role === "dealer") {
-      const loginUrl = new URL("/wholesale-login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(loginUrl);
+  const tokenCookie = request.cookies.get("riya_session")?.value;
+  let decoded: { id: string; role?: string } | null = null;
+  if (tokenCookie) {
+    try {
+      decoded = jwt.verify(tokenCookie, process.env.JWT_SECRET!) as { id: string; role?: string };
+    } catch {
+      // invalid token
     }
-
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  if (decoded) {
+    return NextResponse.next();
+  }
+
+  const isWholesellerPath = WHOLESELLER_PATHS.some(p => pathname === p || pathname.startsWith(p + "/"));
+  const loginUrl = new URL(isWholesellerPath ? "/wholesale-login" : "/login", request.url);
+  loginUrl.searchParams.set("redirect", pathname);
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {

@@ -55,6 +55,6 @@ export async function GET(request: NextRequest) {
     if (error.status) {
       return NextResponse.json({ success: false, message: error.message }, { status: error.status });
     }
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: 500 });
   }
 }

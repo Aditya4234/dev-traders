@@ -41,6 +41,6 @@ export async function POST(request: NextRequest) {
       keyId: process.env.RAZORPAY_KEY_ID,
     }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: error.status || 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: error.status || 500 });
   }
 }

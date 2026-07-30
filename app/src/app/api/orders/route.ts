@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, order }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Order creation failed" }, { status: 500 });
   }
 }
 
@@ -107,9 +107,7 @@ export async function GET(request: NextRequest) {
     const orders = await Order.find().sort("-createdAt");
     return NextResponse.json({ success: true, orders });
   } catch (error: any) {
-    if (error.status) {
-      return NextResponse.json({ success: false, message: error.message }, { status: error.status });
-    }
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    const status = error.status || 500;
+    return NextResponse.json({ success: false, message: status === 401 ? "Not authorized" : "Something went wrong" }, { status });
   }
 }

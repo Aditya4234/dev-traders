@@ -4,6 +4,10 @@ import Inventory from "@/lib/models/Inventory";
 import { protect, adminOnly } from "@/lib/middleware/auth";
 import { cacheDelPattern } from "@/lib/middleware/cache";
 
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
@@ -16,9 +20,10 @@ export async function GET(request: NextRequest) {
     const limit = request.nextUrl.searchParams.get("limit") || "50";
     const filter: any = {};
     if (search && typeof search === "string") {
+      const safe = escapeRegex(search);
       filter.$or = [
-        { sku: { $regex: search, $options: "i" } },
-        { warehouse: { $regex: search, $options: "i" } },
+        { sku: { $regex: safe, $options: "i" } },
+        { warehouse: { $regex: safe, $options: "i" } },
       ];
     }
     if (lowStock === "true") {
@@ -44,7 +49,7 @@ export async function GET(request: NextRequest) {
       pagination: { page: pageNum, limit: limitNum, total, pages: Math.ceil(total / limitNum) },
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: error.status || 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: error.status || 500 });
   }
 }
 
@@ -58,6 +63,6 @@ export async function POST(request: NextRequest) {
     await cacheDelPattern("cache:/api/products*");
     return NextResponse.json({ success: true, item }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: error.status || 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: error.status || 500 });
   }
 }

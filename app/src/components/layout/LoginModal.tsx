@@ -5,6 +5,7 @@ import { X, Mail, Lock, User, ArrowRight } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { isAllowedOrigin, loadGsiScript } from "@/lib/google-signin";
 
 declare global {
   interface Window {
@@ -36,35 +37,30 @@ export default function LoginModal() {
   useEffect(() => {
     if (!loginOpen) return;
 
-    googleInitRef.current = false;
-    const googleLoginWithApiRef = googleLoginWithApi;
-    const setLoginOpenRef = setLoginOpen;
-    const setErrorRef = setError;
-    const setLoadingRef = setLoading;
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId || !googleBtnRef.current || googleInitRef.current || !isAllowedOrigin()) return;
 
-    const initGoogle = () => {
-      const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-      if (!clientId || !window.google || !googleBtnRef.current || googleInitRef.current) return;
-
-      googleInitRef.current = true;
+    googleInitRef.current = true;
+    loadGsiScript().then(() => {
+      if (!window.google || !googleBtnRef.current) return;
       window.google.accounts.id.initialize({
         client_id: clientId,
         callback: async (response: { credential: string }) => {
-          setErrorRef("");
-          setLoadingRef(true);
+          setError("");
+          setLoading(true);
           try {
-            await googleLoginWithApiRef(response.credential);
+            await googleLoginWithApi(response.credential);
             const userData = JSON.parse(localStorage.getItem("riya_touch_user") || "{}");
             if (userData.role === "admin" || userData.role === "dealer") {
-              setErrorRef("This account is a wholeseller. Please use the wholeseller login page.");
+              setError("This account is a wholeseller. Please use the wholeseller login page.");
             } else {
-              setLoginOpenRef(false);
+              setLoginOpen(false);
             }
           } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Google login failed. Please try again.";
-            setErrorRef(message);
+            setError(message);
           } finally {
-            setLoadingRef(false);
+            setLoading(false);
           }
         },
       });
@@ -74,22 +70,8 @@ export default function LoginModal() {
         text: "continue_with",
         shape: "pill",
       });
-    };
-
-    if (window.google) {
-      setTimeout(initGoogle, 100);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      if (window.google) {
-        clearInterval(interval);
-        initGoogle();
-      }
-    }, 200);
-
-    return () => clearInterval(interval);
-  }, [loginOpen, googleLoginWithApi, setLoginOpen]);
+    }).catch(() => {});
+  }, [loginOpen, googleLoginWithApi]);
 
   useEffect(() => {
     if (loginOpen) {

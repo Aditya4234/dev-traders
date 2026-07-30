@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-const ADMIN_WHATSAPP = "919205778531";
+const ADMIN_WHATSAPP = process.env.ADMIN_WHATSAPP || "";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "guptadharmendra280@gmail.com";
 
 interface OrderItem {

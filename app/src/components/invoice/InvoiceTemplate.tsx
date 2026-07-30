@@ -12,6 +12,8 @@ interface Product {
   taxableValue: number
   cgst: number
   sgst: number
+  igst: number
+  gstRate: number
 }
 
 interface InvoiceData {
@@ -28,9 +30,29 @@ interface InvoiceData {
   subtotal: number
   cgst: number
   sgst: number
+  igst: number
+  totalGst: number
   roundOff: number
   grandTotal: number
   amountInWords: string
+  isInterState: boolean
+  placeOfSupply: string
+  customer: {
+    name: string
+    phone: string
+    address: string
+    city: string
+    state: string
+    pincode: string
+    gstNumber?: string
+  }
+  shopName?: string
+  shopAddress?: string
+  shopGstin?: string
+  shopState?: string
+  shopStateCode?: string
+  shopEmail?: string
+  shopPhone?: string
 }
 
 function fmt(n: number) {
@@ -312,11 +334,10 @@ export default function InvoiceTemplate({ data }: { data: InvoiceData }) {
         {/* ─── Header ─── */}
         <div className="inv-hdr">
           <div className="co">
-            <div className="nm">RIYA ENTERPRISES</div>
-            <div>PLOT NO G-168, SECTOR D-1, P-3, TDS CITY, LONI,</div>
-            <div>GHAZIABAD, UTTAR PRADESH - 201103</div>
-            <div className="g">GSTIN: 09BZKPP9250K1ZL &nbsp;|&nbsp; State: Uttar Pradesh (Code 09)</div>
-            <div>Email: RIYATOUCHUG@gmail.com &nbsp;|&nbsp; www.riyatouch.com</div>
+            <div className="nm">{p.shopName || 'RIYA ENTERPRISES'}</div>
+            <div>{p.shopAddress || 'PLOT NO G-168, SECTOR D-1, P-3, TDS CITY, LONI, GHAZIABAD, UTTAR PRADESH - 201103'}</div>
+            <div className="g">GSTIN: {p.shopGstin || '09BZKPP9250K1ZL'} &nbsp;|&nbsp; State: {p.shopState || 'Uttar Pradesh'} (Code {p.shopStateCode || '09'})</div>
+            <div>Email: {p.shopEmail || 'RIYATOUCHUG@gmail.com'} &nbsp;|&nbsp; www.riyatouch.com</div>
           </div>
           <div className="ts">
             <div className="ti">TAX INVOICE</div>
@@ -358,22 +379,21 @@ export default function InvoiceTemplate({ data }: { data: InvoiceData }) {
           <div className="blk">
             <div className="lbl">Buyer (Consignee)</div>
             <div className="ct">
-              <div style={{ fontWeight: 700, fontSize: 8.5 }}>DEV TRADERS</div>
-              <div>BAHUPUR, PATTI, PRATAPGARH</div>
-              <div>UTTAR PRADESH</div>
-              <div><strong>GSTIN:</strong> 09AABCD1234E1Z5</div>
-              <div><strong>State:</strong> Uttar Pradesh (Code 09)</div>
-              <div><strong>Place of Supply:</strong> Uttar Pradesh</div>
+              <div style={{ fontWeight: 700, fontSize: 8.5 }}>{p.customer.name}</div>
+              <div>{p.customer.address}, {p.customer.city}</div>
+              <div>{p.customer.state} - {p.customer.pincode}</div>
+              {p.customer.gstNumber && <div><strong>GSTIN:</strong> {p.customer.gstNumber}</div>}
+              <div><strong>State:</strong> {p.customer.state}</div>
+              <div><strong>Place of Supply:</strong> {p.placeOfSupply}</div>
             </div>
           </div>
           <div className="blk">
             <div className="lbl">Seller (Supplier)</div>
             <div className="ct">
-              <div style={{ fontWeight: 700, fontSize: 8.5 }}>RIYA ENTERPRISES</div>
-              <div>PLOT NO G-168, SECTOR D-1, P-3, TDS CITY, LONI,</div>
-              <div>GHAZIABAD, UTTAR PRADESH - 201103</div>
-              <div><strong>GSTIN:</strong> 09BZKPP9250K1ZL</div>
-              <div><strong>State:</strong> Uttar Pradesh (Code 09)</div>
+              <div style={{ fontWeight: 700, fontSize: 8.5 }}>{p.shopName || 'RIYA ENTERPRISES'}</div>
+              <div>{p.shopAddress || 'PLOT NO G-168, SECTOR D-1, P-3, TDS CITY, LONI, GHAZIABAD, UTTAR PRADESH - 201103'}</div>
+              <div><strong>GSTIN:</strong> {p.shopGstin || '09BZKPP9250K1ZL'}</div>
+              <div><strong>State:</strong> {p.shopState || 'Uttar Pradesh'} (Code {p.shopStateCode || '09'})</div>
             </div>
           </div>
         </div>
@@ -388,16 +408,22 @@ export default function InvoiceTemplate({ data }: { data: InvoiceData }) {
               <th style={{ width: '5%' }}>Qty</th>
               <th style={{ width: '9%' }}>Rate</th>
               <th style={{ width: '4%' }}>Per</th>
-              <th style={{ width: '7%' }}>Disc.%</th>
-              <th style={{ width: '11%' }}>Amount</th>
+              <th style={{ width: '6%' }}>Disc.%</th>
+              <th style={{ width: '10%' }}>Amount</th>
               <th style={{ width: '11%' }}>Taxable Val.</th>
-              <th style={{ width: '7%' }}>CGST</th>
-              <th style={{ width: '7%' }}>SGST</th>
+              {p.isInterState ? (
+                <th style={{ width: '7%' }} colSpan={2}>IGST</th>
+              ) : (
+                <>
+                  <th style={{ width: '7%' }}>CGST</th>
+                  <th style={{ width: '7%' }}>SGST</th>
+                </>
+              )}
             </tr>
           </thead>
           <tbody>
             {p.products.length === 0 ? (
-              <tr><td colSpan={11} style={{ textAlign: 'center', padding: 10, color: '#999' }}>No items</td></tr>
+              <tr><td colSpan={p.isInterState ? 10 : 11} style={{ textAlign: 'center', padding: 10, color: '#999' }}>No items</td></tr>
             ) : p.products.map((item, i) => (
               <tr key={i}>
                 <td>{item.sl}</td>
@@ -409,8 +435,14 @@ export default function InvoiceTemplate({ data }: { data: InvoiceData }) {
                 <td className="r">{item.discount}%</td>
                 <td className="r">{fmt(item.amount)}</td>
                 <td className="r">{fmt(item.taxableValue)}</td>
-                <td className="r">{fmt(item.cgst)}</td>
-                <td className="r">{fmt(item.sgst)}</td>
+                {p.isInterState ? (
+                  <td className="r" colSpan={2}>{fmt(item.igst)}</td>
+                ) : (
+                  <>
+                    <td className="r">{fmt(item.cgst)}</td>
+                    <td className="r">{fmt(item.sgst)}</td>
+                  </>
+                )}
               </tr>
             ))}
           </tbody>
@@ -428,8 +460,14 @@ export default function InvoiceTemplate({ data }: { data: InvoiceData }) {
             <table className="tt">
               <tbody>
                 <tr><td className="k">Subtotal</td><td className="v">{fmt(p.subtotal)}</td></tr>
-                <tr><td className="k">CGST @ 9%</td><td className="v">{fmt(p.cgst)}</td></tr>
-                <tr><td className="k">SGST @ 9%</td><td className="v">{fmt(p.sgst)}</td></tr>
+                {p.isInterState ? (
+                  <tr><td className="k">IGST</td><td className="v">{fmt(p.igst)}</td></tr>
+                ) : (
+                  <>
+                    <tr><td className="k">CGST</td><td className="v">{fmt(p.cgst)}</td></tr>
+                    <tr><td className="k">SGST</td><td className="v">{fmt(p.sgst)}</td></tr>
+                  </>
+                )}
                 <tr><td className="k">Round Off</td><td className="v">{fmtSign(p.roundOff)}</td></tr>
                 <tr><td className="k" style={{ fontSize: 10, fontWeight: 700 }}>Grand Total</td><td className="v tg">{fmt(p.grandTotal)}</td></tr>
               </tbody>
@@ -445,25 +483,37 @@ export default function InvoiceTemplate({ data }: { data: InvoiceData }) {
               <tr>
                 <th>HSN/SAC</th>
                 <th>Taxable Value</th>
-                <th>CGST Rate</th>
-                <th>CGST Amt</th>
-                <th>SGST Rate</th>
-                <th>SGST Amt</th>
+                {p.isInterState ? (
+                  <th colSpan={3}>IGST @ {p.products[0]?.gstRate || 0}%</th>
+                ) : (
+                  <>
+                    <th>CGST Rate</th>
+                    <th>CGST Amt</th>
+                    <th>SGST Rate</th>
+                    <th>SGST Amt</th>
+                  </>
+                )}
                 <th>Total Tax</th>
               </tr>
             </thead>
             <tbody>
               {p.products.length === 0 ? (
-                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 8, color: '#999' }}>No items</td></tr>
+                <tr><td colSpan={p.isInterState ? 4 : 7} style={{ textAlign: 'center', padding: 8, color: '#999' }}>No items</td></tr>
               ) : p.products.map((item, i) => (
                 <tr key={i}>
                   <td>{item.hsn}</td>
                   <td className="r">{fmt(item.taxableValue)}</td>
-                  <td className="r">9%</td>
-                  <td className="r">{fmt(item.cgst)}</td>
-                  <td className="r">9%</td>
-                  <td className="r">{fmt(item.sgst)}</td>
-                  <td className="r">{fmt(item.cgst + item.sgst)}</td>
+                  {p.isInterState ? (
+                    <td className="r" colSpan={3}>{fmt(item.igst)}</td>
+                  ) : (
+                    <>
+                      <td className="r">{item.gstRate / 2}%</td>
+                      <td className="r">{fmt(item.cgst)}</td>
+                      <td className="r">{item.gstRate / 2}%</td>
+                      <td className="r">{fmt(item.sgst)}</td>
+                    </>
+                  )}
+                  <td className="r">{fmt(p.isInterState ? item.igst : item.cgst + item.sgst)}</td>
                 </tr>
               ))}
             </tbody>

@@ -3,9 +3,11 @@ import { connectDB } from "@/lib/db";
 import Payment from "@/lib/models/Payment";
 import Order from "@/lib/models/Order";
 import { verifyPaymentSignature, capturePayment } from "@/lib/services/payment";
+import { protect } from "@/lib/middleware/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    await protect(request);
     await connectDB();
     const { razorpayOrderId, razorpayPaymentId, razorpaySignature, paymentId } = await request.json();
     if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
@@ -27,6 +29,6 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ success: true, status: captured ? "captured" : "authorized", payment });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: error.status || 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: error.status || 500 });
   }
 }

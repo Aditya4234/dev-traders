@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Email is required" }, { status: 400 });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: email.toLowerCase() }).select("+resetPasswordToken");
     if (!user) {
       return NextResponse.json({ success: true, message: "If the email exists, a reset link has been sent" });
     }
@@ -19,14 +19,13 @@ export async function POST(request: NextRequest) {
     const resetToken = crypto.randomBytes(32).toString("hex");
     const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
 
-    (user as any).resetPasswordToken = resetToken;
+    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+    (user as any).resetPasswordToken = hashedToken;
     (user as any).resetPasswordExpiry = resetTokenExpiry;
     await user.save();
 
-    console.log("Password reset token for:", email, "token:", resetToken);
-
     return NextResponse.json({ success: true, message: "If the email exists, a password reset link has been sent" });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: 500 });
   }
 }

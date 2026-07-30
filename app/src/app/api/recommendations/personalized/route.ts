@@ -13,6 +13,6 @@ export async function GET(request: NextRequest) {
     const recommendations = await getPersonalizedRecommendations(user?.id, productId, limit);
     return NextResponse.json({ success: true, recommendations });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: 500 });
   }
 }

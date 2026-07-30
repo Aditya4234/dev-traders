@@ -16,6 +16,6 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     const invoice = await updateInvoicePayment(id, amount, paymentMethod || "online");
     return NextResponse.json({ success: true, invoice });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: error.status || 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: error.status || 500 });
   }
 }

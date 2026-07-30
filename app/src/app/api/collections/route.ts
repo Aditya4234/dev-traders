@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const collections = await Collection.find(filter).sort("sortOrder");
     return NextResponse.json({ success: true, collections });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: 500 });
   }
 }
 
@@ -27,6 +27,6 @@ export async function POST(request: NextRequest) {
     const collection = await Collection.create(body);
     return NextResponse.json({ success: true, collection }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: error.status || 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: error.status || 500 });
   }
 }

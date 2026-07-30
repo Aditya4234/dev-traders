@@ -196,7 +196,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       try {
         const token = localStorage.getItem('riya_touch_token')
         if (!token) return
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/notifications?limit=1`, {
+        const res = await fetch(`/api/notifications?limit=1`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (res.ok) {
@@ -252,7 +252,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     try {
       const token = localStorage.getItem('riya_touch_token')
       if (token && ratingStars > 0) {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/reviews`, {
+        await fetch(`/api/reviews`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

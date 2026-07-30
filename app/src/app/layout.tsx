@@ -112,10 +112,6 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col font-sans">
-        <Script
-          src="https://accounts.google.com/gsi/client"
-          strategy="afterInteractive"
-        />
         <ShopProvider>
           <main className="flex-1">{children}</main>
           <CartDrawer />

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const reviews = await Review.find(filter).sort("-createdAt");
     return NextResponse.json({ success: true, reviews });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: 500 });
   }
 }
 
@@ -26,6 +26,6 @@ export async function POST(request: NextRequest) {
     const review = await Review.create({ ...body, userId: user.id });
     return NextResponse.json({ success: true, review }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: error.status || 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: error.status || 500 });
   }
 }

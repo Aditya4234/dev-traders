@@ -21,6 +21,6 @@ export async function GET(request: NextRequest) {
       stats: { open, inProgress, resolved, closed, total: open + inProgress + resolved + closed },
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: error.status || 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: error.status || 500 });
   }
 }

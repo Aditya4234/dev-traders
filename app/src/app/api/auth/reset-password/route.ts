@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/lib/models/User";
@@ -27,10 +28,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Token and password are required" }, { status: 400 });
     }
 
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
     const user = await User.findOne({
-      resetPasswordToken: token,
+      resetPasswordToken: hashedToken,
       resetPasswordExpiry: { $gt: new Date() },
-    }).select("+password");
+    }).select("+password +resetPasswordToken");
 
     if (!user) {
       return NextResponse.json({ success: false, message: "Invalid or expired reset token" }, { status: 400 });
@@ -42,8 +44,10 @@ export async function POST(request: NextRequest) {
     await user.save();
 
     const newToken = generateToken(user._id.toString());
-    return NextResponse.json({ success: true, message: "Password reset successful", token: newToken, user: sanitizeUser(user) });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    const response = NextResponse.json({ success: true, message: "Password reset successful", token: newToken, user: sanitizeUser(user) });
+    response.cookies.set("riya_session", newToken, { httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 7 * 24 * 60 * 60 });
+    return response;
+  } catch {
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: 500 });
   }
 }

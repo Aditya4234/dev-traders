@@ -16,7 +16,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     }
     return NextResponse.json({ success: true, slide });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: error.status || 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: error.status || 500 });
   }
 }
 
@@ -32,6 +32,6 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
     }
     return NextResponse.json({ success: true, message: "Slide deleted" });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: error.status || 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: error.status || 500 });
   }
 }

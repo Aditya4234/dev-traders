@@ -44,8 +44,10 @@ export async function POST(request: NextRequest) {
 
     const token = generateToken(user._id.toString());
 
-    return NextResponse.json({ success: true, token, user: sanitizeUser(user) });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    const response = NextResponse.json({ success: true, token, user: sanitizeUser(user) });
+    response.cookies.set("riya_session", token, { httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 7 * 24 * 60 * 60 });
+    return response;
+  } catch {
+    return NextResponse.json({ success: false, message: "Login failed" }, { status: 500 });
   }
 }

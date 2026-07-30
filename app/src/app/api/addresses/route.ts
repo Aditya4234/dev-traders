@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const addresses = await Address.find({ user: user.id }).sort("-isDefault -createdAt");
     return NextResponse.json({ success: true, addresses });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: error.status || 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: error.status || 500 });
   }
 }
 
@@ -42,6 +42,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, address: newAddress }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: error.status || 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: error.status || 500 });
   }
 }

@@ -28,8 +28,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Google credential is required" }, { status: 400 });
     }
 
-    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
-    const tokenData: any = await response.json();
+    const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+    const tokenData: any = await googleRes.json();
 
     if (tokenData.error_description || tokenData.error) {
       return NextResponse.json({ success: false, message: "Invalid Google token" }, { status: 401 });
@@ -62,8 +62,10 @@ export async function POST(request: NextRequest) {
 
     const token = generateToken(user._id.toString());
 
-    return NextResponse.json({ success: true, token, user: sanitizeUser(user) });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    const response = NextResponse.json({ success: true, token, user: sanitizeUser(user) });
+    response.cookies.set("riya_session", token, { httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 7 * 24 * 60 * 60 });
+    return response;
+  } catch {
+    return NextResponse.json({ success: false, message: "Google login failed" }, { status: 500 });
   }
 }

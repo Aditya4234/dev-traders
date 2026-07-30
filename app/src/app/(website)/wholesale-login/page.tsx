@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Mail, Lock, User, ArrowRight, Eye, EyeOff, Building2, Hash, Store } from "lucide-react";
 import { useShop } from "@/context/ShopContext";
+import { isAllowedOrigin, loadGsiScript } from "@/lib/google-signin";
 
 declare global {
   interface Window {
@@ -73,11 +74,11 @@ export default function WholesaleLoginPage() {
   useEffect(() => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     if (!clientId || !googleBtnRef.current || googleInitRef.current) return;
+    if (!isAllowedOrigin()) return;
 
-    const initGoogle = () => {
-      if (!window.google || !googleBtnRef.current || googleInitRef.current) return;
-
-      googleInitRef.current = true;
+    googleInitRef.current = true;
+    loadGsiScript().then(() => {
+      if (!window.google || !googleBtnRef.current) return;
       window.google.accounts.id.initialize({
         client_id: clientId,
         callback: async (response: { credential: string }) => {
@@ -106,21 +107,7 @@ export default function WholesaleLoginPage() {
         text: "continue_with",
         shape: "pill",
       });
-    };
-
-    if (window.google) {
-      initGoogle();
-      return;
-    }
-
-    const interval = setInterval(() => {
-      if (window.google) {
-        clearInterval(interval);
-        initGoogle();
-      }
-    }, 200);
-
-    return () => clearInterval(interval);
+    }).catch(() => {});
   }, [googleLoginWithApi, router]);
 
   function validateField(field: string, value: string): string | undefined {

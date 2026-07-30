@@ -32,6 +32,6 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true, message: "Password changed successfully" });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: error.status || 500 });
+    return NextResponse.json({ success: false, message: error.status === 401 ? "Not authorized" : "Something went wrong" }, { status: error.status || 500 });
   }
 }

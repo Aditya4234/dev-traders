@@ -15,6 +15,6 @@ export async function GET(request: NextRequest, context: { params: Promise<{ use
       .lean();
     return NextResponse.json({ success: true, entries });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: error.status || 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: error.status || 500 });
   }
 }

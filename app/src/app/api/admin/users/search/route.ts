@@ -31,6 +31,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, users });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: 500 });
   }
 }

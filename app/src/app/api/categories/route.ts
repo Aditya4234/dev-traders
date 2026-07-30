@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const categories = await Category.find({ isActive: true }).sort("sortOrder");
     return NextResponse.json({ success: true, categories });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: 500 });
   }
 }
 
@@ -22,6 +22,6 @@ export async function POST(request: NextRequest) {
     const category = await Category.create(body);
     return NextResponse.json({ success: true, category }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: error.status || 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: error.status || 500 });
   }
 }

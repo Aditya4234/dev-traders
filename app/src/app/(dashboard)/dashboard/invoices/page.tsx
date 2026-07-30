@@ -31,6 +31,7 @@ interface Invoice {
     phone: string
     address: string
     city: string
+    state: string
     pincode: string
     gstNumber?: string
   }
@@ -334,6 +335,17 @@ export default function InvoicesPage() {
                     buyerOrderNo: '',
                     dispatchNo: '',
                     vehicleNo: '',
+                    customer: {
+                      name: viewInvoice.customer.name,
+                      phone: viewInvoice.customer.phone,
+                      address: viewInvoice.customer.address,
+                      city: viewInvoice.customer.city,
+                      state: viewInvoice.customer.state,
+                      pincode: viewInvoice.customer.pincode,
+                      gstNumber: viewInvoice.customer.gstNumber,
+                    },
+                    isInterState: viewInvoice.isInterState,
+                    placeOfSupply: viewInvoice.placeOfSupply,
                     products: viewInvoice.items.map((item, i) => {
                       const total = item.unitPrice * item.quantity
                       const discPct = total > 0 ? Math.round(((item.discount || 0) / total) * 100) : 0
@@ -349,11 +361,15 @@ export default function InvoicesPage() {
                         taxableValue: item.taxableAmount,
                         cgst: item.cgst,
                         sgst: item.sgst,
+                        igst: item.igst,
+                        gstRate: item.gstRate,
                       }
                     }),
                     subtotal: viewInvoice.subtotal,
                     cgst: viewInvoice.totalCGST,
                     sgst: viewInvoice.totalSGST,
+                    igst: viewInvoice.totalIGST,
+                    totalGst: viewInvoice.totalGST,
                     roundOff: Math.round(viewInvoice.totalAmount) - viewInvoice.totalAmount,
                     grandTotal: viewInvoice.totalAmount,
                     amountInWords: viewInvoice.amountInWords || 'N/A',

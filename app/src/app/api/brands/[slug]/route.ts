@@ -15,6 +15,6 @@ export async function GET(
     }
     return NextResponse.json({ success: true, brand });
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: "Something went wrong" }, { status: 500 });
   }
 }
