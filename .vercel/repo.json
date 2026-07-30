@@ -1,0 +1,11 @@
+{
+  "remoteName": "origin",
+  "projects": [
+    {
+      "id": "prj_hqqkgtNOdDUcmH5k5vHJQzhQTJs5",
+      "name": "dev-traders",
+      "directory": "app",
+      "orgId": "team_zGUZUbnb47vwqYtkEic65kqf"
+    }
+  ]
+}
