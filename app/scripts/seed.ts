@@ -70,8 +70,6 @@ const productsData = [
 const heroSlidesData = [
   { title: "New Innerwear Collection", subtitle: "Exclusive Riya Touch bras & panties — crafted for everyday comfort", cta: "Shop Innerwear", image: "/products/hero.png", accent: "Riya Touch", sortOrder: 1 },
   { title: "Flat 50% OFF", subtitle: "Limited offer on Riya Touch bras, panties & lingerie sets only", cta: "Shop Now", image: "/products/hero1.png", accent: "Flash Sale", sortOrder: 2 },
-  { title: "Bridal Lingerie", subtitle: "Riya Touch bridal bras & innerwear for your special day", cta: "Explore Bridal", image: "/products/hero1.png", accent: "Premium", sortOrder: 3 },
-  { title: "New Collection", subtitle: "Explore Riya Touch latest innerwear collection", cta: "Shop Now", image: "/products/hero.png", accent: "New Arrivals", sortOrder: 4 },
 ];
 
 const featuredCollectionsData = [
