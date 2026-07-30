@@ -47,6 +47,11 @@ const productsData = [
   { name: "Juliyat Panty (3 PCS Pack)", brand: "Juliyat", price: 130, discountPrice: 130, rating: 4.7, reviewCount: 0, image: "/products/JULIYAT.png", category: "Cotton Panties", badge: "new", sizes: ["L"] },
   { name: "Riya Touch Nice Panty (3 PCS Pack)", brand: "Riya Touch", price: 154, discountPrice: 154, rating: 4.7, reviewCount: 0, image: "/products/NICE1.png", category: "Hipsters", badge: "new", sizes: ["XL"] },
   { name: "Riya Touch Pushpa Seamless Panty (3 PCS Pack)", brand: "Riya Touch", price: 106, discountPrice: 106, rating: 4.7, reviewCount: 0, image: "/products/PUSHPA.png", category: "Seamless Panties", badge: "new", sizes: ["XXL"] },
+  { name: "Icon Bra (Non-Padded)", brand: "Riya Touch", price: 200, discountPrice: 200, rating: 4.7, reviewCount: 0, image: "/products/icon.png", category: "Non-Padded Bras", badge: "new", sizes: ["32/80"] },
+  { name: "Juliyat Panty (6 PCS Pack)", brand: "Juliyat", price: 250, discountPrice: 250, rating: 4.7, reviewCount: 0, image: "/products/JULIYAT1.png", category: "Cotton Panties", badge: "new", sizes: ["L"] },
+  { name: "Riya Touch Nice Panty (2 PCS Pack)", brand: "Riya Touch", price: 100, discountPrice: 100, rating: 4.7, reviewCount: 0, image: "/products/NICE.png", category: "Hipsters", badge: "new", sizes: ["XL"] },
+  { name: "Pulse Panty (6 PCS Pack)", brand: "Pulse", price: 280, discountPrice: 280, rating: 4.7, reviewCount: 0, image: "/products/PULSE1.png", category: "Cotton Panties", badge: "new", sizes: ["XL"] },
+  { name: "Pizza Printed Panty", brand: "Riya Touch", price: 99, discountPrice: 99, rating: 4.5, reviewCount: 0, image: "/products/pizza.png", category: "Hipsters", badge: "new", sizes: ["S", "M", "L", "XL"] },
 ];
 
 const heroSlidesData = [
