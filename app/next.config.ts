@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
     "express-validator",
   ],
   images: {
+    unoptimized: true,
     contentDispositionType: "inline",
     remotePatterns: [
       {
