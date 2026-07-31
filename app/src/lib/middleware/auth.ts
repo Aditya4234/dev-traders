@@ -1,6 +1,10 @@
 import jwt from "jsonwebtoken";
 import User from "@/lib/models/User";
 
+const JWT_SECRET =
+  process.env.JWT_SECRET ||
+  "f70e1da00018664f44cc68ec105bb9bb5e600a262af41d9969dc6e4426de3168f8ae3b35f0bf0536d83ceef079af205cbb198d4a5259418f9717eacd43a49798";
+
 export interface AuthUser {
   id: string;
   name: string;
@@ -36,7 +40,7 @@ export async function protect(request: Request): Promise<AuthUser> {
     throw Object.assign(new Error("Not authorized"), { status: 401 });
   }
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
     const user = await User.findById(decoded.id);
     if (!user) {
       throw Object.assign(new Error("User not found"), { status: 401 });
@@ -62,7 +66,7 @@ export async function optionalAuth(request: Request): Promise<AuthUser | null> {
   const token = getToken(request);
   if (!token) return null;
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
     const user = await User.findById(decoded.id);
     if (!user) return null;
     return {
@@ -94,7 +98,7 @@ export function wholesellerOnly(user: AuthUser): void {
 }
 
 export function generateToken(userId: string): string {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET!, {
+  return jwt.sign({ id: userId }, JWT_SECRET, {
     expiresIn: (process.env.JWT_EXPIRE || "7d") as any,
   } as any);
 }
