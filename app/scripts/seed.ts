@@ -21,15 +21,11 @@ const categoriesData = [
 
 const productsData = [
   { name: "Silk Lace Push-Up Bra", brand: "Riya Touch", price: 399, discountPrice: 499, rating: 4.8, reviewCount: 124, image: "/products/image1.png", category: "Push-Up Bras", badge: "bestseller", sizes: ["32A", "32B", "32C", "34A", "34B", "34C", "36B", "36C"] },
-  { name: "Seamless T-Shirt Bra", brand: "Lace & Love", price: 280, discountPrice: 380, rating: 4.6, reviewCount: 89, image: "/products/image1.png", category: "T-Shirt Bras", badge: "new", sizes: ["32B", "32C", "34A", "34B", "34C", "36B", "36C", "38B"] },
   { name: "Cotton Comfort Hipster Panty", brand: "Bloom Intimates", price: 799, discountPrice: 499, rating: 4.9, reviewCount: 256, image: "/products/image2.png", category: "Hipsters", badge: "bestseller", sizes: ["XS", "S", "M", "L", "XL", "XXL"] },
-  { name: "Wireless Everyday Bra", brand: "Riya Touch", price: 249, discountPrice: 299, rating: 4.7, reviewCount: 167, image: "/products/image1.png", category: "Wireless Bras", badge: "trending", sizes: ["32A", "32B", "34A", "34B", "34C", "36B", "36C", "38B", "38C"] },
   { name: "Lace Bra & Panty Set", brand: "Lace & Love", price: 390, discountPrice: 490, rating: 4.8, reviewCount: 93, image: "/products/image3.png", category: "Bra & Panty Sets", badge: "sale", sizes: ["S", "M", "L", "XL"] },
+  { name: "Essential Padded Bra", brand: "Riya Touch", price: 259, discountPrice: 259, rating: 4.5, reviewCount: 0, image: "/products/image4.png", category: "Padded Bras", badge: "new", sizes: ["32B", "34B", "36B"] },
+  { name: "Essential Shapewear", brand: "Riya Touch", price: 299, discountPrice: 299, rating: 4.5, reviewCount: 0, image: "/products/image5.png", category: "Shapewear", badge: "new", sizes: ["S", "M", "L"] },
   { name: "High-Impact Sports Bra", brand: "Riya Touch", price: 299, discountPrice: 399, rating: 4.5, reviewCount: 78, image: "/products/image6.png", category: "Sports Bras", badge: "new", sizes: ["32B", "32C", "34B", "34C", "36B", "36C", "38B"] },
-  { name: "Non-Padded Cotton Bra", brand: "Bloom Intimates", price: 170, discountPrice: 210, rating: 4.6, reviewCount: 142, image: "/products/image1.png", category: "Non-Padded Bras", sizes: ["32A", "34A", "34B", "36A", "36B", "38B", "40B"] },
-  { name: "Seamless Bikini Panty", brand: "Velvet Dreams", price: 239, discountPrice: 299, rating: 4.8, reviewCount: 201, image: "/products/image2.png", category: "Bikini Panties", badge: "trending", sizes: ["XS", "S", "M", "L", "XL"] },
-  { name: "Padded Full Coverage Bra", brand: "Riya Touch", price: 349, discountPrice: 449, rating: 4.7, reviewCount: 115, image: "/products/image1.png", category: "Padded Bras", badge: "bestseller", sizes: ["32B", "32C", "34A", "34B", "34C", "36B", "36C", "38B", "38C", "40B"] },
-  { name: "Boyshort Cotton Panty", brand: "Bloom Intimates", price: 649, discountPrice: 399, rating: 4.5, reviewCount: 88, image: "/products/image2.png", category: "Boyshorts", sizes: ["S", "M", "L", "XL", "XXL"] },
   { name: "Bridal Lace Lingerie Set", brand: "Lace & Love", price: 490, discountPrice: 590, rating: 4.9, reviewCount: 56, image: "/products/bhavna.png", category: "Bridal Lingerie", badge: "new", sizes: ["S", "M", "L", "XL"] },
   { name: "Maternity Nursing Bra", brand: "Riya Touch", price: 299, discountPrice: 399, rating: 4.8, reviewCount: 134, image: "/products/sonam.png", category: "Maternity Bras", badge: "trending", sizes: ["34B", "34C", "36B", "36C", "38B", "38C", "40B", "40C"] },
   { name: "Damini", brand: "Velvet Dreams", price: 290, discountPrice: 390, rating: 4.7, reviewCount: 0, image: "/products/damini.png", category: "Bra & Panty Sets", badge: "new", sizes: ["S", "M", "L", "XL"] },
@@ -58,14 +54,8 @@ const productsData = [
   { name: "Perry Comfort Bra", brand: "Riya Touch", price: 220, discountPrice: 220, rating: 4.5, reviewCount: 0, image: "/products/perry.png", category: "Non-Padded Bras", badge: "new", sizes: ["34B", "36B", "38B"] },
   { name: "Zoom Active Bra", brand: "Riya Touch", price: 260, discountPrice: 260, rating: 4.5, reviewCount: 0, image: "/products/zoom.png", category: "Sports Bras", badge: "new", sizes: ["32B", "34B", "36B"] },
   { name: "Roohi Non-Padded Bra", brand: "Riya Touch", price: 200, discountPrice: 200, rating: 4.5, reviewCount: 0, image: "/products/roohi.png", category: "Non-Padded Bras", badge: "new", sizes: ["30/75"] },
-  { name: "Bhavna Lace Bra", brand: "Riya Touch", price: 290, discountPrice: 290, rating: 4.5, reviewCount: 0, image: "/products/bhavna.png", category: "Padded Bras", badge: "new", sizes: ["32B", "34B", "36B"] },
-  { name: "Sonam Daily Bra", brand: "Riya Touch", price: 230, discountPrice: 230, rating: 4.5, reviewCount: 0, image: "/products/sonam.png", category: "T-Shirt Bras", badge: "new", sizes: ["32B", "34B", "36B", "38B"] },
-  { name: "Essential Bra", brand: "Riya Touch", price: 199, discountPrice: 199, rating: 4.5, reviewCount: 0, image: "/products/image1.png", category: "Non-Padded Bras", badge: "new", sizes: ["32B", "34B", "36B"] },
-  { name: "Essential Panty", brand: "Riya Touch", price: 149, discountPrice: 149, rating: 4.5, reviewCount: 0, image: "/products/image2.png", category: "Bikini Panties", badge: "new", sizes: ["S", "M", "L", "XL"] },
-  { name: "Essential Set", brand: "Riya Touch", price: 299, discountPrice: 299, rating: 4.5, reviewCount: 0, image: "/products/image3.png", category: "Bra & Panty Sets", badge: "new", sizes: ["S", "M", "L"] },
-  { name: "Essential Padded Bra", brand: "Riya Touch", price: 259, discountPrice: 259, rating: 4.5, reviewCount: 0, image: "/products/image4.png", category: "Padded Bras", badge: "new", sizes: ["32B", "34B", "36B"] },
-  { name: "Essential Shapewear", brand: "Riya Touch", price: 299, discountPrice: 299, rating: 4.5, reviewCount: 0, image: "/products/image5.png", category: "Shapewear", badge: "new", sizes: ["S", "M", "L"] },
-  { name: "Essential Sports Bra", brand: "Riya Touch", price: 279, discountPrice: 279, rating: 4.5, reviewCount: 0, image: "/products/image6.png", category: "Sports Bras", badge: "new", sizes: ["32B", "34B", "36B"] },
+  { name: "Sofy", brand: "Bloom Intimates", price: 1599, discountPrice: 1099, rating: 4.7, reviewCount: 0, image: "/products/sofy.png", category: "Bra & Panty Sets", badge: "new", sizes: ["S", "M", "L", "XL"] },
+  { name: "Riya Touch Mini Panty (3 PCS Pack)", brand: "Riya Touch", price: 132, discountPrice: 132, rating: 4.7, reviewCount: 0, image: "/products/riya touch.png", category: "Hipsters", badge: "new", sizes: ["S"] },
 ];
 
 const heroSlidesData = [
