@@ -65,7 +65,8 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({ success: true, token, user: sanitizeUser(user) });
     response.cookies.set("riya_session", token, { httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 7 * 24 * 60 * 60 });
     return response;
-  } catch {
-    return NextResponse.json({ success: false, message: "Google login failed" }, { status: 500 });
+  } catch (error: any) {
+    console.error("[GOOGLE LOGIN ERROR]", error?.message || error);
+    return NextResponse.json({ success: false, message: error?.message || "Google login failed" }, { status: 500 });
   }
 }
