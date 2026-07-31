@@ -84,12 +84,7 @@ const premiumCollectionsData = [
   { title: "Bridal Innerwear", subtitle: "Bridal bras & lingerie sets", image: "/products/bhavna.png", href: "/collections/bridal", type: "premium" as const, sortOrder: 2 },
 ];
 
-const reviewsData = [
-  { name: "Priya Sharma", rating: 5, comment: "Riya Touch bras are so soft and fit perfectly.", date: "2 weeks ago", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" },
-  { name: "Ananya Reddy", rating: 5, comment: "Only Riya Touch for me now! Their lace bra & panty set is beautiful.", date: "1 month ago", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop" },
-  { name: "Meera Patel", rating: 4, comment: "Ordered Riya Touch sports bra and cotton panties. Great quality!", date: "3 weeks ago", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop" },
-  { name: "Kavya Nair", rating: 5, comment: "Riya Touch seamless panties and wireless bras are the best.", date: "1 week ago", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop" },
-];
+const reviewsData: { name: string; rating: number; text: string; date: string }[] = [];
 
 async function seed() {
   try {

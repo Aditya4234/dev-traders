@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Inter, Poppins } from "next/font/google";
-import Script from "next/script";
 import { ShopProvider } from "@/context/ShopContext";
 import CartDrawer from "@/components/layout/CartDrawer";
 import WishlistDrawer from "@/components/layout/WishlistDrawer";
@@ -64,6 +63,34 @@ export const metadata: Metadata = {
   },
 };
 
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Riya Touch",
+  url: "https://riyatouch.com",
+  logo: "https://riyatouch.com/products/logo.png",
+  description:
+    "India's trusted wholesale women's innerwear brand. Premium bras, panties, lingerie sets at wholesale prices.",
+  contactPoint: {
+    "@type": "ContactPoint",
+    telephone: "+91-9205778531",
+    contactType: "customer service",
+  },
+  sameAs: [],
+};
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Riya Touch",
+  url: "https://riyatouch.com",
+  potentialAction: {
+    "@type": "SearchAction",
+    target: "https://riyatouch.com/l/lingerie?search={search_term_string}",
+    "query-input": "required name=search_term_string",
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -74,44 +101,19 @@ export default function RootLayout({
       lang="en"
       className={`${playfair.variable} ${inter.variable} ${poppins.variable} h-full antialiased`}
     >
-      <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              name: "Riya Touch",
-              url: "https://riyatouch.com",
-              logo: "https://riyatouch.com/products/logo.png",
-              description: "India's trusted wholesale women's innerwear brand. Premium bras, panties, lingerie sets at wholesale prices.",
-              contactPoint: {
-                "@type": "ContactPoint",
-                telephone: "+91-9205778531",
-                contactType: "customer service",
-              },
-              sameAs: [],
-            }),
-          }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              name: "Riya Touch",
-              url: "https://riyatouch.com",
-              potentialAction: {
-                "@type": "SearchAction",
-                target: "https://riyatouch.com/l/lingerie?search={search_term_string}",
-                "query-input": "required name=search_term_string",
-              },
-            }),
-          }}
-        />
-      </head>
       <body className="min-h-full flex flex-col font-sans">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationJsonLd),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(websiteJsonLd),
+          }}
+        />
         <ShopProvider>
           <main className="flex-1">{children}</main>
           <CartDrawer />

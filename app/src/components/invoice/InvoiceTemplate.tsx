@@ -1,8 +1,13 @@
 'use client'
 
+import Image from 'next/image'
+import { INVOICE_COMPANY } from '@/lib/invoice-config'
+import { getProductImagePath } from '@/lib/product-image-map'
+
 interface Product {
   sl: number
   description: string
+  image?: string | null
   hsn: string
   quantity: number
   rate: number
@@ -16,16 +21,30 @@ interface Product {
   gstRate: number
 }
 
-interface InvoiceData {
+interface HsnSummaryRow {
+  hsn: string
+  taxableValue: number
+  cgstRate: number
+  cgstAmount: number
+  sgstRate: number
+  sgstAmount: number
+  igstAmount: number
+  totalTax: number
+}
+
+export interface InvoiceData {
   invoiceNo: string
   invoiceDate: string
-  ewayBillNo: string
-  deliveryNote: string
-  paymentTerms: string
-  referenceNo: string
-  buyerOrderNo: string
-  dispatchNo: string
-  vehicleNo: string
+  irn?: string
+  ackNo?: string
+  ackDate?: string
+  ewayBillNo?: string
+  deliveryNote?: string
+  paymentTerms?: string
+  referenceNo?: string
+  dispatchedThrough?: string
+  destination?: string
+  vehicleNo?: string
   products: Product[]
   subtotal: number
   cgst: number
@@ -35,42 +54,84 @@ interface InvoiceData {
   roundOff: number
   grandTotal: number
   amountInWords: string
+  taxAmountInWords?: string
   isInterState: boolean
   placeOfSupply: string
   customer: {
     name: string
-    phone: string
+    phone?: string
     address: string
     city: string
     state: string
     pincode: string
     gstNumber?: string
   }
-  shopName?: string
-  shopAddress?: string
-  shopGstin?: string
-  shopState?: string
-  shopStateCode?: string
-  shopEmail?: string
-  shopPhone?: string
 }
 
 function fmt(n: number) {
-  return '₹ ' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
+
 function fmtSign(n: number) {
   const s = Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  return n < 0 ? '₹ -' + s : '₹ ' + s
+  return n < 0 ? '-' + s : s
+}
+
+function buildHsnSummary(products: Product[], isInterState: boolean): HsnSummaryRow[] {
+  const map = new Map<string, HsnSummaryRow>()
+
+  for (const item of products) {
+    const existing = map.get(item.hsn) || {
+      hsn: item.hsn,
+      taxableValue: 0,
+      cgstRate: isInterState ? 0 : item.gstRate / 2,
+      cgstAmount: 0,
+      sgstRate: isInterState ? 0 : item.gstRate / 2,
+      sgstAmount: 0,
+      igstAmount: 0,
+      totalTax: 0,
+    }
+
+    existing.taxableValue += item.taxableValue
+    existing.cgstAmount += item.cgst
+    existing.sgstAmount += item.sgst
+    existing.igstAmount += item.igst
+    existing.totalTax += isInterState ? item.igst : item.cgst + item.sgst
+    map.set(item.hsn, existing)
+  }
+
+  return Array.from(map.values())
+}
+
+function ProductThumb({ name, image }: { name: string; image?: string | null }) {
+  const src = image || getProductImagePath(name)
+  if (!src) return null
+
+  return (
+    <Image
+      src={src}
+      alt={name}
+      width={28}
+      height={28}
+      className="inv-prod-img"
+      unoptimized
+    />
+  )
 }
 
 export default function InvoiceTemplate({ data }: { data: InvoiceData }) {
   const p = data
+  const company = INVOICE_COMPANY
+  const hsnSummary = buildHsnSummary(p.products, p.isInterState)
+  const totalQty = p.products.reduce((sum, item) => sum + item.quantity, 0)
+  const qtyUnit = p.products[0]?.per || 'DOZ'
+  const gstRate = p.products[0]?.gstRate || 5
 
   return (
     <div className="invoice-wrap">
       <style>{`
         .invoice-wrap {
-          font-family: 'Noto Sans', 'DejaVu Sans', Arial, Helvetica, sans-serif;
+          font-family: Arial, Helvetica, sans-serif;
           color: #000;
         }
         .inv-page {
@@ -78,480 +139,478 @@ export default function InvoiceTemplate({ data }: { data: InvoiceData }) {
           min-height: 297mm;
           margin: 0 auto;
           background: #fff;
-          padding: 7mm 5mm;
+          padding: 4mm 5mm 6mm;
           box-sizing: border-box;
-          font-size: 8.5px;
-          line-height: 1.35;
-        }
-        .inv-hdr {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          border-bottom: 2px solid #000;
-          padding-bottom: 5px;
-          margin-bottom: 5px;
-        }
-        .inv-hdr .co .nm {
-          font-size: 17px;
-          font-weight: 700;
-          letter-spacing: 0.5px;
-        }
-        .inv-hdr .co .g {
-          font-weight: 600;
-        }
-        .inv-hdr .ts {
-          text-align: right;
-        }
-        .inv-hdr .ts .ti {
-          font-size: 15px;
-          font-weight: 700;
-          border: 2px solid #000;
-          padding: 1px 10px;
-          display: inline-block;
-        }
-        .inv-hdr .ts .or {
           font-size: 8px;
-          font-weight: 600;
-          margin-top: 2px;
+          line-height: 1.25;
         }
-        .irn-bar {
+        .inv-title-row {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          position: relative;
+          margin-bottom: 3px;
+        }
+        .inv-title-row .title {
+          font-size: 13px;
+          font-weight: 700;
+          text-decoration: underline;
+        }
+        .inv-title-row .copy {
+          position: absolute;
+          right: 0;
+          top: 0;
+          font-size: 7px;
+          font-weight: 600;
+        }
+        .irn-row {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
+          border: 1px solid #000;
           margin-bottom: 4px;
         }
-        .irn-bar .irn {
+        .irn-row .irn-left {
           flex: 1;
+          padding: 2px 4px;
+          font-size: 6.5px;
           display: flex;
           flex-wrap: wrap;
-          gap: 3px 10px;
-          font-size: 7px;
-          border: 1px solid #000;
-          padding: 2px 5px;
-          background: #fafafa;
-          margin-right: 5px;
+          gap: 2px 8px;
         }
-        .irn-bar .irn .it {
-          display: flex;
-          gap: 2px;
-        }
-        .irn-bar .irn .it .k {
-          font-weight: 700;
-        }
-        .irn-bar .qr {
-          border: 1px solid #000;
-          width: 65px;
-          height: 65px;
+        .irn-row .irn-left b { font-weight: 700; }
+        .irn-row .qr {
+          width: 58px;
+          height: 58px;
+          border-left: 1px solid #000;
           display: flex;
           align-items: center;
           justify-content: center;
           font-size: 6px;
           text-align: center;
-          color: #555;
           flex-shrink: 0;
         }
-        .det-grid {
+        .top-grid {
           display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 5px;
-          margin-bottom: 5px;
-        }
-        .det-grid .r {
-          display: flex;
+          grid-template-columns: 1.15fr 0.85fr;
           border: 1px solid #000;
+          margin-bottom: 4px;
         }
-        .det-grid .r + .r {
-          border-top: none;
-        }
-        .det-grid .r .k {
-          width: 105px;
-          font-weight: 700;
-          font-size: 7.5px;
-          padding: 2px 5px;
+        .seller-block {
           border-right: 1px solid #000;
-          background: #f5f5f5;
-          flex-shrink: 0;
+          padding: 3px 4px;
         }
-        .det-grid .r .v {
-          flex: 1;
-          font-size: 7.5px;
-          padding: 2px 5px;
-        }
-        .det-grid .col {
+        .seller-block .head {
           display: flex;
-          flex-direction: column;
-          border: 1px solid #000;
+          align-items: center;
+          gap: 4px;
+          margin-bottom: 2px;
         }
-        .det-grid .col .r:first-child {
-          border-top: none;
+        .seller-block .logo {
+          width: 22px;
+          height: 22px;
+          object-fit: contain;
         }
-        .bs {
-          display: flex;
-          gap: 5px;
-          margin-bottom: 5px;
-        }
-        .bs .blk {
-          border: 1px solid #000;
-          flex: 1;
-          padding: 3px 5px;
-          min-height: 60px;
-        }
-        .bs .blk .lbl {
+        .seller-block .nm {
+          font-size: 11px;
           font-weight: 700;
-          font-size: 7.5px;
+        }
+        .seller-block .line { font-size: 7px; margin-bottom: 1px; }
+        .meta-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+        }
+        .meta-grid .row {
+          display: grid;
+          grid-template-columns: 92px 1fr;
           border-bottom: 1px solid #000;
-          padding-bottom: 2px;
-          margin-bottom: 3px;
-          text-transform: uppercase;
+          min-height: 14px;
         }
-        .bs .blk .ct {
-          font-size: 7.5px;
-          line-height: 1.5;
-        }
-        table.pd {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 5px;
-          font-size: 7.5px;
-        }
-        table.pd th {
-          border: 1px solid #000;
-          padding: 3px 2px;
+        .meta-grid .row:last-child { border-bottom: none; }
+        .meta-grid .k {
+          border-right: 1px solid #000;
+          padding: 1px 3px;
           font-weight: 700;
-          text-align: center;
-          background: #f5f5f5;
+          font-size: 6.5px;
+          background: #fff;
+        }
+        .meta-grid .v {
+          padding: 1px 3px;
           font-size: 7px;
         }
-        table.pd td {
+        .buyer-block {
+          border: 1px solid #000;
+          border-top: none;
+          margin-bottom: 4px;
+          padding: 2px 4px;
+        }
+        .buyer-block .lbl {
+          font-weight: 700;
+          font-size: 7px;
+          margin-bottom: 1px;
+        }
+        .buyer-block .nm { font-weight: 700; font-size: 8px; }
+        .buyer-block .line { font-size: 7px; }
+        table.items {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 0;
+          font-size: 7px;
+        }
+        table.items th,
+        table.items td {
+          border: 1px solid #000;
+          padding: 2px 3px;
+          vertical-align: middle;
+        }
+        table.items th {
+          font-weight: 700;
+          text-align: center;
+          font-size: 6.5px;
+          background: #fff;
+        }
+        table.items td.c { text-align: center; }
+        table.items td.r { text-align: right; }
+        table.items td.l { text-align: left; }
+        .desc-cell {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+        .inv-prod-img {
+          width: 24px !important;
+          height: 24px !important;
+          object-fit: contain;
+          border: 1px solid #ddd;
+          background: #fff;
+          flex-shrink: 0;
+        }
+        .totals-wrap {
+          border: 1px solid #000;
+          border-top: none;
+        }
+        .totals-wrap .row {
+          display: flex;
+          justify-content: space-between;
+          padding: 1px 4px;
+          font-size: 7px;
+          border-bottom: 1px solid #000;
+        }
+        .totals-wrap .row:last-child { border-bottom: none; }
+        .totals-wrap .row.bold { font-weight: 700; font-size: 8px; }
+        .totals-wrap .row.grand {
+          font-weight: 700;
+          font-size: 9px;
+          justify-content: flex-end;
+          gap: 20px;
+        }
+        .words-row {
+          border: 1px solid #000;
+          border-top: none;
+          padding: 3px 4px;
+          font-size: 7px;
+        }
+        .words-row b { font-weight: 700; }
+        table.hsn-sum {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 4px;
+          font-size: 6.5px;
+        }
+        table.hsn-sum th,
+        table.hsn-sum td {
           border: 1px solid #000;
           padding: 2px 3px;
           text-align: center;
-          font-size: 7.5px;
         }
-        table.pd td.l { text-align: left; }
-        table.pd td.r { text-align: right; }
-        .tsx {
-          display: flex;
-          gap: 5px;
-          margin-bottom: 5px;
+        table.hsn-sum th { font-weight: 700; }
+        table.hsn-sum td.r { text-align: right; }
+        .footer-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 4px;
+          margin-top: 4px;
         }
-        .tsx .tl { flex: 1; }
-        .tsx .tr { width: 190px; }
-        table.tt {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 8px;
-        }
-        table.tt td {
+        .footer-grid .box {
           border: 1px solid #000;
-          padding: 2px 6px;
+          padding: 3px 4px;
+          font-size: 6.5px;
         }
-        table.tt td.k {
-          font-weight: 600;
-          background: #f5f5f5;
-        }
-        table.tt td.v { text-align: right; }
-        table.tt td.tg {
+        .footer-grid .box .lbl {
           font-weight: 700;
-          font-size: 10px;
-        }
-        .aw {
-          border: 1px solid #000;
-          padding: 4px 6px;
-          margin-bottom: 0;
-          font-size: 8px;
-          height: 100%;
-          box-sizing: border-box;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-        }
-        .aw .lb { font-weight: 700; }
-        .aw .tx { font-weight: 600; font-size: 9px; }
-        .bd {
-          display: flex;
-          gap: 5px;
-          margin-bottom: 5px;
-        }
-        .bd .blk {
-          border: 1px solid #000;
-          padding: 3px 5px;
-        }
-        .bd .bnk { flex: 0 0 200px; }
-        .bd .dec { flex: 1; }
-        .bd .blk .lbl {
-          font-weight: 700;
-          font-size: 7.5px;
-          border-bottom: 1px solid #000;
-          padding-bottom: 2px;
+          font-size: 7px;
           margin-bottom: 2px;
         }
-        .bd .blk .ct {
-          font-size: 7.5px;
-          line-height: 1.6;
-        }
-        .ft {
+        .sign-row {
           display: flex;
           justify-content: space-between;
           align-items: flex-end;
-          border-top: 2px solid #000;
-          padding-top: 5px;
+          margin-top: 8px;
+          padding-top: 4px;
         }
-        .ft .stmp {
-          text-align: center;
-          font-size: 8px;
-        }
-        .ft .stmp .box {
-          border: 1px dashed #000;
-          width: 90px;
-          height: 45px;
+        .sign-row .stamp {
+          width: 70px;
+          height: 70px;
+          border: 1px dashed #666;
+          border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 6.5px;
-          color: #666;
-          margin: 0 auto;
+          font-size: 6px;
+          text-align: center;
+          color: #444;
         }
-        .ft .sig {
+        .sign-row .sig {
           text-align: right;
-          font-size: 8px;
+          font-size: 7px;
         }
-        .ft .sig .ln {
-          width: 130px;
+        .sign-row .sig .for { font-weight: 700; margin-bottom: 18px; }
+        .sign-row .sig .ln {
           border-top: 1px solid #000;
-          margin: 3px 0 2px auto;
-          padding-top: 3px;
+          padding-top: 2px;
+          min-width: 120px;
+        }
+        .computer-note {
+          text-align: center;
+          font-size: 6.5px;
+          margin-top: 4px;
+          font-style: italic;
         }
         @media print {
           body { margin: 0; padding: 0; }
           .invoice-wrap { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
-          .inv-page { width: 100%; min-height: 100vh; padding: 7mm 5mm; margin: 0; }
+          .inv-page { width: 100%; min-height: 100vh; padding: 4mm 5mm 6mm; margin: 0; }
           @page { size: A4 portrait; margin: 0; }
         }
       `}</style>
 
       <div className="inv-page">
-        {/* ─── Header ─── */}
-        <div className="inv-hdr">
-          <div className="co">
-            <div className="nm">{p.shopName || 'RIYA ENTERPRISES'}</div>
-            <div>{p.shopAddress || 'PLOT NO G-168, SECTOR D-1, P-3, TDS CITY, LONI, GHAZIABAD, UTTAR PRADESH - 201103'}</div>
-            <div className="g">GSTIN: {p.shopGstin || '09BZKPP9250K1ZL'} &nbsp;|&nbsp; State: {p.shopState || 'Uttar Pradesh'} (Code {p.shopStateCode || '09'})</div>
-            <div>Email: {p.shopEmail || 'RIYATOUCHUG@gmail.com'} &nbsp;|&nbsp; www.riyatouch.com</div>
-          </div>
-          <div className="ts">
-            <div className="ti">TAX INVOICE</div>
-            <div className="or">ORIGINAL FOR RECIPIENT</div>
-          </div>
+        <div className="inv-title-row">
+          <div className="title">Tax Invoice</div>
+          <div className="copy">(ORIGINAL FOR RECIPIENT)</div>
         </div>
 
-        {/* ─── IRN + QR ─── */}
-        <div className="irn-bar">
-          <div className="irn">
-            <span className="it"><span className="k">IRN:</span><span>642024c0e4b0cb1e2345abcd</span></span>
-            <span className="it"><span className="k">Ack No.:</span><span>1624024</span></span>
-            <span className="it"><span className="k">Ack Date:</span><span>2024-11-20</span></span>
-            <span className="it"><span className="k">Doc Type:</span><span>INV</span></span>
+        <div className="irn-row">
+          <div className="irn-left">
+            <span><b>IRN :</b> {p.irn || '—'}</span>
+            <span><b>Ack No. :</b> {p.ackNo || '—'}</span>
+            <span><b>Ack Date :</b> {p.ackDate || p.invoiceDate}</span>
           </div>
           <div className="qr">e-Invoice<br />QR Code</div>
         </div>
 
-        {/* ─── Invoice Details ─── */}
-        <div className="det-grid">
-          <div className="col">
-            <div className="r"><span className="k">Invoice No.</span><span className="v">{p.invoiceNo}</span></div>
-            <div className="r"><span className="k">e-Way Bill No.</span><span className="v">{p.ewayBillNo}</span></div>
-            <div className="r"><span className="k">Delivery Note</span><span className="v">{p.deliveryNote}</span></div>
-            <div className="r"><span className="k">Payment Terms</span><span className="v">{p.paymentTerms}</span></div>
-            <div className="r"><span className="k">Reference No.</span><span className="v">{p.referenceNo}</span></div>
+        <div className="top-grid">
+          <div className="seller-block">
+            <div className="head">
+              <Image src={company.logo} alt="Logo" width={22} height={22} className="logo" unoptimized />
+              <div className="nm">{company.name}</div>
+            </div>
+            <div className="line">{company.address}</div>
+            <div className="line">{company.delhiOffice}</div>
+            <div className="line"><b>GSTIN/UIN :</b> {company.gstin}</div>
+            <div className="line"><b>State Name :</b> {company.state}, Code : {company.stateCode}</div>
+            <div className="line"><b>E-Mail :</b> {company.email}</div>
+            <div className="line">{company.website}</div>
           </div>
-          <div className="col">
-            <div className="r"><span className="k">Invoice Date</span><span className="v">{p.invoiceDate}</span></div>
-            <div className="r"><span className="k">Buyer&rsquo;s Order No.</span><span className="v">{p.buyerOrderNo}</span></div>
-            <div className="r"><span className="k">Dispatch Doc No.</span><span className="v">{p.dispatchNo}</span></div>
-            <div className="r"><span className="k">Vehicle Number</span><span className="v">{p.vehicleNo}</span></div>
-            <div className="r"><span className="k">Terms of Delivery</span><span className="v">F.O.R. Destination</span></div>
+
+          <div className="meta-grid">
+            <div className="row"><div className="k">Invoice No.</div><div className="v">{p.invoiceNo}</div></div>
+            <div className="row"><div className="k">Dated</div><div className="v">{p.invoiceDate}</div></div>
+            <div className="row"><div className="k">Delivery Note</div><div className="v">{p.deliveryNote || '—'}</div></div>
+            <div className="row"><div className="k">Mode/Terms of Payment</div><div className="v">{p.paymentTerms || '—'}</div></div>
+            <div className="row"><div className="k">Reference No. & Date.</div><div className="v">{p.referenceNo || '—'}</div></div>
+            <div className="row"><div className="k">Dispatched through</div><div className="v">{p.dispatchedThrough || '—'}</div></div>
+            <div className="row"><div className="k">Destination</div><div className="v">{p.destination || p.customer.city || '—'}</div></div>
+            <div className="row"><div className="k">Motor Vehicle No.</div><div className="v">{p.vehicleNo || '—'}</div></div>
           </div>
         </div>
 
-        {/* ─── Buyer & Seller ─── */}
-        <div className="bs">
-          <div className="blk">
-            <div className="lbl">Buyer (Consignee)</div>
-            <div className="ct">
-              <div style={{ fontWeight: 700, fontSize: 8.5 }}>{p.customer.name}</div>
-              <div>{p.customer.address}, {p.customer.city}</div>
-              <div>{p.customer.state} - {p.customer.pincode}</div>
-              {p.customer.gstNumber && <div><strong>GSTIN:</strong> {p.customer.gstNumber}</div>}
-              <div><strong>State:</strong> {p.customer.state}</div>
-              <div><strong>Place of Supply:</strong> {p.placeOfSupply}</div>
-            </div>
+        <div className="buyer-block">
+          <div className="lbl">Buyer (Bill to)</div>
+          <div className="nm">{p.customer.name}</div>
+          <div className="line">
+            {p.customer.address}{p.customer.address && p.customer.city ? ', ' : ''}{p.customer.city}
+            {p.customer.pincode ? ` - ${p.customer.pincode}` : ''}
           </div>
-          <div className="blk">
-            <div className="lbl">Seller (Supplier)</div>
-            <div className="ct">
-              <div style={{ fontWeight: 700, fontSize: 8.5 }}>{p.shopName || 'RIYA ENTERPRISES'}</div>
-              <div>{p.shopAddress || 'PLOT NO G-168, SECTOR D-1, P-3, TDS CITY, LONI, GHAZIABAD, UTTAR PRADESH - 201103'}</div>
-              <div><strong>GSTIN:</strong> {p.shopGstin || '09BZKPP9250K1ZL'}</div>
-              <div><strong>State:</strong> {p.shopState || 'Uttar Pradesh'} (Code {p.shopStateCode || '09'})</div>
-            </div>
-          </div>
+          {p.customer.gstNumber && <div className="line"><b>GSTIN/UIN :</b> {p.customer.gstNumber}</div>}
+          <div className="line"><b>State Name :</b> {p.customer.state}, Code : 09</div>
+          <div className="line"><b>Place of Supply :</b> {p.placeOfSupply}</div>
         </div>
 
-        {/* ─── Products Table ─── */}
-        <table className="pd">
+        <table className="items">
           <thead>
             <tr>
-              <th style={{ width: '4%' }}>Sl.<br/>No.</th>
-              <th style={{ width: '26%' }}>Description of Goods</th>
+              <th style={{ width: '4%' }}>Sl<br />No.</th>
+              <th style={{ width: '28%' }}>Description of Goods</th>
               <th style={{ width: '10%' }}>HSN/SAC</th>
-              <th style={{ width: '5%' }}>Qty</th>
-              <th style={{ width: '9%' }}>Rate</th>
-              <th style={{ width: '4%' }}>Per</th>
-              <th style={{ width: '6%' }}>Disc.%</th>
-              <th style={{ width: '10%' }}>Amount</th>
-              <th style={{ width: '11%' }}>Taxable Val.</th>
+              <th style={{ width: '10%' }}>Quantity</th>
+              <th style={{ width: '10%' }}>Rate</th>
+              <th style={{ width: '5%' }}>per</th>
+              <th style={{ width: '7%' }}>Disc. %</th>
+              <th style={{ width: '12%' }}>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {p.products.length === 0 ? (
+              <tr><td colSpan={8} className="c" style={{ padding: 8, color: '#999' }}>No items</td></tr>
+            ) : (
+              p.products.map((item) => (
+                <tr key={item.sl}>
+                  <td className="c">{item.sl}</td>
+                  <td className="l">
+                    <div className="desc-cell">
+                      <ProductThumb name={item.description} image={item.image} />
+                      <span>{item.description}</span>
+                    </div>
+                  </td>
+                  <td className="c">{item.hsn}</td>
+                  <td className="c">{fmt(item.quantity)} {item.per}</td>
+                  <td className="r">{fmt(item.rate)}</td>
+                  <td className="c">{item.per}</td>
+                  <td className="r">{item.discount} %</td>
+                  <td className="r">{fmt(item.amount)}</td>
+                </tr>
+              ))
+            )}
+            {p.products.length > 0 && (
+              <tr>
+                <td colSpan={3} className="r" style={{ fontWeight: 700 }}>Total</td>
+                <td className="c" style={{ fontWeight: 700 }}>{fmt(totalQty)} {qtyUnit}</td>
+                <td colSpan={3} />
+                <td className="r" style={{ fontWeight: 700 }}>{fmt(p.subtotal)}</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+
+        <div className="totals-wrap">
+          {p.isInterState ? (
+            <div className="row"><span>IGST @ {gstRate}%</span><span>{fmt(p.igst)}</span></div>
+          ) : (
+            <>
+              <div className="row"><span>CGST @ {gstRate / 2}%</span><span>{fmt(p.cgst)}</span></div>
+              <div className="row"><span>SGST @ {gstRate / 2}%</span><span>{fmt(p.sgst)}</span></div>
+            </>
+          )}
+          <div className="row"><span>Round Off</span><span>{fmtSign(p.roundOff)}</span></div>
+          <div className="row grand"><span>Total</span><span>₹ {fmt(p.grandTotal)}</span></div>
+        </div>
+
+        <div className="words-row">
+          <b>Amount Chargeable (in words)</b><br />
+          INR {p.amountInWords}
+        </div>
+
+        <table className="hsn-sum">
+          <thead>
+            <tr>
+              <th rowSpan={2}>HSN/SAC</th>
+              <th rowSpan={2}>Taxable<br />Value</th>
               {p.isInterState ? (
-                <th style={{ width: '7%' }} colSpan={2}>IGST</th>
+                <th colSpan={2}>Integrated Tax</th>
               ) : (
                 <>
-                  <th style={{ width: '7%' }}>CGST</th>
-                  <th style={{ width: '7%' }}>SGST</th>
+                  <th colSpan={2}>Central Tax</th>
+                  <th colSpan={2}>State Tax</th>
+                </>
+              )}
+              <th rowSpan={2}>Total<br />Tax Amount</th>
+            </tr>
+            <tr>
+              {p.isInterState ? (
+                <>
+                  <th>Rate</th>
+                  <th>Amount</th>
+                </>
+              ) : (
+                <>
+                  <th>Rate</th>
+                  <th>Amount</th>
+                  <th>Rate</th>
+                  <th>Amount</th>
                 </>
               )}
             </tr>
           </thead>
           <tbody>
-            {p.products.length === 0 ? (
-              <tr><td colSpan={p.isInterState ? 10 : 11} style={{ textAlign: 'center', padding: 10, color: '#999' }}>No items</td></tr>
-            ) : p.products.map((item, i) => (
-              <tr key={i}>
-                <td>{item.sl}</td>
-                <td className="l">{item.description}</td>
-                <td>{item.hsn}</td>
-                <td>{item.quantity}</td>
-                <td className="r">{fmt(item.rate)}</td>
-                <td>{item.per}</td>
-                <td className="r">{item.discount}%</td>
-                <td className="r">{fmt(item.amount)}</td>
-                <td className="r">{fmt(item.taxableValue)}</td>
+            {hsnSummary.length === 0 ? (
+              <tr><td colSpan={p.isInterState ? 5 : 7}>—</td></tr>
+            ) : (
+              hsnSummary.map((row) => (
+                <tr key={row.hsn}>
+                  <td>{row.hsn}</td>
+                  <td className="r">{fmt(row.taxableValue)}</td>
+                  {p.isInterState ? (
+                    <>
+                      <td>{row.cgstRate + row.sgstRate}%</td>
+                      <td className="r">{fmt(row.igstAmount)}</td>
+                    </>
+                  ) : (
+                    <>
+                      <td>{row.cgstRate}%</td>
+                      <td className="r">{fmt(row.cgstAmount)}</td>
+                      <td>{row.sgstRate}%</td>
+                      <td className="r">{fmt(row.sgstAmount)}</td>
+                    </>
+                  )}
+                  <td className="r">{fmt(row.totalTax)}</td>
+                </tr>
+              ))
+            )}
+            {hsnSummary.length > 0 && (
+              <tr style={{ fontWeight: 700 }}>
+                <td>Total</td>
+                <td className="r">{fmt(hsnSummary.reduce((s, r) => s + r.taxableValue, 0))}</td>
                 {p.isInterState ? (
-                  <td className="r" colSpan={2}>{fmt(item.igst)}</td>
+                  <>
+                    <td />
+                    <td className="r">{fmt(p.igst)}</td>
+                  </>
                 ) : (
                   <>
-                    <td className="r">{fmt(item.cgst)}</td>
-                    <td className="r">{fmt(item.sgst)}</td>
+                    <td />
+                    <td className="r">{fmt(p.cgst)}</td>
+                    <td />
+                    <td className="r">{fmt(p.sgst)}</td>
                   </>
                 )}
+                <td className="r">{fmt(p.totalGst)}</td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
 
-        {/* ─── Totals ─── */}
-        <div className="tsx">
-          <div className="tl">
-            <div className="aw">
-              <span className="lb">Amount Chargeable (in words):</span>
-              <span className="tx">{p.amountInWords}</span>
-            </div>
+        {p.taxAmountInWords && (
+          <div className="words-row" style={{ marginTop: 4 }}>
+            <b>Tax Amount (in words) :</b> INR {p.taxAmountInWords}
           </div>
-          <div className="tr">
-            <table className="tt">
-              <tbody>
-                <tr><td className="k">Subtotal</td><td className="v">{fmt(p.subtotal)}</td></tr>
-                {p.isInterState ? (
-                  <tr><td className="k">IGST</td><td className="v">{fmt(p.igst)}</td></tr>
-                ) : (
-                  <>
-                    <tr><td className="k">CGST</td><td className="v">{fmt(p.cgst)}</td></tr>
-                    <tr><td className="k">SGST</td><td className="v">{fmt(p.sgst)}</td></tr>
-                  </>
-                )}
-                <tr><td className="k">Round Off</td><td className="v">{fmtSign(p.roundOff)}</td></tr>
-                <tr><td className="k" style={{ fontSize: 10, fontWeight: 700 }}>Grand Total</td><td className="v tg">{fmt(p.grandTotal)}</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        )}
 
-        {/* ─── Tax Summary ─── */}
-        <div style={{ marginBottom: 5 }}>
-          <div style={{ fontWeight: 700, fontSize: 7.5, border: '1px solid #000', borderBottom: 'none', padding: '2px 5px', background: '#f5f5f5' }}>Tax Summary</div>
-          <table className="pd" style={{ marginBottom: 0 }}>
-            <thead>
-              <tr>
-                <th>HSN/SAC</th>
-                <th>Taxable Value</th>
-                {p.isInterState ? (
-                  <th colSpan={3}>IGST @ {p.products[0]?.gstRate || 0}%</th>
-                ) : (
-                  <>
-                    <th>CGST Rate</th>
-                    <th>CGST Amt</th>
-                    <th>SGST Rate</th>
-                    <th>SGST Amt</th>
-                  </>
-                )}
-                <th>Total Tax</th>
-              </tr>
-            </thead>
-            <tbody>
-              {p.products.length === 0 ? (
-                <tr><td colSpan={p.isInterState ? 4 : 7} style={{ textAlign: 'center', padding: 8, color: '#999' }}>No items</td></tr>
-              ) : p.products.map((item, i) => (
-                <tr key={i}>
-                  <td>{item.hsn}</td>
-                  <td className="r">{fmt(item.taxableValue)}</td>
-                  {p.isInterState ? (
-                    <td className="r" colSpan={3}>{fmt(item.igst)}</td>
-                  ) : (
-                    <>
-                      <td className="r">{item.gstRate / 2}%</td>
-                      <td className="r">{fmt(item.cgst)}</td>
-                      <td className="r">{item.gstRate / 2}%</td>
-                      <td className="r">{fmt(item.sgst)}</td>
-                    </>
-                  )}
-                  <td className="r">{fmt(p.isInterState ? item.igst : item.cgst + item.sgst)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* ─── Bank & Declaration ─── */}
-        <div className="bd">
-          <div className="blk bnk">
-            <div className="lbl">Bank Details</div>
-            <div className="ct">
-              <strong>Bank:</strong> State Bank of India<br />
-              <strong>A/C No.:</strong> 12345678901234<br />
-              <strong>IFSC:</strong> SBIN0001234<br />
-              <strong>Branch:</strong> Loni, Ghaziabad<br />
-              <strong>A/C Type:</strong> Current Account
-            </div>
+        <div className="footer-grid">
+          <div className="box">
+            <div className="lbl">Company&apos;s Bank Details</div>
+            <div><b>Bank Name</b> : {company.bank.name}</div>
+            <div><b>A/c No.</b> : {company.bank.accountNo}</div>
+            <div><b>Branch & IFS Code :</b> {company.bank.branch} & {company.bank.ifsc}</div>
           </div>
-          <div className="blk dec">
+          <div className="box">
             <div className="lbl">Declaration</div>
-            <div className="ct">
-              We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct. This is a system-generated invoice and does not require a physical signature.
+            <div>
+              We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.
+              Goods once sold will not be taken back. Interest @ 18% p.a. will be charged if payment is not made within the stipulated period.
             </div>
           </div>
         </div>
 
-        {/* ─── Footer ─── */}
-        <div className="ft">
-          <div className="stmp">
-            <div className="box">Company Stamp</div>
-            <div style={{ marginTop: 1, fontWeight: 600, fontSize: 7.5 }}>RIYA ENTERPRISES</div>
-          </div>
+        <div className="sign-row">
+          <div className="stamp">Company<br />Stamp</div>
           <div className="sig">
-            <div style={{ fontWeight: 600, marginBottom: 1 }}>for RIYA ENTERPRISES</div>
-            <div className="ln">Authorized Signatory</div>
+            <div className="for">for {company.name}</div>
+            <div className="ln">Authorised Signatory</div>
           </div>
         </div>
 
+        <div className="computer-note">This is a Computer Generated Invoice</div>
       </div>
     </div>
   )
